@@ -1,0 +1,37 @@
+name: ttsim bring-up
+
+on:
+  push:
+    branches: [sim-bringup]
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [blackhole, wormhole]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ttnn and CPU torch
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install ttnn==0.79.0
+          pip list | grep -iE "^(ttnn|torch|numpy) "
+      - name: Look at the ttnn install
+        run: |
+          SITE=$(python -c "import site; print(site.getsitepackages()[0])")
+          ls "$SITE" | grep -iE "tt|metal" || true
+          find "$SITE" -path '*soc_descriptors*' -name '*.yaml' | head -n 20
+          find "$SITE" -maxdepth 4 -type d -iname '*sfpi*' | head -n 5
+          du -sh "$SITE"/ttnn "$SITE"/tt_metal 2>/dev/null || true
+      - name: Set up ttsim
+        run: bash scripts/setup_ttsim.sh ${{ matrix.arch }}
+      - name: Smoke test
+        run: python scripts/ttsim_smoke.py
