@@ -1,0 +1,2638 @@
+[
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   1,
+   1,
+   1
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 2.384185791015625e-06,
+  "dram": {
+   "read": 1216,
+   "write": 192,
+   "total": 1408,
+   "by_tensor": {
+    "a": {
+     "read": 512,
+     "write": 0
+    },
+    "b": {
+     "read": 512,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    },
+    "x": {
+     "read": 128,
+     "write": 0
+    },
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 128
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 1.6,
+  "label": "1x1 tile blocks",
+  "cores": 1,
+  "model_tiles": 1408,
+  "measured_tiles": 1408,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   1,
+   1,
+   1
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 2.384185791015625e-06,
+  "dram": {
+   "read": 1088,
+   "write": 64,
+   "total": 1152,
+   "by_tensor": {
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "a": {
+     "read": 512,
+     "write": 0
+    },
+    "b": {
+     "read": 512,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "1x1 tile blocks",
+  "cores": 1,
+  "model_tiles": 1152,
+  "measured_tiles": 1152,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": 20480
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   2,
+   2,
+   2
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 2.384185791015625e-06,
+  "dram": {
+   "read": 704,
+   "write": 192,
+   "total": 896,
+   "by_tensor": {
+    "a": {
+     "read": 256,
+     "write": 0
+    },
+    "b": {
+     "read": 256,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    },
+    "x": {
+     "read": 128,
+     "write": 0
+    },
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 128
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "2x2 tile blocks",
+  "cores": 1,
+  "model_tiles": 896,
+  "measured_tiles": 896,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   2,
+   2,
+   2
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 2.384185791015625e-06,
+  "dram": {
+   "read": 576,
+   "write": 64,
+   "total": 640,
+   "by_tensor": {
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "a": {
+     "read": 256,
+     "write": 0
+    },
+    "b": {
+     "read": 256,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "2x2 tile blocks",
+  "cores": 1,
+  "model_tiles": 640,
+  "measured_tiles": 640,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": 81920
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.9073486328125e-06,
+  "dram": {
+   "read": 448,
+   "write": 192,
+   "total": 640,
+   "by_tensor": {
+    "a": {
+     "read": 128,
+     "write": 0
+    },
+    "b": {
+     "read": 128,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    },
+    "x": {
+     "read": 128,
+     "write": 0
+    },
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 128
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "4x4 tile blocks",
+  "cores": 1,
+  "model_tiles": 640,
+  "measured_tiles": 640,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.9073486328125e-06,
+  "dram": {
+   "read": 320,
+   "write": 64,
+   "total": 384,
+   "by_tensor": {
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "a": {
+     "read": 128,
+     "write": 0
+    },
+    "b": {
+     "read": 128,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "4x4 tile blocks",
+  "cores": 1,
+  "model_tiles": 384,
+  "measured_tiles": 384,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   8,
+   8,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.9073486328125e-06,
+  "dram": {
+   "read": 320,
+   "write": 192,
+   "total": 512,
+   "by_tensor": {
+    "a": {
+     "read": 64,
+     "write": 0
+    },
+    "b": {
+     "read": 64,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    },
+    "x": {
+     "read": 128,
+     "write": 0
+    },
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 128
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "8x8 tile blocks",
+  "cores": 1,
+  "model_tiles": 512,
+  "measured_tiles": 512,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   8,
+   8,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.9073486328125e-06,
+  "dram": {
+   "read": 192,
+   "write": 64,
+   "total": 256,
+   "by_tensor": {
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "a": {
+     "read": 64,
+     "write": 0
+    },
+    "b": {
+     "read": 64,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "8x8 tile blocks",
+  "cores": 1,
+  "model_tiles": 256,
+  "measured_tiles": 256,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": 1048576
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   2,
+   2
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.9073486328125e-06,
+  "dram": {
+   "read": 448,
+   "write": 192,
+   "total": 640,
+   "by_tensor": {
+    "a": {
+     "read": 128,
+     "write": 0
+    },
+    "b": {
+     "read": 128,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    },
+    "x": {
+     "read": 128,
+     "write": 0
+    },
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 128
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "4x4 blocks per core, 2x2 grid",
+  "cores": 4,
+  "model_tiles": 640,
+  "measured_tiles": 640,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   2,
+   2
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.9073486328125e-06,
+  "dram": {
+   "read": 320,
+   "write": 64,
+   "total": 384,
+   "by_tensor": {
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "a": {
+     "read": 128,
+     "write": 0
+    },
+    "b": {
+     "read": 128,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "4x4 blocks per core, 2x2 grid",
+  "cores": 4,
+  "model_tiles": 384,
+  "measured_tiles": 384,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   2,
+   2
+  ],
+  "mcast": true,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.9073486328125e-06,
+  "dram": {
+   "read": 320,
+   "write": 192,
+   "total": 512,
+   "by_tensor": {
+    "a": {
+     "read": 64,
+     "write": 0
+    },
+    "b": {
+     "read": 64,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    },
+    "x": {
+     "read": 128,
+     "write": 0
+    },
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 128
+    }
+   },
+   "pipe_tiles_sent": 128
+  },
+  "seconds": 0.8,
+  "label": "4x4 blocks per core, 2x2 grid, multicast",
+  "cores": 4,
+  "model_tiles": 512,
+  "measured_tiles": 512,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 256,
+  "K": 256,
+  "N": 256,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   2,
+   2
+  ],
+  "mcast": true,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.9073486328125e-06,
+  "dram": {
+   "read": 192,
+   "write": 64,
+   "total": 256,
+   "by_tensor": {
+    "c": {
+     "read": 64,
+     "write": 0
+    },
+    "b": {
+     "read": 64,
+     "write": 0
+    },
+    "a": {
+     "read": 64,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 64
+    }
+   },
+   "pipe_tiles_sent": 128
+  },
+  "seconds": 0.8,
+  "label": "4x4 blocks per core, 2x2 grid, multicast",
+  "cores": 4,
+  "model_tiles": 256,
+  "measured_tiles": 256,
+  "matches_model": true,
+  "compulsory_tiles": 256,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   1,
+   1,
+   1
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 4.291534423828125e-06,
+  "dram": {
+   "read": 8960,
+   "write": 768,
+   "total": 9728,
+   "by_tensor": {
+    "a": {
+     "read": 4096,
+     "write": 0
+    },
+    "b": {
+     "read": 4096,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    },
+    "x": {
+     "read": 512,
+     "write": 0
+    },
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 512
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 1.4,
+  "label": "1x1 tile blocks",
+  "cores": 1,
+  "model_tiles": 9728,
+  "measured_tiles": 9728,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   1,
+   1,
+   1
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 4.291534423828125e-06,
+  "dram": {
+   "read": 8448,
+   "write": 256,
+   "total": 8704,
+   "by_tensor": {
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "a": {
+     "read": 4096,
+     "write": 0
+    },
+    "b": {
+     "read": 4096,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 1.3,
+  "label": "1x1 tile blocks",
+  "cores": 1,
+  "model_tiles": 8704,
+  "measured_tiles": 8704,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": 20480
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   2,
+   2,
+   2
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 4.291534423828125e-06,
+  "dram": {
+   "read": 4864,
+   "write": 768,
+   "total": 5632,
+   "by_tensor": {
+    "a": {
+     "read": 2048,
+     "write": 0
+    },
+    "b": {
+     "read": 2048,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    },
+    "x": {
+     "read": 512,
+     "write": 0
+    },
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 512
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.9,
+  "label": "2x2 tile blocks",
+  "cores": 1,
+  "model_tiles": 5632,
+  "measured_tiles": 5632,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   2,
+   2,
+   2
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 4.291534423828125e-06,
+  "dram": {
+   "read": 4352,
+   "write": 256,
+   "total": 4608,
+   "by_tensor": {
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "a": {
+     "read": 2048,
+     "write": 0
+    },
+    "b": {
+     "read": 2048,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "2x2 tile blocks",
+  "cores": 1,
+  "model_tiles": 4608,
+  "measured_tiles": 4608,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": 81920
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 4.5299530029296875e-06,
+  "dram": {
+   "read": 2816,
+   "write": 768,
+   "total": 3584,
+   "by_tensor": {
+    "a": {
+     "read": 1024,
+     "write": 0
+    },
+    "b": {
+     "read": 1024,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    },
+    "x": {
+     "read": 512,
+     "write": 0
+    },
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 512
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "4x4 tile blocks",
+  "cores": 1,
+  "model_tiles": 3584,
+  "measured_tiles": 3584,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 4.5299530029296875e-06,
+  "dram": {
+   "read": 2304,
+   "write": 256,
+   "total": 2560,
+   "by_tensor": {
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "a": {
+     "read": 1024,
+     "write": 0
+    },
+    "b": {
+     "read": 1024,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "4x4 tile blocks",
+  "cores": 1,
+  "model_tiles": 2560,
+  "measured_tiles": 2560,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   8,
+   8,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 4.5299530029296875e-06,
+  "dram": {
+   "read": 1792,
+   "write": 768,
+   "total": 2560,
+   "by_tensor": {
+    "a": {
+     "read": 512,
+     "write": 0
+    },
+    "b": {
+     "read": 512,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    },
+    "x": {
+     "read": 512,
+     "write": 0
+    },
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 512
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "8x8 tile blocks",
+  "cores": 1,
+  "model_tiles": 2560,
+  "measured_tiles": 2560,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   8,
+   8,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 4.5299530029296875e-06,
+  "dram": {
+   "read": 1280,
+   "write": 256,
+   "total": 1536,
+   "by_tensor": {
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "a": {
+     "read": 512,
+     "write": 0
+    },
+    "b": {
+     "read": 512,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "8x8 tile blocks",
+  "cores": 1,
+  "model_tiles": 1536,
+  "measured_tiles": 1536,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": 1048576
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   4,
+   4
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 4.5299530029296875e-06,
+  "dram": {
+   "read": 2816,
+   "write": 768,
+   "total": 3584,
+   "by_tensor": {
+    "a": {
+     "read": 1024,
+     "write": 0
+    },
+    "b": {
+     "read": 1024,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    },
+    "x": {
+     "read": 512,
+     "write": 0
+    },
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 512
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "4x4 blocks per core, 4x4 grid",
+  "cores": 16,
+  "model_tiles": 3584,
+  "measured_tiles": 3584,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   4,
+   4
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 4.5299530029296875e-06,
+  "dram": {
+   "read": 2304,
+   "write": 256,
+   "total": 2560,
+   "by_tensor": {
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "a": {
+     "read": 1024,
+     "write": 0
+    },
+    "b": {
+     "read": 1024,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.8,
+  "label": "4x4 blocks per core, 4x4 grid",
+  "cores": 16,
+  "model_tiles": 2560,
+  "measured_tiles": 2560,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   4,
+   4
+  ],
+  "mcast": true,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 4.5299530029296875e-06,
+  "dram": {
+   "read": 1280,
+   "write": 768,
+   "total": 2048,
+   "by_tensor": {
+    "a": {
+     "read": 256,
+     "write": 0
+    },
+    "b": {
+     "read": 256,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    },
+    "x": {
+     "read": 512,
+     "write": 0
+    },
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 512
+    }
+   },
+   "pipe_tiles_sent": 512
+  },
+  "seconds": 0.8,
+  "label": "4x4 blocks per core, 4x4 grid, multicast",
+  "cores": 16,
+  "model_tiles": 2048,
+  "measured_tiles": 2048,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 512,
+  "K": 512,
+  "N": 512,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   4,
+   4
+  ],
+  "mcast": true,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 4.5299530029296875e-06,
+  "dram": {
+   "read": 768,
+   "write": 256,
+   "total": 1024,
+   "by_tensor": {
+    "c": {
+     "read": 256,
+     "write": 0
+    },
+    "b": {
+     "read": 256,
+     "write": 0
+    },
+    "a": {
+     "read": 256,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 256
+    }
+   },
+   "pipe_tiles_sent": 512
+  },
+  "seconds": 0.8,
+  "label": "4x4 blocks per core, 4x4 grid, multicast",
+  "cores": 16,
+  "model_tiles": 1024,
+  "measured_tiles": 1024,
+  "matches_model": true,
+  "compulsory_tiles": 1024,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   1,
+   1,
+   1
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 7.152557373046875e-06,
+  "dram": {
+   "read": 68608,
+   "write": 3072,
+   "total": 71680,
+   "by_tensor": {
+    "a": {
+     "read": 32768,
+     "write": 0
+    },
+    "b": {
+     "read": 32768,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    },
+    "x": {
+     "read": 2048,
+     "write": 0
+    },
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 2048
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 5.1,
+  "label": "1x1 tile blocks",
+  "cores": 1,
+  "model_tiles": 71680,
+  "measured_tiles": 71680,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   1,
+   1,
+   1
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 7.152557373046875e-06,
+  "dram": {
+   "read": 66560,
+   "write": 1024,
+   "total": 67584,
+   "by_tensor": {
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "a": {
+     "read": 32768,
+     "write": 0
+    },
+    "b": {
+     "read": 32768,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 5.7,
+  "label": "1x1 tile blocks",
+  "cores": 1,
+  "model_tiles": 67584,
+  "measured_tiles": 67584,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": 20480
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   2,
+   2,
+   2
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 35840,
+   "write": 3072,
+   "total": 38912,
+   "by_tensor": {
+    "a": {
+     "read": 16384,
+     "write": 0
+    },
+    "b": {
+     "read": 16384,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    },
+    "x": {
+     "read": 2048,
+     "write": 0
+    },
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 2048
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 2.2,
+  "label": "2x2 tile blocks",
+  "cores": 1,
+  "model_tiles": 38912,
+  "measured_tiles": 38912,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   2,
+   2,
+   2
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 0.9999999403953552,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 33792,
+   "write": 1024,
+   "total": 34816,
+   "by_tensor": {
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "a": {
+     "read": 16384,
+     "write": 0
+    },
+    "b": {
+     "read": 16384,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 1.6,
+  "label": "2x2 tile blocks",
+  "cores": 1,
+  "model_tiles": 34816,
+  "measured_tiles": 34816,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": 81920
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 19456,
+   "write": 3072,
+   "total": 22528,
+   "by_tensor": {
+    "a": {
+     "read": 8192,
+     "write": 0
+    },
+    "b": {
+     "read": 8192,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    },
+    "x": {
+     "read": 2048,
+     "write": 0
+    },
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 2048
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 1.0,
+  "label": "4x4 tile blocks",
+  "cores": 1,
+  "model_tiles": 22528,
+  "measured_tiles": 22528,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 17408,
+   "write": 1024,
+   "total": 18432,
+   "by_tensor": {
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "a": {
+     "read": 8192,
+     "write": 0
+    },
+    "b": {
+     "read": 8192,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.9,
+  "label": "4x4 tile blocks",
+  "cores": 1,
+  "model_tiles": 18432,
+  "measured_tiles": 18432,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   8,
+   8,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 11264,
+   "write": 3072,
+   "total": 14336,
+   "by_tensor": {
+    "a": {
+     "read": 4096,
+     "write": 0
+    },
+    "b": {
+     "read": 4096,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    },
+    "x": {
+     "read": 2048,
+     "write": 0
+    },
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 2048
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.9,
+  "label": "8x8 tile blocks",
+  "cores": 1,
+  "model_tiles": 14336,
+  "measured_tiles": 14336,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   8,
+   8,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 9216,
+   "write": 1024,
+   "total": 10240,
+   "by_tensor": {
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "a": {
+     "read": 4096,
+     "write": 0
+    },
+    "b": {
+     "read": 4096,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.9,
+  "label": "8x8 tile blocks",
+  "cores": 1,
+  "model_tiles": 10240,
+  "measured_tiles": 10240,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": 1048576
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   8,
+   8
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 19456,
+   "write": 3072,
+   "total": 22528,
+   "by_tensor": {
+    "a": {
+     "read": 8192,
+     "write": 0
+    },
+    "b": {
+     "read": 8192,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    },
+    "x": {
+     "read": 2048,
+     "write": 0
+    },
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 2048
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.9,
+  "label": "4x4 blocks per core, 8x8 grid",
+  "cores": 64,
+  "model_tiles": 22528,
+  "measured_tiles": 22528,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   8,
+   8
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 17408,
+   "write": 1024,
+   "total": 18432,
+   "by_tensor": {
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "a": {
+     "read": 8192,
+     "write": 0
+    },
+    "b": {
+     "read": 8192,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 0.9,
+  "label": "4x4 blocks per core, 8x8 grid",
+  "cores": 64,
+  "model_tiles": 18432,
+  "measured_tiles": 18432,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   8,
+   8
+  ],
+  "mcast": true,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 5120,
+   "write": 3072,
+   "total": 8192,
+   "by_tensor": {
+    "a": {
+     "read": 1024,
+     "write": 0
+    },
+    "b": {
+     "read": 1024,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    },
+    "x": {
+     "read": 2048,
+     "write": 0
+    },
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 2048
+    }
+   },
+   "pipe_tiles_sent": 2048
+  },
+  "seconds": 1.0,
+  "label": "4x4 blocks per core, 8x8 grid, multicast",
+  "cores": 64,
+  "model_tiles": 8192,
+  "measured_tiles": 8192,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 1024,
+  "K": 1024,
+  "N": 1024,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   8,
+   8
+  ],
+  "mcast": true,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 6.4373016357421875e-06,
+  "dram": {
+   "read": 3072,
+   "write": 1024,
+   "total": 4096,
+   "by_tensor": {
+    "c": {
+     "read": 1024,
+     "write": 0
+    },
+    "b": {
+     "read": 1024,
+     "write": 0
+    },
+    "a": {
+     "read": 1024,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 1024
+    }
+   },
+   "pipe_tiles_sent": 2048
+  },
+  "seconds": 1.0,
+  "label": "4x4 blocks per core, 8x8 grid, multicast",
+  "cores": 64,
+  "model_tiles": 4096,
+  "measured_tiles": 4096,
+  "matches_model": true,
+  "compulsory_tiles": 4096,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   1,
+   1,
+   1
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "dram": {
+   "read": 536576,
+   "write": 12288,
+   "total": 548864,
+   "by_tensor": {
+    "a": {
+     "read": 262144,
+     "write": 0
+    },
+    "b": {
+     "read": 262144,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    },
+    "x": {
+     "read": 8192,
+     "write": 0
+    },
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 8192
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 31.3,
+  "label": "1x1 tile blocks",
+  "cores": 1,
+  "model_tiles": 548864,
+  "measured_tiles": 548864,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   1,
+   1,
+   1
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "dram": {
+   "read": 528384,
+   "write": 4096,
+   "total": 532480,
+   "by_tensor": {
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "a": {
+     "read": 262144,
+     "write": 0
+    },
+    "b": {
+     "read": 262144,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 26.7,
+  "label": "1x1 tile blocks",
+  "cores": 1,
+  "model_tiles": 532480,
+  "measured_tiles": 532480,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": 20480
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   2,
+   2,
+   2
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.1444091796875e-05,
+  "dram": {
+   "read": 274432,
+   "write": 12288,
+   "total": 286720,
+   "by_tensor": {
+    "a": {
+     "read": 131072,
+     "write": 0
+    },
+    "b": {
+     "read": 131072,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    },
+    "x": {
+     "read": 8192,
+     "write": 0
+    },
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 8192
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 6.1,
+  "label": "2x2 tile blocks",
+  "cores": 1,
+  "model_tiles": 286720,
+  "measured_tiles": 286720,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   2,
+   2,
+   2
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.1444091796875e-05,
+  "dram": {
+   "read": 266240,
+   "write": 4096,
+   "total": 270336,
+   "by_tensor": {
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "a": {
+     "read": 131072,
+     "write": 0
+    },
+    "b": {
+     "read": 131072,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 5.4,
+  "label": "2x2 tile blocks",
+  "cores": 1,
+  "model_tiles": 270336,
+  "measured_tiles": 270336,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": 81920
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.0728836059570312e-05,
+  "dram": {
+   "read": 143360,
+   "write": 12288,
+   "total": 155648,
+   "by_tensor": {
+    "a": {
+     "read": 65536,
+     "write": 0
+    },
+    "b": {
+     "read": 65536,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    },
+    "x": {
+     "read": 8192,
+     "write": 0
+    },
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 8192
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 1.7,
+  "label": "4x4 tile blocks",
+  "cores": 1,
+  "model_tiles": 155648,
+  "measured_tiles": 155648,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.0728836059570312e-05,
+  "dram": {
+   "read": 135168,
+   "write": 4096,
+   "total": 139264,
+   "by_tensor": {
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "a": {
+     "read": 65536,
+     "write": 0
+    },
+    "b": {
+     "read": 65536,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 1.8,
+  "label": "4x4 tile blocks",
+  "cores": 1,
+  "model_tiles": 139264,
+  "measured_tiles": 139264,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   8,
+   8,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.0728836059570312e-05,
+  "dram": {
+   "read": 77824,
+   "write": 12288,
+   "total": 90112,
+   "by_tensor": {
+    "a": {
+     "read": 32768,
+     "write": 0
+    },
+    "b": {
+     "read": 32768,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    },
+    "x": {
+     "read": 8192,
+     "write": 0
+    },
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 8192
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 2.4,
+  "label": "8x8 tile blocks",
+  "cores": 1,
+  "model_tiles": 90112,
+  "measured_tiles": 90112,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   8,
+   8,
+   4
+  ],
+  "grid": [
+   1,
+   1
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.0728836059570312e-05,
+  "dram": {
+   "read": 69632,
+   "write": 4096,
+   "total": 73728,
+   "by_tensor": {
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "a": {
+     "read": 32768,
+     "write": 0
+    },
+    "b": {
+     "read": 32768,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 2.6,
+  "label": "8x8 tile blocks",
+  "cores": 1,
+  "model_tiles": 73728,
+  "measured_tiles": 73728,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": 1048576
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   8,
+   8
+  ],
+  "mcast": false,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.0728836059570312e-05,
+  "dram": {
+   "read": 143360,
+   "write": 12288,
+   "total": 155648,
+   "by_tensor": {
+    "a": {
+     "read": 65536,
+     "write": 0
+    },
+    "b": {
+     "read": 65536,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    },
+    "x": {
+     "read": 8192,
+     "write": 0
+    },
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 8192
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 2.3,
+  "label": "4x4 blocks per core, 8x8 grid",
+  "cores": 64,
+  "model_tiles": 155648,
+  "measured_tiles": 155648,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   8,
+   8
+  ],
+  "mcast": false,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.0728836059570312e-05,
+  "dram": {
+   "read": 135168,
+   "write": 4096,
+   "total": 139264,
+   "by_tensor": {
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "a": {
+     "read": 65536,
+     "write": 0
+    },
+    "b": {
+     "read": 65536,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    }
+   },
+   "pipe_tiles_sent": 0
+  },
+  "seconds": 2.4,
+  "label": "4x4 blocks per core, 8x8 grid",
+  "cores": 64,
+  "model_tiles": 139264,
+  "measured_tiles": 139264,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": 327680
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   8,
+   8
+  ],
+  "mcast": true,
+  "variant": "unfused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.0728836059570312e-05,
+  "dram": {
+   "read": 28672,
+   "write": 12288,
+   "total": 40960,
+   "by_tensor": {
+    "a": {
+     "read": 8192,
+     "write": 0
+    },
+    "b": {
+     "read": 8192,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    },
+    "x": {
+     "read": 8192,
+     "write": 0
+    },
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "out": {
+     "read": 0,
+     "write": 8192
+    }
+   },
+   "pipe_tiles_sent": 16384
+  },
+  "seconds": 2.7,
+  "label": "4x4 blocks per core, 8x8 grid, multicast",
+  "cores": 64,
+  "model_tiles": 40960,
+  "measured_tiles": 40960,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": null
+ },
+ {
+  "M": 2048,
+  "K": 2048,
+  "N": 2048,
+  "block": [
+   4,
+   4,
+   4
+  ],
+  "grid": [
+   8,
+   8
+  ],
+  "mcast": true,
+  "variant": "fused",
+  "act": "relu",
+  "pcc": 1.0,
+  "max_abs_err": 1.0728836059570312e-05,
+  "dram": {
+   "read": 20480,
+   "write": 4096,
+   "total": 24576,
+   "by_tensor": {
+    "c": {
+     "read": 4096,
+     "write": 0
+    },
+    "b": {
+     "read": 8192,
+     "write": 0
+    },
+    "a": {
+     "read": 8192,
+     "write": 0
+    },
+    "y": {
+     "read": 0,
+     "write": 4096
+    }
+   },
+   "pipe_tiles_sent": 16384
+  },
+  "seconds": 2.5,
+  "label": "4x4 blocks per core, 8x8 grid, multicast",
+  "cores": 64,
+  "model_tiles": 24576,
+  "measured_tiles": 24576,
+  "matches_model": true,
+  "compulsory_tiles": 16384,
+  "l1_bytes_per_core": 327680
+ }
+]
