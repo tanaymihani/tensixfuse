@@ -2,7 +2,7 @@
 
 How much DRAM traffic does kernel fusion actually save on a Tenstorrent chip? And how far can a model's weights be pushed into Tenstorrent's block-float formats before the model notices? I'm writing fused kernels for Tensix cores to find out, in TT-Lang (Tenstorrent's Python kernel language) and by hand in TT-Metalium C++, and running two real models through them: GPT-2's MLP blocks and the classifier head of [GPU-CorruptNet](https://github.com/tanaymihani/gpu-corruptnet), my GPU-corruption detector.
 
-**Status: in progress, started October 2026.** The kernels aren't written yet. What's here so far is the design and an analytic model of how much data each version of the kernel moves. Once the kernels run, the simulator's measurements replace the model, and a test checks that the two match tile for tile.
+**Status: in progress, started October 2026.** The fusion study is done: fused and unfused TT-Lang kernels, measured on TT-Lang's simulator, matching an analytic model tile for tile. Quantization, the C++ kernel, the models and the infrastructure are next (status table below).
 
 Everything device-side runs on Tenstorrent's simulators, not silicon: TT-Lang's functional simulator, which logs every tile that moves between DRAM, L1 and other cores, and [ttsim](https://github.com/tenstorrent/ttsim), a full-system simulator of Wormhole and Blackhole chips that is designed to be bit-exact with the hardware. That's enough for correctness and data movement. It isn't enough for timing, because ttsim doesn't model it, so this project won't report device latency.
 
@@ -10,9 +10,9 @@ Everything device-side runs on Tenstorrent's simulators, not silicon: TT-Lang's 
 
 | Milestone | Scope | State |
 |---|---|---|
-| M0 | TT-Lang simulator on macOS, ttsim on Linux x86_64 (Wormhole, Blackhole), pinned versions | in progress |
-| M1 | Analytic DRAM traffic model for fused and unfused kernels | done (below) |
-| M2 | Fused matmul + bias + activation in TT-Lang, unfused baseline, block sweep, NoC multicast | next |
+| M0 | TT-Lang simulator on macOS (done), ttsim on Linux x86_64 (Wormhole, Blackhole), pinned versions | in progress |
+| M1 | Analytic DRAM traffic model for fused and unfused kernels | done |
+| M2 | Fused matmul + bias + activation in TT-Lang, unfused baseline, block sweep, NoC multicast | done (below) |
 | M3 | bfloat8_b and bfloat4_b weights and math fidelity on GPT-2's 12 MLP blocks | planned |
 | M4 | TT-Metalium C++: fused BatchNorm + ReLU (host code plus reader, compute and writer kernels) | planned |
 | M5 | GPU-CorruptNet's classifier head on simulated Blackhole | planned |
@@ -38,27 +38,30 @@ flowchart LR
 
 Unfused, each op is one trip around this loop, and each op's output goes back to DRAM before the next op reads it in again. Fused, the bias add and the activation happen in the math stage before pack, so those intermediates never leave the core.
 
-## What fusion should save
+## Fusion and data movement
 
-`y = relu(a @ b + c)` at M = K = N = 1024 in bf16, where a 32×32 tile is 2 KiB. The matmul is blocked the way TT-Lang's matmul tutorial does it: each block of output tiles streams its row panel of A and column panel of B from DRAM, so smaller blocks re-read the inputs more often. "Unfused" is the same matmul followed by separate add and ReLU operations, each writing its output to DRAM.
+`y = relu(a @ b + c)` in bf16, where a 32×32 tile is 2 KiB. The matmul is blocked the way TT-Lang's matmul tutorial does it: each block of output tiles streams its row panel of A and column panel of B from DRAM, so smaller blocks re-read the inputs more often. "Unfused" is the same matmul followed by separate add and ReLU operations, written in TT-Lang with the same blocking and each writing its output to DRAM, so fusion is the only difference.
 
-These numbers come from the analytic model (M1), not from the simulator yet.
+DRAM traffic at M = K = N = 1024, measured on TT-Lang's simulator (tile reads plus tile writes from its trace):
 
 | Matmul data reuse | Cores | Unfused | Fused | Fusion saves |
 |---|---|---|---|---|
 | 1×1 tile blocks | 1 | 140 MiB | 132 MiB | 6% |
+| 2×2 tile blocks | 1 | 76 MiB | 68 MiB | 11% |
 | 4×4 tile blocks | 1 | 44 MiB | 36 MiB | 18% |
 | 8×8 tile blocks | 1 | 28 MiB | 20 MiB | 29% |
 | 4×4 blocks per core, 8×8 grid | 64 | 44 MiB | 36 MiB | 18% |
 | same, with A and B multicast | 64 | 16 MiB | 8 MiB | 50% |
 
-Three things fall out of this before writing any kernel code:
+Before running anything I wrote an analytic model of how many tiles each kernel should move ([`traffic.py`](src/tensixfuse/traffic.py)). The simulator agrees with it tile for tile on all 48 runs: 4 sizes from 256 to 2048, 6 reuse levels, fused and unfused. [`tests/test_sim_traffic.py`](tests/test_sim_traffic.py) keeps it that way. Every run that computed real values matched PyTorch with PCC 1.000000. That's expected, because the functional simulator does its math in fp32: it checks that the right tiles went to the right place, not the chip's arithmetic. The chip's arithmetic comes from ttsim, starting with M3.
+
+What the numbers say:
 
 - **Fusion always saves the same 8 MiB here:** two intermediate tensors, each written to DRAM and read back. With 1×1 blocks that's 6% of the traffic and fusion barely shows. Once the matmul reads each input only once, it's half.
-- **More cores don't cut DRAM traffic by themselves.** 64 cores with 4×4 blocks each still fetch their own A and B panels, so together they move exactly as much as one core with 4×4 blocks. Multicast is what changes it: one core per row reads its A panel and sends it along the row over the NoC, one core per column does the same for B, and every input tile leaves DRAM once. That's the 8 MiB floor.
-- **L1 caps the block size.** With every buffer double-buffered, an 8×8 block needs 1 MiB of buffers and a 16×16 block needs 3.5 MiB, while TT-Lang budgets 1,432 KiB per core.
+- **More cores don't cut DRAM traffic by themselves.** 64 cores with 4×4 blocks each still fetch their own A and B panels, so together they move exactly as much as one core with 4×4 blocks. Multicast is what changes it: one core per row reads its A panel and sends it along the row over the NoC, one core per column does the same for B, and every input tile leaves DRAM once. That's the 8 MiB floor, 16.5x below the 1×1 version.
+- **L1 caps the block size.** With every buffer double-buffered, an 8×8 block needs 1 MiB of buffers. A 16×16 block needs 3,670,016 bytes, and the simulator warns that this is over its per-core limit of 1,466,368 bytes (1,432 KiB).
 
-M2 checks all of this against the simulator's tile counts from `tt-lang-sim-stats`.
+The full sweep, including 256, 512 and 2048, is in [`results/fusion.json`](results/fusion.json).
 
 ## Block-float formats
 
@@ -85,3 +88,34 @@ M3 measures what that costs. The shared exponent is the risk: in bfloat4_b, any 
 - Device numbers come only from the simulators, and every result says which one.
 - No device latency or throughput.
 - Every number will be regenerated by one command, with the analytic number next to the measured one wherever both exist.
+
+## Reproduce
+
+```bash
+python3.11 -m venv .venv && source .venv/bin/activate   # Python 3.11 or newer
+pip install -e ".[dev]"                                  # includes tt-lang-sim 1.1.6
+pytest                                                   # model tests + simulator-vs-model tests
+python bench/fusion.py                                   # full sweep -> results/fusion.json, ~2 min
+```
+
+One configuration by hand, with the simulator's own summary:
+
+```bash
+tt-lang-sim kernels/ttlang/run_matmul.py --trace t.jsonl --trace-events copy,pipe \
+    -- --M 1024 --K 1024 --N 1024 --block 4,4,4 --grid 8,8 --mcast --variant fused
+tt-lang-sim-stats t.jsonl
+```
+
+## Layout
+
+```
+kernels/ttlang/ops.py          fused and unfused matmul, multicast (SUMMA-style) variant, elementwise ops
+kernels/ttlang/run_matmul.py   runs one configuration under the simulator and checks it against PyTorch
+kernels/ttlang/simfix.py       readable kernel errors under tt-lang-sim 1.1.6 (its own printer looks
+                               for a file the package doesn't ship)
+src/tensixfuse/traffic.py      analytic DRAM traffic and L1 model
+src/tensixfuse/simrun.py       runs kernels through tt-lang-sim, reads DRAM tiles from the trace
+bench/fusion.py                the fusion sweep
+tests/                         model tests and simulator-vs-model tests
+results/fusion.json            every run of the sweep
+```
