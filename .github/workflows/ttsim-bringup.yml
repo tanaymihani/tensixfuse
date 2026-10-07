@@ -8,7 +8,7 @@ on:
 jobs:
   smoke:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -18,18 +18,30 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install ttnn and CPU torch
+      - name: Install ttnn, CPU torch and this package
         run: |
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install ttnn==0.79.0
-          pip list | grep -iE "^(ttnn|torch|numpy) "
+          pip install --no-deps -e .
       - name: Install SFPI
-        run: |
-          bash scripts/install_sfpi.sh
-          SFPI=$(python -c "import os, ttnn; print(os.path.join(os.path.dirname(ttnn.__file__), 'runtime', 'sfpi'))")
-          ls "$SFPI" | head; ls "$SFPI"/compiler/bin 2>/dev/null | head -n 5
+        run: bash scripts/install_sfpi.sh
       - name: Set up ttsim
         run: bash scripts/setup_ttsim.sh ${{ matrix.arch }}
       - name: Smoke test
         run: python scripts/ttsim_smoke.py
+      - name: Block-float emulation vs tt-metal's packer
+        if: matrix.arch == 'blackhole'
+        run: python scripts/check_bfp_packing.py
+      - name: Time a GPT-2-sized linear + GELU
+        if: matrix.arch == 'blackhole'
+        timeout-minutes: 45
+        run: python scripts/ttsim_linear_timing.py 128 768 3072
+      - name: Look for the C++ SDK in the wheel
+        if: matrix.arch == 'blackhole'
+        run: |
+          TTNN=$(python -c "import os, ttnn; print(os.path.dirname(ttnn.__file__))")
+          find "$TTNN" -name host_api.hpp | head -n 3
+          find "$TTNN" \( -name '*Config.cmake' -o -name '*-config.cmake' \) | head -n 10
+          ls "$TTNN/build/lib" | head -n 20
+          find "$TTNN" -maxdepth 2 -type d | head -n 40
