@@ -24,13 +24,11 @@ jobs:
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install ttnn==0.79.0
           pip list | grep -iE "^(ttnn|torch|numpy) "
-      - name: Look at the ttnn install
+      - name: Install SFPI
         run: |
-          SITE=$(python -c "import site; print(site.getsitepackages()[0])")
-          ls "$SITE" | grep -iE "tt|metal" || true
-          find "$SITE" -path '*soc_descriptors*' -name '*.yaml' | head -n 20
-          find "$SITE" -maxdepth 4 -type d -iname '*sfpi*' | head -n 5
-          du -sh "$SITE"/ttnn "$SITE"/tt_metal 2>/dev/null || true
+          bash scripts/install_sfpi.sh
+          SFPI=$(python -c "import os, ttnn; print(os.path.join(os.path.dirname(ttnn.__file__), 'runtime', 'sfpi'))")
+          ls "$SFPI" | head; ls "$SFPI"/compiler/bin 2>/dev/null | head -n 5
       - name: Set up ttsim
         run: bash scripts/setup_ttsim.sh ${{ matrix.arch }}
       - name: Smoke test
