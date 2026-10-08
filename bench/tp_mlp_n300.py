@@ -73,8 +73,11 @@ def main() -> None:
     results: dict = {"chips": mesh.get_num_devices(), "blocks": []}
 
     def to_mesh(a, mapper):
+        # Round to bf16 on the host. Handing from_torch fp32 for a mesh makes the
+        # conversion run on the device, and ttsim stops it with UndefinedBehavior
+        # (an unpacker reading and writing Float32 without unpack-to-dest).
         return ttnn.from_torch(
-            torch.from_numpy(np.ascontiguousarray(a, np.float32)),
+            torch.from_numpy(np.ascontiguousarray(a, np.float32)).to(torch.bfloat16),
             dtype=ttnn.bfloat16,
             layout=ttnn.TILE_LAYOUT,
             device=mesh,
