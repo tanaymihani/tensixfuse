@@ -1,0 +1,59 @@
+{
+ "frames": 4160,
+ "tile_rows": 130.0,
+ "temperature": 1.5646949856130867,
+ "pytorch": {
+  "macro_f1": {
+   "seen": 0.9112095296476417,
+   "unseen": 0.8755638695667075
+  }
+ },
+ "formats": {
+  "bf16": {
+   "fused_sigmoid": true,
+   "label_set_agreement": 0.9992788461538461,
+   "frames_that_differ": 3,
+   "logit_pcc": 0.9999637038566271,
+   "macro_f1": {
+    "seen": 0.9112095296476417,
+    "unseen": 0.8754372958560728
+   },
+   "padded_column_values": [
+    0.5
+   ],
+   "labels_per_frame_if_padding_kept": 22.921153846153846,
+   "labels_per_frame": 0.9211538461538461
+  },
+  "bfloat8_b": {
+   "fused_sigmoid": true,
+   "label_set_agreement": 0.9995192307692308,
+   "frames_that_differ": 2,
+   "logit_pcc": 0.9999628519051413,
+   "macro_f1": {
+    "seen": 0.9112095296476417,
+    "unseen": 0.875611568937325
+   },
+   "padded_column_values": [
+    0.5
+   ],
+   "labels_per_frame_if_padding_kept": 22.920432692307692,
+   "labels_per_frame": 0.9204326923076923
+  },
+  "bfloat4_b": {
+   "fused_sigmoid": true,
+   "label_set_agreement": 0.9947115384615385,
+   "frames_that_differ": 22,
+   "logit_pcc": 0.9998413196682898,
+   "macro_f1": {
+    "seen": 0.9112703509053075,
+    "unseen": 0.8767812866425228
+   },
+   "padded_column_values": [
+    0.5
+   ],
+   "labels_per_frame_if_padding_kept": 22.917067307692307,
+   "labels_per_frame": 0.9170673076923077
+  }
+ },
+ "arch": "Arch.BLACKHOLE"
+}

@@ -46,6 +46,32 @@ def block_ops(cfg: MatmulConfig) -> int:
     return Mb * Nb * Kb
 
 
+def estimated_seconds(cfg: MatmulConfig, variant: str, max_full_ops: int) -> float:
+    """Rough cost of one run, from the number of block matmuls the simulator steps
+    through. Full runs also do the math, dry runs only move data."""
+    # The unfused chain's extra add and ReLU passes are cheap next to the matmul.
+    per_op = 1.8e-4 if block_ops(cfg) <= max_full_ops else 1.0e-4
+    extra = 1.15 if variant == "unfused" else 1.0
+    return 1.0 + block_ops(cfg) * per_op * extra
+
+
+def balanced_shard(runs: list, shard: int, n_shards: int, max_full_ops: int) -> list:
+    """Longest-first greedy split: each run goes to the shard with the least work
+    so far. Round-robin put both 30-second 2048^3 dry runs next to other big
+    runs; this keeps the slowest shard close to the average."""
+    load = [0.0] * n_shards
+    owner = {}
+    order = sorted(
+        range(len(runs)),
+        key=lambda i: -estimated_seconds(runs[i][2], runs[i][3], max_full_ops),
+    )
+    for i in order:
+        s = min(range(n_shards), key=load.__getitem__)
+        owner[i] = s
+        load[s] += estimated_seconds(runs[i][2], runs[i][3], max_full_ops)
+    return [run for i, run in enumerate(runs) if owner[i] == shard]
+
+
 def run_one(cfg: MatmulConfig, variant: str, label: str, full: bool) -> dict:
     t0 = time.perf_counter()
     res = run_kernel_script(SCRIPT, matmul_args(cfg, variant), dry_run=not full)
@@ -86,7 +112,7 @@ def main() -> None:
         for label, block, grid, mcast in reuse_levels(size)
         for variant in ("unfused", "fused")
     ]
-    mine = runs[shard::n_shards]
+    mine = balanced_shard(runs, shard, n_shards, args.max_full_ops)
     print(f"shard {shard}/{n_shards}: {len(mine)} of {len(runs)} runs", flush=True)
 
     t_start = time.perf_counter()
