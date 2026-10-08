@@ -1,12 +1,12 @@
 {
- "_comment": "Numbers measured in CI on GitHub-hosted runners; each links to the run it came from.",
+ "_comment": "Measured in CI on GitHub-hosted runners, on main; each entry links to its run. Wall-clock times vary between runs.",
  "ci": {
   "tests": 54,
   "platforms": [
    "ubuntu-latest",
    "macos-latest"
   ],
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37724128265"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795257"
  },
  "ttsim_matrix": {
   "jobs": 6,
@@ -20,7 +20,7 @@
    "bfloat4_b"
   ],
   "tests_per_chip": 7,
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37724128268"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795284"
  },
  "metalium": {
   "chips": 2,
@@ -29,46 +29,46 @@
    "sfpu"
   ],
   "values_checked_per_run": 3211264,
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37723306083"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795305"
+ },
+ "studies": {
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795335"
  },
  "docker": {
-  "image_size": "2.1 GB",
+  "ttsim_image": "2.08 GB",
+  "sweep_image": "1.1 GB",
   "ttsim_tests_per_chip": 7,
   "seconds_per_chip": [
-   12.9,
-   13.1
+   16.83,
+   16.68
   ],
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725323135",
-  "images": [
-   "tensixfuse (ttsim target)",
-   "tensixfuse-sweep (sweep target)"
-  ]
+  "sweep_in_image": "12 runs in 14.3 s, 0 mismatches",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795399"
  },
  "sweep": {
   "runs": 48,
-  "one_runner_job_s": 242,
-  "one_runner_compute_s": 207.5,
-  "eight_runners_slowest_job_s": 102,
-  "eight_runners_slowest_compute_s": 61.1,
-  "merge_job_s": 8,
-  "note": "bounded by the largest single run, the unblocked 2048^3 dry run",
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37723066088"
- },
- "ansible": {
-  "first_run_s": 90,
-  "first_run_changed": 11,
-  "second_run_changed": 0,
-  "molecule": "converge, idempotence, verify passed",
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37722979050"
+  "one_runner_job_s": 184,
+  "eight_runners_slowest_job_s": 71,
+  "merge_job_s": 5,
+  "note": "bounded by the largest single run, the unblocked 2048^3 dry run; an earlier run measured 242 s vs 110 s",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795342"
  },
  "kubernetes": {
   "pods": 4,
-  "jobset_seconds": 23,
+  "jobset_seconds": 18,
   "runs": 24,
   "model_mismatches": 0,
-  "slowest_pod_compute_s": 20.3,
   "cluster": "kind",
   "jobset": "v0.12.0",
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725323128"
+  "note": "an earlier run took 23 s",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795233"
+ },
+ "ansible": {
+  "first_run_s": 98,
+  "first_run_changed": 11,
+  "second_run_changed": 0,
+  "molecule": "converge, idempotence, verify passed",
+  "note": "an earlier run took 90 s",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795309"
  }
 }

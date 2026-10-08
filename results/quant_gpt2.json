@@ -6,356 +6,356 @@
    "c_fc": "bfloat16",
    "c_proj": "bfloat16",
    "weight_mib": 108.0,
-   "median_pcc": 0.9999860684883499,
-   "worst_pcc": 0.9999680387313872,
+   "median_pcc": 0.9999860592659111,
+   "worst_pcc": 0.9999680658830885,
    "worst_block": 5,
    "blocks": [
     {
      "block": 0,
-     "pcc_device": 0.9999909596257932,
-     "pcc_emulated": 0.9999948088996943
+     "pcc_device": 0.9999909651466025,
+     "pcc_emulated": 0.9999948011263778
     },
     {
      "block": 1,
-     "pcc_device": 0.9999971902017428,
-     "pcc_emulated": 0.9999979124609486
+     "pcc_device": 0.9999971904486112,
+     "pcc_emulated": 0.9999979139911913
     },
     {
      "block": 2,
-     "pcc_device": 0.9999998616267719,
-     "pcc_emulated": 0.9999998985080165
+     "pcc_device": 0.9999998617601997,
+     "pcc_emulated": 0.9999998984136279
     },
     {
      "block": 3,
-     "pcc_device": 0.9999872872985339,
-     "pcc_emulated": 0.9999910455004454
+     "pcc_device": 0.999987273922561,
+     "pcc_emulated": 0.9999910368212326
     },
     {
      "block": 4,
-     "pcc_device": 0.9999838751756309,
-     "pcc_emulated": 0.9999869192795483
+     "pcc_device": 0.9999838311529582,
+     "pcc_emulated": 0.9999869172492964
     },
     {
      "block": 5,
-     "pcc_device": 0.9999680387313872,
-     "pcc_emulated": 0.9999790681009538
+     "pcc_device": 0.9999680658830885,
+     "pcc_emulated": 0.9999790684674877
     },
     {
      "block": 6,
-     "pcc_device": 0.9999756655523062,
-     "pcc_emulated": 0.9999834896019982
+     "pcc_device": 0.9999756756123886,
+     "pcc_emulated": 0.9999834969245704
     },
     {
      "block": 7,
-     "pcc_device": 0.9999786582022486,
-     "pcc_emulated": 0.9999871097985599
+     "pcc_device": 0.9999786997923856,
+     "pcc_emulated": 0.999987105973531
     },
     {
      "block": 8,
-     "pcc_device": 0.9999810156474255,
-     "pcc_emulated": 0.9999880288303752
+     "pcc_device": 0.9999810334902742,
+     "pcc_emulated": 0.9999880310922677
     },
     {
      "block": 9,
-     "pcc_device": 0.999984849678166,
-     "pcc_emulated": 0.9999903110224578
+     "pcc_device": 0.9999848446092611,
+     "pcc_emulated": 0.9999903147731942
     },
     {
      "block": 10,
-     "pcc_device": 0.9999920372956911,
-     "pcc_emulated": 0.9999952951253493
+     "pcc_device": 0.9999920758996601,
+     "pcc_emulated": 0.9999953083652015
     },
     {
      "block": 11,
-     "pcc_device": 0.9999926117057497,
-     "pcc_emulated": 0.9999956308266081
+     "pcc_device": 0.9999925882357176,
+     "pcc_emulated": 0.9999956293990425
     }
    ],
-   "seconds": 93.1
+   "seconds": 95.1
   },
   "bfloat8_b": {
    "c_fc": "bfloat8_b",
    "c_proj": "bfloat8_b",
    "weight_mib": 57.375,
-   "median_pcc": 0.9998698427820907,
-   "worst_pcc": 0.999821194869142,
+   "median_pcc": 0.9998698134090022,
+   "worst_pcc": 0.9998212512412219,
    "worst_block": 6,
    "blocks": [
     {
      "block": 0,
-     "pcc_device": 0.9999157636406909,
-     "pcc_emulated": 0.9999193257792035
+     "pcc_device": 0.9999157611979587,
+     "pcc_emulated": 0.9999193343130622
     },
     {
      "block": 1,
-     "pcc_device": 0.999959058618833,
-     "pcc_emulated": 0.9999598622171209
+     "pcc_device": 0.9999590649902454,
+     "pcc_emulated": 0.9999598642842735
     },
     {
      "block": 2,
-     "pcc_device": 0.9999971738867458,
-     "pcc_emulated": 0.9999971699613557
+     "pcc_device": 0.9999971737427146,
+     "pcc_emulated": 0.9999971702628735
     },
     {
      "block": 3,
-     "pcc_device": 0.9998565266505678,
-     "pcc_emulated": 0.999853374003602
+     "pcc_device": 0.9998563820032809,
+     "pcc_emulated": 0.9998533824782806
     },
     {
      "block": 4,
-     "pcc_device": 0.9998496957874458,
-     "pcc_emulated": 0.9998524272497615
+     "pcc_device": 0.999849756637304,
+     "pcc_emulated": 0.9998524848118747
     },
     {
      "block": 5,
-     "pcc_device": 0.9998259071463191,
-     "pcc_emulated": 0.9998312382351924
+     "pcc_device": 0.99982601994302,
+     "pcc_emulated": 0.9998313005973019
     },
     {
      "block": 6,
-     "pcc_device": 0.999821194869142,
-     "pcc_emulated": 0.9998306503927622
+     "pcc_device": 0.9998212512412219,
+     "pcc_emulated": 0.999830664108776
     },
     {
      "block": 7,
-     "pcc_device": 0.9998493709357923,
-     "pcc_emulated": 0.9998587831497063
+     "pcc_device": 0.9998493323145072,
+     "pcc_emulated": 0.999858794584631
     },
     {
      "block": 8,
-     "pcc_device": 0.9998517999780835,
-     "pcc_emulated": 0.9998573938718853
+     "pcc_device": 0.9998517831931888,
+     "pcc_emulated": 0.9998574132951884
     },
     {
      "block": 9,
-     "pcc_device": 0.9998831589136135,
-     "pcc_emulated": 0.9998888095574172
+     "pcc_device": 0.9998832448147235,
+     "pcc_emulated": 0.9998888122917168
     },
     {
      "block": 10,
-     "pcc_device": 0.9999483459859773,
-     "pcc_emulated": 0.9999508639161421
+     "pcc_device": 0.9999484020546063,
+     "pcc_emulated": 0.9999508640866737
     },
     {
      "block": 11,
-     "pcc_device": 0.9999382907338833,
-     "pcc_emulated": 0.9999419661906833
+     "pcc_device": 0.9999383264981065,
+     "pcc_emulated": 0.9999419407209048
     }
    ],
-   "seconds": 92.4
+   "seconds": 97.0
   },
   "bfloat4_b": {
    "c_fc": "bfloat4_b",
    "c_proj": "bfloat4_b",
    "weight_mib": 30.375,
-   "median_pcc": 0.9769813830488348,
-   "worst_pcc": 0.960661008224833,
+   "median_pcc": 0.9769826338232996,
+   "worst_pcc": 0.9606603392422124,
    "worst_block": 6,
    "blocks": [
     {
      "block": 0,
-     "pcc_device": 0.9841345428593407,
-     "pcc_emulated": 0.9841522188382364
+     "pcc_device": 0.9841344417852907,
+     "pcc_emulated": 0.9841526871942744
     },
     {
      "block": 1,
-     "pcc_device": 0.9933881749793035,
-     "pcc_emulated": 0.9934225075265153
+     "pcc_device": 0.9933881443332576,
+     "pcc_emulated": 0.9934224647960065
     },
     {
      "block": 2,
-     "pcc_device": 0.9995487145328987,
-     "pcc_emulated": 0.9995488730900465
+     "pcc_device": 0.9995487297504613,
+     "pcc_emulated": 0.9995488692957548
     },
     {
      "block": 3,
-     "pcc_device": 0.9788724817164576,
-     "pcc_emulated": 0.9788696947587644
+     "pcc_device": 0.978873019383848,
+     "pcc_emulated": 0.9788701625480257
     },
     {
      "block": 4,
-     "pcc_device": 0.9670419850805233,
-     "pcc_emulated": 0.9669968730165985
+     "pcc_device": 0.9670446266890891,
+     "pcc_emulated": 0.9669974070941285
     },
     {
      "block": 5,
-     "pcc_device": 0.9643901775350757,
-     "pcc_emulated": 0.9644147941917488
+     "pcc_device": 0.9643898652769429,
+     "pcc_emulated": 0.9644137861278802
     },
     {
      "block": 6,
-     "pcc_device": 0.960661008224833,
-     "pcc_emulated": 0.9606817167617795
+     "pcc_device": 0.9606603392422124,
+     "pcc_emulated": 0.960682191765577
     },
     {
      "block": 7,
-     "pcc_device": 0.964164264256119,
-     "pcc_emulated": 0.964115204911466
+     "pcc_device": 0.9641648195156199,
+     "pcc_emulated": 0.9641155789235464
     },
     {
      "block": 8,
-     "pcc_device": 0.9670063463713009,
-     "pcc_emulated": 0.9669938688002729
+     "pcc_device": 0.9670061921894357,
+     "pcc_emulated": 0.9669935088742108
     },
     {
      "block": 9,
-     "pcc_device": 0.9750902843812119,
-     "pcc_emulated": 0.9750628210728718
+     "pcc_device": 0.9750922482627513,
+     "pcc_emulated": 0.9750627556451273
     },
     {
      "block": 10,
-     "pcc_device": 0.9888068748499055,
-     "pcc_emulated": 0.9887894086739464
+     "pcc_device": 0.9888062713686955,
+     "pcc_emulated": 0.988789388706958
     },
     {
      "block": 11,
-     "pcc_device": 0.9906387159688621,
-     "pcc_emulated": 0.990634168348622
+     "pcc_device": 0.9906391933642718,
+     "pcc_emulated": 0.9906339856068345
     }
    ],
-   "seconds": 93.0
+   "seconds": 97.4
   },
   "bfloat4_b c_fc, bfloat8_b c_proj": {
    "c_fc": "bfloat4_b",
    "c_proj": "bfloat8_b",
    "weight_mib": 43.875,
-   "median_pcc": 0.9862282351908127,
-   "worst_pcc": 0.9750051711714008,
+   "median_pcc": 0.9862284180273446,
+   "worst_pcc": 0.9750048559367953,
    "worst_block": 6,
    "blocks": [
     {
      "block": 0,
-     "pcc_device": 0.9929876125191923,
-     "pcc_emulated": 0.9929962779882263
+     "pcc_device": 0.9929876267996691,
+     "pcc_emulated": 0.9929963659441217
     },
     {
      "block": 1,
-     "pcc_device": 0.9954694875830677,
-     "pcc_emulated": 0.9954661177382993
+     "pcc_device": 0.9954693257834454,
+     "pcc_emulated": 0.9954660809087689
     },
     {
      "block": 2,
-     "pcc_device": 0.9997183155423364,
-     "pcc_emulated": 0.9997174289877618
+     "pcc_device": 0.9997183304626042,
+     "pcc_emulated": 0.9997174278288313
     },
     {
      "block": 3,
-     "pcc_device": 0.9854313697297394,
-     "pcc_emulated": 0.985453714220561
+     "pcc_device": 0.9854309690921168,
+     "pcc_emulated": 0.985454119727575
     },
     {
      "block": 4,
-     "pcc_device": 0.9787540774226322,
-     "pcc_emulated": 0.9788013114417461
+     "pcc_device": 0.9787557906901627,
+     "pcc_emulated": 0.9788022673964724
     },
     {
      "block": 5,
-     "pcc_device": 0.9769677591478418,
-     "pcc_emulated": 0.9769860882017619
+     "pcc_device": 0.9769683016242995,
+     "pcc_emulated": 0.9769851497181715
     },
     {
      "block": 6,
-     "pcc_device": 0.9750051711714008,
-     "pcc_emulated": 0.9750355381187883
+     "pcc_device": 0.9750048559367953,
+     "pcc_emulated": 0.9750361537036737
     },
     {
      "block": 7,
-     "pcc_device": 0.9806813310269356,
-     "pcc_emulated": 0.9806824000237065
+     "pcc_device": 0.9806817097464444,
+     "pcc_emulated": 0.9806828092377528
     },
     {
      "block": 8,
-     "pcc_device": 0.982262568928921,
-     "pcc_emulated": 0.9822641092706892
+     "pcc_device": 0.9822626427210222,
+     "pcc_emulated": 0.9822636835478934
     },
     {
      "block": 9,
-     "pcc_device": 0.987025100651886,
-     "pcc_emulated": 0.9870192547671194
+     "pcc_device": 0.9870258669625726,
+     "pcc_emulated": 0.987019174997458
     },
     {
      "block": 10,
-     "pcc_device": 0.9945535428335228,
-     "pcc_emulated": 0.9945479042736938
+     "pcc_device": 0.9945534759603535,
+     "pcc_emulated": 0.9945478576693954
     },
     {
      "block": 11,
-     "pcc_device": 0.9957768398454144,
-     "pcc_emulated": 0.9957800450676756
+     "pcc_device": 0.9957772310521605,
+     "pcc_emulated": 0.9957798436728358
     }
    ],
-   "seconds": 87.9
+   "seconds": 92.7
   },
   "bfloat8_b c_fc, bfloat4_b c_proj": {
    "c_fc": "bfloat8_b",
    "c_proj": "bfloat4_b",
    "weight_mib": 43.875,
-   "median_pcc": 0.990499047327768,
-   "worst_pcc": 0.9833159144347546,
+   "median_pcc": 0.990499087994295,
+   "worst_pcc": 0.9833166764874006,
    "worst_block": 7,
    "blocks": [
     {
      "block": 0,
-     "pcc_device": 0.9916243008220853,
-     "pcc_emulated": 0.991630336574315
+     "pcc_device": 0.9916242476616033,
+     "pcc_emulated": 0.9916303366555091
     },
     {
      "block": 1,
-     "pcc_device": 0.9982030162567395,
-     "pcc_emulated": 0.9982003650963103
+     "pcc_device": 0.9982030260385762,
+     "pcc_emulated": 0.9982003645173722
     },
     {
      "block": 2,
-     "pcc_device": 0.999851296221197,
-     "pcc_emulated": 0.9998492422778302
+     "pcc_device": 0.9998512901622726,
+     "pcc_emulated": 0.9998492456632333
     },
     {
      "block": 3,
-     "pcc_device": 0.9915984611029628,
-     "pcc_emulated": 0.9915964597502955
+     "pcc_device": 0.9915985992337727,
+     "pcc_emulated": 0.9915962970060571
     },
     {
      "block": 4,
-     "pcc_device": 0.9893996335525732,
-     "pcc_emulated": 0.989426553736076
+     "pcc_device": 0.9893995767548174,
+     "pcc_emulated": 0.989426637143078
     },
     {
      "block": 5,
-     "pcc_device": 0.9870903119565085,
-     "pcc_emulated": 0.9870675661824225
+     "pcc_device": 0.9870906212339766,
+     "pcc_emulated": 0.9870676737588199
     },
     {
      "block": 6,
-     "pcc_device": 0.9842838946871555,
-     "pcc_emulated": 0.984283123524344
+     "pcc_device": 0.9842835134845462,
+     "pcc_emulated": 0.9842830418061842
     },
     {
      "block": 7,
-     "pcc_device": 0.9833159144347546,
-     "pcc_emulated": 0.9832676838228598
+     "pcc_device": 0.9833166764874006,
+     "pcc_emulated": 0.9832680799405842
     },
     {
      "block": 8,
-     "pcc_device": 0.9847168880027506,
-     "pcc_emulated": 0.9847123851011529
+     "pcc_device": 0.9847170801190046,
+     "pcc_emulated": 0.9847125177702472
     },
     {
      "block": 9,
-     "pcc_device": 0.9879650410987512,
-     "pcc_emulated": 0.9879477821982895
+     "pcc_device": 0.9879654469881487,
+     "pcc_emulated": 0.9879475313495596
     },
     {
      "block": 10,
-     "pcc_device": 0.9944793443785279,
-     "pcc_emulated": 0.9944726056428249
+     "pcc_device": 0.9944797274182469,
+     "pcc_emulated": 0.9944725556894881
     },
     {
      "block": 11,
-     "pcc_device": 0.9946934929817731,
-     "pcc_emulated": 0.994691593095008
+     "pcc_device": 0.9946934152375237,
+     "pcc_emulated": 0.9946915649260409
     }
    ],
-   "seconds": 87.6
+   "seconds": 92.1
   }
  },
  "weights": [
@@ -449,22 +449,22 @@
   "block": 6,
   "pcc": {
    "bfloat16": {
-    "LoFi": 0.9984066431702945,
-    "HiFi2": 0.999933247315412,
-    "HiFi3": 0.9999757305909539,
-    "HiFi4": 0.9999756655523062
+    "LoFi": 0.9984064249798883,
+    "HiFi2": 0.9999332606370951,
+    "HiFi3": 0.9999756824857671,
+    "HiFi4": 0.9999756756123886
    },
    "bfloat8_b": {
-    "LoFi": 0.9988207684467874,
-    "HiFi2": 0.9997892319916594,
-    "HiFi3": 0.999821270426785,
-    "HiFi4": 0.999821194869142
+    "LoFi": 0.9988207359207998,
+    "HiFi2": 0.9997891688536175,
+    "HiFi3": 0.9998213113275388,
+    "HiFi4": 0.9998212512412219
    },
    "bfloat4_b": {
-    "LoFi": 0.9606960888965345,
-    "HiFi2": 0.9606960888965345,
-    "HiFi3": 0.960661008224833,
-    "HiFi4": 0.960661008224833
+    "LoFi": 0.9606958271030518,
+    "HiFi2": 0.9606958271030518,
+    "HiFi3": 0.9606603392422124,
+    "HiFi4": 0.9606603392422124
    }
   }
  }

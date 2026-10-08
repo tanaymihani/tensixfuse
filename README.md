@@ -39,7 +39,7 @@ Unfused, each op is one trip around this loop, and each op's output goes back to
 
 ## Results
 
-Every table here is regenerated from the JSON in [`results/`](results) by `python bench/report.py`, which writes [`docs/RESULTS.md`](docs/RESULTS.md) with all sizes and every run. Each section says which simulator it came from.
+Every table here is regenerated from the JSON in [`results/`](results) by `python bench/report.py`, which writes [`docs/RESULTS.md`](docs/RESULTS.md) with all sizes and every run. Each section says which simulator it came from. CI re-runs the studies on every change; across runs every table holds to the precision shown, except that GPT-2 PCCs can move in the 6th decimal (and once in the 5th), because the GPT-2 activations are captured with PyTorch on the runner's CPU, which isn't bit-reproducible across CPU types.
 
 ### 1. Fusion and data movement
 
@@ -65,7 +65,7 @@ GPT-2 small has 12 MLP blocks: `c_fc` (768 to 3072), GELU, then `c_proj` (3072 t
 | bf16 | 108.0 MiB | 0.99999 | 0.99997 |
 | bfloat8_b | 57.4 MiB | 0.99987 | 0.99982 |
 | bfloat4_b | 30.4 MiB | 0.97698 | 0.96066 |
-| bfloat4_b `c_fc`, bfloat8_b `c_proj` | 43.9 MiB | 0.98623 | 0.97501 |
+| bfloat4_b `c_fc`, bfloat8_b `c_proj` | 43.9 MiB | 0.98623 | 0.97500 |
 | bfloat8_b `c_fc`, bfloat4_b `c_proj` | 43.9 MiB | 0.99050 | 0.98332 |
 
 bfloat8_b and bfloat4_b store one 8-bit exponent for every 16 values, and each value keeps a sign and 7 or 3 bits of mantissa (hidden bit included) measured against the largest value in its group. A 32×32 tile is 1,024 values plus 64 shared exponents: 1,088 bytes for bfloat8_b and 576 for bfloat4_b, against 2,048 for bf16. In bfloat4_b, a value 16x or more smaller than the largest in its group is always stored as zero, and between 15 and 19% of the weights in every layer here end up as zero.
@@ -114,10 +114,10 @@ Both give identical results on Wormhole and Blackhole, and the same bits on ever
 | ttsim matrix ([`ttsim.yml`](.github/workflows/ttsim.yml)) | 6 jobs, Wormhole and Blackhole × bf16, bfloat8_b and bfloat4_b, with a pinned simulator and PCC floors in [`bench/baselines.json`](bench/baselines.json) | 7 tests per chip, split by format |
 | Regression gate | A PR fails if a PCC drops below its floor or a kernel's DRAM tile count goes above its baseline | |
 | C++ build ([`metalium.yml`](.github/workflows/metalium.yml)) | Installs tt-metal's SDK packages, builds the program with CMake, runs both kernels on both chips | 3.2M values checked per run |
-| Containers ([`docker/`](docker)) | Two pinned images, each tested before it's pushed to GHCR: `tensixfuse` with ttnn, SFPI and ttsim for both chips, and `tensixfuse-sweep` with TT-Lang's simulator | 2.1 GB; 7 ttsim tests per chip in 13 s |
-| Sharded sweep ([`sweep.yml`](.github/workflows/sweep.yml)) | The 48-run fusion sweep split over 8 GitHub-hosted runners with cost-balanced shards, merged and checked | 242 s on one runner, about 110 s on 8 |
-| Kubernetes ([`deploy/helm`](deploy/helm/tensixfuse-sweep)) | A Helm chart that runs the sweep as a [JobSet](https://github.com/kubernetes-sigs/jobset), one simulator pod per shard; CI runs it on a kind cluster | 4 pods finish in 23 s on kind; all 24 runs match the model |
-| Ansible ([`deploy/ansible`](deploy/ansible)) | `site.yml` turns a bare Ubuntu 24.04 host into a simulator node; `health_check` runs known-answer kernels on every simulated chip and fails the play on a mismatch. Tested with Molecule | 90 s on a fresh VM; a second run changes nothing |
+| Containers ([`docker/`](docker)) | Two pinned images, each tested before it's pushed to GHCR: `tensixfuse` with ttnn, SFPI and ttsim for both chips, and `tensixfuse-sweep` with TT-Lang's simulator | 2.1 GB and 1.1 GB; 7 ttsim tests per chip in under 20 s |
+| Sharded sweep ([`sweep.yml`](.github/workflows/sweep.yml)) | The 48-run fusion sweep split over 8 GitHub-hosted runners with cost-balanced shards, merged and checked | 184 s on one runner, 76 s across 8 |
+| Kubernetes ([`deploy/helm`](deploy/helm/tensixfuse-sweep)) | A Helm chart that runs the sweep as a [JobSet](https://github.com/kubernetes-sigs/jobset), one simulator pod per shard; CI runs it on a kind cluster | 4 pods finish in under 25 s on kind; all 24 runs match the model |
+| Ansible ([`deploy/ansible`](deploy/ansible)) | `site.yml` turns a bare Ubuntu 24.04 host into a simulator node; `health_check` runs known-answer kernels on every simulated chip and fails the play on a mismatch. Tested with Molecule | under 100 s on a fresh VM; a second run changes nothing |
 
 The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 itself pins, with checksums ([`ttsim-version`](ttsim-version), [`sfpi-version`](sfpi-version)). When the simulator changes, I want to know that the simulator changed, not wonder whether my kernel did.
 

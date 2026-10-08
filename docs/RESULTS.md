@@ -61,7 +61,7 @@ ttsim, simulated Blackhole, ttnn 0.79.0, HiFi4. All 12 MLP blocks of GPT-2 small
 | bf16 | 108.0 MiB | 0.99999 | 0.99997 (5) | 0.99999 | 0.99998 |
 | bfloat8_b | 57.4 MiB | 0.99987 | 0.99982 (6) | 0.99987 | 0.99983 |
 | bfloat4_b | 30.4 MiB | 0.97698 | 0.96066 (6) | 0.97697 | 0.96068 |
-| bfloat4_b c_fc, bfloat8_b c_proj | 43.9 MiB | 0.98623 | 0.97501 (6) | 0.98624 | 0.97504 |
+| bfloat4_b c_fc, bfloat8_b c_proj | 43.9 MiB | 0.98623 | 0.97500 (6) | 0.98624 | 0.97504 |
 | bfloat8_b c_fc, bfloat4_b c_proj | 43.9 MiB | 0.99050 | 0.98332 (7) | 0.99051 | 0.98327 |
 
 Math fidelity on block 6, the one bfloat4_b hurts most:

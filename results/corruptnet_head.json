@@ -13,7 +13,7 @@
    "fused_sigmoid": true,
    "label_set_agreement": 0.9992788461538461,
    "frames_that_differ": 3,
-   "logit_pcc": 0.9999637038566271,
+   "logit_pcc": 0.9999637038566268,
    "macro_f1": {
     "seen": 0.9112095296476417,
     "unseen": 0.8754372958560728
@@ -28,7 +28,7 @@
    "fused_sigmoid": true,
    "label_set_agreement": 0.9995192307692308,
    "frames_that_differ": 2,
-   "logit_pcc": 0.9999628519051413,
+   "logit_pcc": 0.9999628519051403,
    "macro_f1": {
     "seen": 0.9112095296476417,
     "unseen": 0.875611568937325
@@ -43,7 +43,7 @@
    "fused_sigmoid": true,
    "label_set_agreement": 0.9947115384615385,
    "frames_that_differ": 22,
-   "logit_pcc": 0.9998413196682898,
+   "logit_pcc": 0.9998413196682897,
    "macro_f1": {
     "seen": 0.9112703509053075,
     "unseen": 0.8767812866425228
