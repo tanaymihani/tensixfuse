@@ -49,9 +49,18 @@ jobs:
       - name: Wait for the JobSet
         run: |
           start=$(date +%s)
-          kubectl wait --for=condition=Completed jobset/sweep --timeout=30m
+          kubectl wait --for=condition=Completed jobset/sweep --timeout=12m
           echo "JobSet finished in $(( $(date +%s) - start ))s"
           kubectl get pods -l app.kubernetes.io/instance=sweep -o wide
+      - name: Diagnostics
+        if: failure()
+        run: |
+          kubectl get jobset,jobs,pods -o wide || true
+          kubectl describe jobset sweep | tail -n 40 || true
+          kubectl get events --sort-by=.lastTimestamp | tail -n 40 || true
+          for p in $(kubectl get pods -l app.kubernetes.io/instance=sweep -o name); do
+            echo "== $p"; kubectl logs "$p" --tail=30 || true
+          done
       - name: Collect and merge the shards
         if: always()
         run: |
