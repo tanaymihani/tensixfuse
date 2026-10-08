@@ -16,6 +16,7 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       python3.12 python3.12-venv ca-certificates curl xz-utils \
       libatomic1 libnuma1 libhwloc15 libgomp1 \
+      libmpc3 libmpfr6 libgmp10 libisl23 \
  && rm -rf /var/lib/apt/lists/* \
  && python3.12 -m venv /opt/venv \
  && pip install --upgrade pip \
