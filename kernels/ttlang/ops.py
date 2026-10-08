@@ -6,8 +6,8 @@ elements, blocks in 32x32 tiles, and the grid is (columns, rows).
 
 make_matmul(..., epilogue="bias_act") is the fused kernel: the bias add and the
 activation run on the accumulator before it leaves L1. The unfused baseline is
-make_matmul(..., epilogue=None) followed by make_eltwise_add and
-make_eltwise_act, with the same blocking, so fusion is the only difference.
+make_matmul(..., epilogue=None) followed by make_eltwise(op="add") and
+make_eltwise(op="act"), with the same blocking, so fusion is the only difference.
 """
 
 from __future__ import annotations

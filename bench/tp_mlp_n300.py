@@ -9,6 +9,11 @@ fp32 PyTorch block and that both chips end up with the same bits.
 Needs ttsim's 2-chip build (scripts/setup_ttsim.sh n300) and an N300 cluster
 descriptor in TT_METAL_MOCK_CLUSTER_DESC_PATH.
 
+Status: with tt-metal 0.79.0 and ttsim v1.10.8 the two simulated chips come up
+and the Ethernet fabric between them initializes, but host writes to the remote
+chip (through its Ethernet core) time out. ttsim notes that multichip support
+isn't fully merged into mainline tt-metal yet.
+
     python bench/tp_mlp_n300.py data/gpt2_mlp.npz --out results/tp_n300.json
 """
 
@@ -73,9 +78,9 @@ def main() -> None:
     results: dict = {"chips": mesh.get_num_devices(), "blocks": []}
 
     def to_mesh(a, mapper):
-        # Round to bf16 on the host. Handing from_torch fp32 for a mesh makes the
-        # conversion run on the device, and ttsim stops it with UndefinedBehavior
-        # (an unpacker reading and writing Float32 without unpack-to-dest).
+        # Round to bf16 on the host so nothing has to be converted on the device.
+        # (An earlier run that passed fp32 stopped on ttsim with UndefinedBehavior
+        # in an unpacker reading and writing Float32; I didn't pin down which op.)
         return ttnn.from_torch(
             torch.from_numpy(np.ascontiguousarray(a, np.float32)).to(torch.bfloat16),
             dtype=ttnn.bfloat16,

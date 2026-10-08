@@ -52,14 +52,14 @@ For each decision: what I picked, what it costs, what could break, and how I'd f
 
 ## Pinning
 
-ttnn 0.79.0, ttsim v1.10.8 and SFPI 7.78.0 are the versions tt-metal 0.79.0 pins for itself, each with a checksum, and the N300 cluster file comes from the tt-umd commit tt-metal pins. When a number moves, it should be because the code moved. A simulator bump is its own commit.
+ttnn 0.79.0, ttsim v1.10.8 and SFPI 7.78.0 are the versions tt-metal 0.79.0 pins for itself, each with a checksum. The N300 cluster file for the (manual, not yet working) two-chip run comes from the tt-umd commit tt-metal pins. When a number moves, it should be because the code moved. A simulator bump is its own commit.
 
 ## CI tiers
 
 - Every push: lint and the 54 fast tests on Linux and macOS (functional simulator, emulation, model, regression gate).
 - ttsim: 6 jobs over simulated Wormhole and Blackhole and the three weight formats, with PCC floors.
 - C++: built against Tenstorrent's released SDK packages, both kernels on both chips, every element checked.
-- Studies (GPT-2, CorruptNet head, N300) run when their code changes, and write the JSON the tables come from.
+- Studies (GPT-2, CorruptNet head) run when their code changes and write the JSON the tables come from. The two-chip N300 run is manual until host writes to the remote chip work.
 
 ## Sharding the sweep
 

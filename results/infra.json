@@ -1,0 +1,60 @@
+{
+ "_comment": "Numbers measured in CI on GitHub-hosted runners; each links to the run it came from.",
+ "ci": {
+  "tests": 54,
+  "platforms": [
+   "ubuntu-latest",
+   "macos-latest"
+  ],
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37724128265"
+ },
+ "ttsim_matrix": {
+  "jobs": 6,
+  "chips": [
+   "wormhole",
+   "blackhole"
+  ],
+  "formats": [
+   "bfloat16",
+   "bfloat8_b",
+   "bfloat4_b"
+  ],
+  "tests_per_chip": 7,
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37724128268"
+ },
+ "metalium": {
+  "chips": 2,
+  "kernels": [
+   "fpu",
+   "sfpu"
+  ],
+  "values_checked_per_run": 3211264,
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37723306083"
+ },
+ "docker": {
+  "image_size": "2.1 GB",
+  "ttsim_tests_per_chip": 7,
+  "seconds_per_chip": [
+   12.9,
+   13.1
+  ],
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37722979039"
+ },
+ "sweep": {
+  "runs": 48,
+  "one_runner_job_s": 242,
+  "one_runner_compute_s": 207.5,
+  "eight_runners_slowest_job_s": 102,
+  "eight_runners_slowest_compute_s": 61.1,
+  "merge_job_s": 8,
+  "note": "bounded by the largest single run, the unblocked 2048^3 dry run",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37723066088"
+ },
+ "ansible": {
+  "first_run_s": 90,
+  "first_run_changed": 11,
+  "second_run_changed": 0,
+  "molecule": "converge, idempotence, verify passed",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37722979050"
+ }
+}

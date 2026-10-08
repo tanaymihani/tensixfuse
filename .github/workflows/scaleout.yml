@@ -2,12 +2,9 @@ name: scaleout
 
 # GPT-2's MLP tensor-parallel across the two chips of a simulated N300
 # (ttsim's 2-chip Wormhole build), with a real all-reduce between them.
+# Manual only for now: the chips and the fabric come up, but host writes to the
+# remote chip time out with tt-metal 0.79.0 (see bench/tp_mlp_n300.py).
 on:
-  push:
-    branches: [main, sim-bringup]
-    paths:
-      - "bench/tp_mlp_n300.py"
-      - ".github/workflows/scaleout.yml"
   workflow_dispatch:
 
 env:
