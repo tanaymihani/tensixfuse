@@ -11,7 +11,9 @@
 // through compute and back to DRAM. x is read once and y written once; the
 // intermediate x * scale never leaves the core's L1.
 //
-// usage: bn_relu IN.bin SCALE.bin SHIFT.bin OUT.bin ROWS CHANNELS [CORES]
+// usage: bn_relu IN.bin SCALE.bin SHIFT.bin OUT.bin ROWS CHANNELS [CORES] [fpu|sfpu]
+// fpu (default): FPU row broadcast, bf16 intermediate in L1.
+// sfpu: fp32 math in the destination registers, one rounding at the end.
 // All .bin files are raw little-endian bf16, row-major.
 
 #include <tt-metalium/bfloat16.hpp>
@@ -88,12 +90,16 @@ std::vector<uint16_t> untilize(const std::vector<uint16_t>& t, uint32_t rows, ui
     return out;
 }
 
-// One tile per channel tile, with the 32 per-channel values in row 0 and zeros
-// below. mul/add_tiles_bcast_rows repeat row 0 down the whole tile.
-std::vector<uint16_t> row_tiles(const std::vector<uint16_t>& per_channel, uint32_t cols) {
+// One tile per channel tile. For the FPU kernel only row 0 holds the 32
+// per-channel values (mul/add_tiles_bcast_rows repeat it down the tile); the
+// SFPU kernel has no broadcast, so every row gets a copy.
+std::vector<uint16_t> channel_tiles(const std::vector<uint16_t>& per_channel, uint32_t cols, bool every_row) {
     std::vector<uint16_t> out(static_cast<size_t>(cols / TILE) * TILE_ELEMS, 0);
+    const uint32_t rows = every_row ? TILE : 1;
     for (uint32_t c = 0; c < cols; ++c) {
-        out[static_cast<size_t>(c / TILE) * TILE_ELEMS + index_in_tile(0, c % TILE)] = per_channel[c];
+        for (uint32_t r = 0; r < rows; ++r) {
+            out[static_cast<size_t>(c / TILE) * TILE_ELEMS + index_in_tile(r, c % TILE)] = per_channel[c];
+        }
     }
     return out;
 }
@@ -116,12 +122,18 @@ void make_cb(Program& program, const tt::tt_metal::CoreRangeSet& cores, tt::CBIn
 
 int main(int argc, char** argv) {
     if (argc < 7) {
-        std::fprintf(stderr, "usage: %s IN.bin SCALE.bin SHIFT.bin OUT.bin ROWS CHANNELS [CORES]\n", argv[0]);
+        std::fprintf(stderr, "usage: %s IN.bin SCALE.bin SHIFT.bin OUT.bin ROWS CHANNELS [CORES] [fpu|sfpu]\n", argv[0]);
         return 2;
     }
     const uint32_t rows = std::stoul(argv[5]);
     const uint32_t cols = std::stoul(argv[6]);
     const uint32_t requested_cores = argc > 7 ? std::stoul(argv[7]) : 8;
+    const std::string mode = argc > 8 ? argv[8] : "fpu";
+    if (mode != "fpu" && mode != "sfpu") {
+        std::fprintf(stderr, "mode must be fpu or sfpu\n");
+        return 2;
+    }
+    const bool sfpu = mode == "sfpu";
     if (rows % TILE || cols % TILE) {
         std::fprintf(stderr, "ROWS and CHANNELS must be multiples of 32 (pad first)\n");
         return 2;
@@ -142,8 +154,8 @@ int main(int argc, char** argv) {
     auto y_buf = dram_buffer(device.get(), row_tiles_n * col_tiles_n);
 
     auto x_tiles = tilize(x, rows, cols);
-    auto s_tiles = row_tiles(scale, cols);
-    auto b_tiles = row_tiles(shift, cols);
+    auto s_tiles = channel_tiles(scale, cols, sfpu);
+    auto b_tiles = channel_tiles(shift, cols, sfpu);
     distributed::EnqueueWriteMeshBuffer(cq, x_buf, x_tiles, false);
     distributed::EnqueueWriteMeshBuffer(cq, s_buf, s_tiles, false);
     distributed::EnqueueWriteMeshBuffer(cq, b_buf, b_tiles, false);
@@ -185,7 +197,10 @@ int main(int argc, char** argv) {
         DataMovementConfig{
             .processor = DataMovementProcessor::RISCV_1, .noc = NOC::RISCV_1_default, .compile_args = writer_ct});
     auto compute = CreateKernel(
-        program, KERNEL_DIR "compute/bn_relu.cpp", cores, ComputeConfig{.math_fidelity = MathFidelity::HiFi4});
+        program,
+        sfpu ? KERNEL_DIR "compute/bn_relu_sfpu.cpp" : KERNEL_DIR "compute/bn_relu.cpp",
+        cores,
+        ComputeConfig{.math_fidelity = MathFidelity::HiFi4, .fp32_dest_acc_en = sfpu, .math_approx_mode = false});
 
     const uint32_t per_core = col_tiles_n / n_cores;
     const uint32_t extra = col_tiles_n % n_cores;
@@ -218,11 +233,12 @@ int main(int argc, char** argv) {
 
     device->close();
     std::printf(
-        "{\"rows\": %u, \"channels\": %u, \"tiles\": %u, \"cores\": %u, \"seconds\": %.2f}\n",
+        "{\"rows\": %u, \"channels\": %u, \"tiles\": %u, \"cores\": %u, \"mode\": \"%s\", \"seconds\": %.2f}\n",
         rows,
         cols,
         row_tiles_n * col_tiles_n,
         n_cores,
+        mode.c_str(),
         secs);
     return 0;
 }

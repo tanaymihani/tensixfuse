@@ -39,6 +39,7 @@ def main() -> None:
     p.add_argument("--binary", required=True)
     p.add_argument("--data", default="data/corruptnet.npz")
     p.add_argument("--cores", type=int, default=8)
+    p.add_argument("--mode", choices=("fpu", "sfpu"), default="fpu")
     p.add_argument("--out", default="results/bn_relu.json")
     args = p.parse_args()
 
@@ -56,6 +57,9 @@ def main() -> None:
     # L1 buffer in bf16 before the add, so it's rounded twice.
     twice = as_bf16(as_bf16(xf * sf) + bf)
     twice_bits = bf16_bits(np.maximum(twice, 0))
+    # Reference 3: fp32 math, truncated to bf16 instead of rounded (tells the
+    # packer's rounding mode apart from round-to-nearest-even).
+    trunc_bits = (np.maximum(ref, 0).astype(np.float32).view(np.uint32) >> 16).astype(np.uint16)
 
     outputs, timings = [], []
     with tempfile.TemporaryDirectory() as tmp:
@@ -74,6 +78,7 @@ def main() -> None:
                     str(rows),
                     str(cols),
                     str(args.cores),
+                    args.mode,
                 ],
                 capture_output=True,
                 text=True,
@@ -96,6 +101,7 @@ def main() -> None:
     scale_of_y = float(np.abs(bits_to_f32(ref_bits)).max())
     result = {
         "arch": os.environ.get("TENSIXFUSE_ARCH", "?"),
+        "mode": args.mode,
         "rows": rows,
         "channels": cols,
         "elements": int(y.size),
@@ -104,6 +110,7 @@ def main() -> None:
         "exact_vs_single_rounding": float((ulp == 0).mean()),
         "within_1_ulp_vs_single_rounding": float((ulp <= 1).mean()),
         "exact_vs_double_rounding": float((ulp_twice == 0).mean()),
+        "exact_vs_truncation": float((y == trunc_bits).mean()),
         "within_1_ulp_vs_double_rounding": float((ulp_twice <= 1).mean()),
         "max_abs_err": float(np.abs(yf - bits_to_f32(ref_bits)).max()),
         "max_abs_err_relative_to_max_output": float(

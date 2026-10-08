@@ -69,7 +69,10 @@ jobs:
         run: |
           pip install --no-deps -e .
           bash scripts/fetch_data.sh
-          python bench/bn_relu.py --binary build/bn_relu/bn_relu --out results/bn_relu_${{ matrix.arch }}.json
+          for mode in fpu sfpu; do
+            python bench/bn_relu.py --binary build/bn_relu/bn_relu --mode $mode \
+              --out results/bn_relu_${{ matrix.arch }}_$mode.json
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
