@@ -1,0 +1,23 @@
+{
+ "arch": "blackhole",
+ "mode": "sfpu",
+ "rows": 1568,
+ "channels": 2048,
+ "elements": 3211264,
+ "tiles": 3136,
+ "cores": 8,
+ "exact_vs_single_rounding": 0.9978189273756377,
+ "within_1_ulp_vs_single_rounding": 1.0,
+ "exact_vs_double_rounding": 0.958513220962213,
+ "exact_vs_truncation": 0.9684980742785395,
+ "within_1_ulp_vs_double_rounding": 0.9836161087970344,
+ "max_abs_err": 0.0625,
+ "max_abs_err_relative_to_max_output": 0.001700680237263441,
+ "pcc": 0.9999997585054001,
+ "relu_zeros": 0.9339967065927933,
+ "runs_identical": true,
+ "seconds": [
+  1.6,
+  0.58
+ ]
+}

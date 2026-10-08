@@ -56,9 +56,10 @@ def estimated_seconds(cfg: MatmulConfig, variant: str, max_full_ops: int) -> flo
 
 
 def balanced_shard(runs: list, shard: int, n_shards: int, max_full_ops: int) -> list:
-    """Longest-first greedy split: each run goes to the shard with the least work
-    so far. Round-robin put both 30-second 2048^3 dry runs next to other big
-    runs; this keeps the slowest shard close to the average."""
+    """Longest-first greedy split: each run goes to the shard with the least
+    work so far, so the big runs land on separate shards. It can't split a run,
+    though: the slowest shard is never faster than the largest single run (the
+    unblocked 2048^3 dry run, about a minute on a hosted runner)."""
     load = [0.0] * n_shards
     owner = {}
     order = sorted(

@@ -134,20 +134,24 @@ def bn_section(runs: list[dict]) -> list[str]:
         "## TT-Metalium C++: fused BatchNorm + ReLU",
         "",
         (
-            "ttsim, tt-metal 0.79.0 SDK packages. The input to GPU-CorruptNet's layer4.2.bn3 for 32 frames, "
-            "channels last. Made by `python bench/bn_relu.py --binary build/bn_relu/bn_relu`."
+            "ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into GPU-CorruptNet's "
+            "layer4.2.bn3 for 32 frames, channels last. `fpu` multiplies and adds on the matrix engine with "
+            "a bf16 intermediate in L1; `sfpu` does all three steps in fp32 on the vector engine. "
+            "Compared with NumPy fp32 rounded once to bf16. "
+            "Made by `python bench/bn_relu.py --binary build/bn_relu/bn_relu --mode fpu|sfpu`."
         ),
         "",
-        "| Chip | Elements | Tiles | Cores | PCC | Exact vs one rounding | Exact vs the kernel's two roundings | Two runs identical |",
-        "|---|---|---|---|---|---|---|---|",
+        (
+            "| Chip | Kernel | Elements | Cores | PCC | Bit-exact | Within 1 bf16 step | "
+            "Max error / max output | Two runs identical |"
+        ),
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for r in runs:
-        twice = r.get("exact_vs_double_rounding")
-        twice_s = f"{twice:.2%}" if twice is not None else "n/a"
-        once = r.get("exact_vs_single_rounding", r.get("exact_fraction"))
         out.append(
-            f"| {r['arch']} | {r['elements']:,} | {r['tiles']:,} | {r['cores']} | {r['pcc']:.6f} | "
-            f"{once:.2%} | {twice_s} | {r['runs_identical']} |"
+            f"| {r['arch']} | {r['mode']} | {r['elements']:,} | {r['cores']} | {r['pcc']:.6f} | "
+            f"{r['exact_vs_single_rounding']:.2%} | {r['within_1_ulp_vs_single_rounding']:.2%} | "
+            f"{r['max_abs_err_relative_to_max_output']:.2%} | {r['runs_identical']} |"
         )
     return out
 
@@ -169,7 +173,9 @@ def main() -> None:
         parts += quant_section(quant) + [""]
     if head := load("corruptnet_head.json"):
         parts += head_section(head) + [""]
-    bn_runs = [load(f"bn_relu_{a}.json") for a in ("wormhole", "blackhole")]
+    bn_runs = [
+        load(f"bn_relu_{a}_{m}.json") for a in ("wormhole", "blackhole") for m in ("fpu", "sfpu")
+    ]
     if any(bn_runs):
         parts += bn_section([r for r in bn_runs if r]) + [""]
     dest = REPO / "docs" / "RESULTS.md"

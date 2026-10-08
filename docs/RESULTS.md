@@ -15,9 +15,9 @@ TT-Lang functional simulator (tt-lang-sim 1.1.6). `y = relu(a @ b + c)`, square,
 | 1x1 tile blocks | 1 | 2.8 MiB | 2.2 MiB | 18% |
 | 2x2 tile blocks | 1 | 1.8 MiB | 1.2 MiB | 29% |
 | 4x4 tile blocks | 1 | 1.2 MiB | 0.8 MiB | 40% |
-| 8x8 tile blocks | 1 | 1.0 MiB | 0.5 MiB | 50% |
 | 4x4 blocks per core, 2x2 grid | 4 | 1.2 MiB | 0.8 MiB | 40% |
 | 4x4 blocks per core, 2x2 grid, multicast | 4 | 1.0 MiB | 0.5 MiB | 50% |
+| 8x8 tile blocks | 1 | 1.0 MiB | 0.5 MiB | 50% |
 
 ### 512³
 
@@ -26,9 +26,9 @@ TT-Lang functional simulator (tt-lang-sim 1.1.6). `y = relu(a @ b + c)`, square,
 | 1x1 tile blocks | 1 | 19.0 MiB | 17.0 MiB | 11% |
 | 2x2 tile blocks | 1 | 11.0 MiB | 9.0 MiB | 18% |
 | 4x4 tile blocks | 1 | 7.0 MiB | 5.0 MiB | 29% |
-| 8x8 tile blocks | 1 | 5.0 MiB | 3.0 MiB | 40% |
 | 4x4 blocks per core, 4x4 grid | 16 | 7.0 MiB | 5.0 MiB | 29% |
 | 4x4 blocks per core, 4x4 grid, multicast | 16 | 4.0 MiB | 2.0 MiB | 50% |
+| 8x8 tile blocks | 1 | 5.0 MiB | 3.0 MiB | 40% |
 
 ### 1024³
 
@@ -37,9 +37,9 @@ TT-Lang functional simulator (tt-lang-sim 1.1.6). `y = relu(a @ b + c)`, square,
 | 1x1 tile blocks | 1 | 140.0 MiB | 132.0 MiB | 6% |
 | 2x2 tile blocks | 1 | 76.0 MiB | 68.0 MiB | 11% |
 | 4x4 tile blocks | 1 | 44.0 MiB | 36.0 MiB | 18% |
-| 8x8 tile blocks | 1 | 28.0 MiB | 20.0 MiB | 29% |
 | 4x4 blocks per core, 8x8 grid | 64 | 44.0 MiB | 36.0 MiB | 18% |
 | 4x4 blocks per core, 8x8 grid, multicast | 64 | 16.0 MiB | 8.0 MiB | 50% |
+| 8x8 tile blocks | 1 | 28.0 MiB | 20.0 MiB | 29% |
 
 ### 2048³
 
@@ -48,9 +48,9 @@ TT-Lang functional simulator (tt-lang-sim 1.1.6). `y = relu(a @ b + c)`, square,
 | 1x1 tile blocks | 1 | 1072.0 MiB | 1040.0 MiB | 3% |
 | 2x2 tile blocks | 1 | 560.0 MiB | 528.0 MiB | 6% |
 | 4x4 tile blocks | 1 | 304.0 MiB | 272.0 MiB | 11% |
-| 8x8 tile blocks | 1 | 176.0 MiB | 144.0 MiB | 18% |
 | 4x4 blocks per core, 8x8 grid | 64 | 304.0 MiB | 272.0 MiB | 11% |
 | 4x4 blocks per core, 8x8 grid, multicast | 64 | 80.0 MiB | 48.0 MiB | 40% |
+| 8x8 tile blocks | 1 | 176.0 MiB | 144.0 MiB | 18% |
 
 ## Block-float weights on GPT-2's MLP blocks
 
@@ -84,3 +84,14 @@ ttsim, simulated Blackhole. Fused `sigmoid(x @ W + b)` over 4160 test frames (13
 | bfloat4_b | 99.47% | 22 | 0.999841 | 0.9113 | 0.8768 |
 
 Padded output columns came out as [0.5] on the device. Thresholding before slicing them off would give 22.92 labels per frame instead of 0.92.
+
+## TT-Metalium C++: fused BatchNorm + ReLU
+
+ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into GPU-CorruptNet's layer4.2.bn3 for 32 frames, channels last. `fpu` multiplies and adds on the matrix engine with a bf16 intermediate in L1; `sfpu` does all three steps in fp32 on the vector engine. Compared with NumPy fp32 rounded once to bf16. Made by `python bench/bn_relu.py --binary build/bn_relu/bn_relu --mode fpu|sfpu`.
+
+| Chip | Kernel | Elements | Cores | PCC | Bit-exact | Within 1 bf16 step | Max error / max output | Two runs identical |
+|---|---|---|---|---|---|---|---|---|
+| wormhole | fpu | 3,211,264 | 8 | 0.999986 | 95.40% | 97.67% | 0.68% | True |
+| wormhole | sfpu | 3,211,264 | 8 | 1.000000 | 99.78% | 100.00% | 0.17% | True |
+| blackhole | fpu | 3,211,264 | 8 | 0.999986 | 95.40% | 97.67% | 0.68% | True |
+| blackhole | sfpu | 3,211,264 | 8 | 1.000000 | 99.78% | 100.00% | 0.17% | True |
