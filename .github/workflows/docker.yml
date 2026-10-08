@@ -37,13 +37,18 @@ jobs:
           ver=$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml)
           sim=$(tr -d '[:space:]' < ttsim-version)
           tags="$IMAGE:${ver}-ttsim${sim#v},$IMAGE:sha-${GITHUB_SHA::7}"
-          if [ "$GITHUB_REF" = "refs/heads/main" ]; then tags="$tags,$IMAGE:latest"; fi
+          sweep="$IMAGE-sweep:${ver},$IMAGE-sweep:sha-${GITHUB_SHA::7}"
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            tags="$tags,$IMAGE:latest"; sweep="$sweep,$IMAGE-sweep:latest"
+          fi
           echo "tags=$tags" >> "$GITHUB_OUTPUT"
+          echo "sweep=$sweep" >> "$GITHUB_OUTPUT"
       - name: Build
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile
+          target: ttsim
           load: true
           tags: tensixfuse:test
           cache-from: type=gha
@@ -55,6 +60,20 @@ jobs:
             docker run --rm -e TENSIXFUSE_ARCH=$arch tensixfuse:test tensixfuse-doctor
             docker run --rm -e TENSIXFUSE_ARCH=$arch tensixfuse:test pytest -q -m ttsim tests/test_ttsim.py
           done
+      - name: Build the sweep image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: sweep
+          load: true
+          tags: tensixfuse-sweep:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Fusion sweep inside the sweep image
+        run: |
+          docker image ls tensixfuse-sweep:test --format '{{.Size}}'
+          docker run --rm tensixfuse-sweep:test python bench/fusion.py --sizes 256 --out /tmp/f.json
       - name: Log in to GHCR
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: docker/login-action@v3
@@ -62,12 +81,23 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push
+      - name: Push the ttsim image
         if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: docker/build-push-action@v6
         with:
           context: .
           file: docker/Dockerfile
+          target: ttsim
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+      - name: Push the sweep image
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          target: sweep
+          push: true
+          tags: ${{ steps.meta.outputs.sweep }}
           cache-from: type=gha

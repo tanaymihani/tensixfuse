@@ -1,6 +1,6 @@
-# Container with tt-lang-sim, ttnn and ttsim (docker/Dockerfile).
+# The sweep image: TT-Lang's functional simulator (docker/Dockerfile, --target sweep).
 image:
-  repository: ghcr.io/tanaymihani/tensixfuse
+  repository: ghcr.io/tanaymihani/tensixfuse-sweep
   tag: latest
   pullPolicy: IfNotPresent
 
@@ -8,10 +8,11 @@ image:
 shards: 8
 sizes: [256, 512, 1024, 2048]
 
+# Each pod is one single-threaded simulator process.
 resources:
   requests:
-    cpu: "1"
-    memory: 2Gi
+    cpu: 500m
+    memory: 1Gi
   limits:
     memory: 4Gi
 
