@@ -18,11 +18,21 @@
   register: doctor
   changed_when: false
 
+- name: Read the per-chip reports
+  ansible.builtin.slurp:
+    src: "{{ health_dir }}/health-{{ item.key }}.json"
+  loop: "{{ ttsim_archs | dict2items }}"
+  register: chip_reports
+
+# A report, not configuration: it holds run timings, so it never counts as a change.
 - name: Node report
+  vars:
+    chips: "{{ chip_reports.results | map(attribute='content') | map('b64decode') | map('from_json') | list }}"
   ansible.builtin.copy:
     dest: "{{ health_dir }}/health.json"
     content: >-
       {{ {'host': inventory_hostname,
-          'healthy': doctor.results | map(attribute='rc') | select('ne', 0) | list | length == 0,
-          'chips': doctor.results | map(attribute='stdout') | map('from_json') | list} | to_nice_json }}
+          'healthy': chips | selectattr('healthy') | list | length == chips | length,
+          'chips': chips} | to_nice_json }}
     mode: "0644"
+  changed_when: false
