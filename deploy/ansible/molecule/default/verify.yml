@@ -1,0 +1,14 @@
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Read the node report
+      ansible.builtin.slurp:
+        src: /var/lib/tensixfuse/health.json
+      register: report
+
+    - name: Node is healthy on every simulated chip
+      ansible.builtin.assert:
+        that:
+          - (report.content | b64decode | from_json).healthy
+          - (report.content | b64decode | from_json).chips | length == 2

@@ -1,0 +1,85 @@
+- name: System packages
+  ansible.builtin.apt:
+    name:
+      - python3.12
+      - python3.12-venv
+      - git
+      - curl
+      - ca-certificates
+      - xz-utils
+      - libatomic1
+      - libnuma1
+      - libhwloc15
+      - libgomp1
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: TensixFuse source
+  ansible.builtin.git:
+    repo: "{{ tensixfuse_repo }}"
+    dest: "{{ tensixfuse_src }}"
+    version: "{{ tensixfuse_version }}"
+    depth: 1
+    update: false
+
+- name: CPU torch
+  ansible.builtin.pip:
+    name: torch
+    extra_args: "--index-url {{ torch_index_url }}"
+    virtualenv: "{{ tensixfuse_venv }}"
+    virtualenv_command: python3.12 -m venv
+
+- name: ttnn, TT-Lang's simulator and test tools
+  ansible.builtin.pip:
+    name:
+      - "ttnn=={{ ttnn_version }}"
+      - "tt-lang-sim=={{ tt_lang_sim_version }}"
+      - pytest
+    virtualenv: "{{ tensixfuse_venv }}"
+
+- name: TensixFuse package
+  ansible.builtin.command:
+    cmd: "{{ tensixfuse_venv }}/bin/pip install --no-deps -e {{ tensixfuse_src }}"
+    creates: "{{ tensixfuse_venv }}/bin/tensixfuse-doctor"
+
+- name: Find the ttnn install
+  ansible.builtin.command:
+    cmd: "{{ tensixfuse_venv }}/bin/python -c 'import os, ttnn; print(os.path.dirname(ttnn.__file__))'"
+  register: ttnn_dir
+  changed_when: false
+
+- name: SFPI kernel compiler (pinned in sfpi-version, checksum checked by the script)
+  ansible.builtin.command:
+    cmd: bash {{ tensixfuse_src }}/scripts/install_sfpi.sh {{ ttnn_dir.stdout }}/runtime/sfpi
+  register: sfpi
+  changed_when: "'installed in' in sfpi.stderr"
+
+- name: ttsim directories
+  ansible.builtin.file:
+    path: "{{ ttsim_root }}/{{ ttsim_version }}/{{ item.key }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ ttsim_archs | dict2items }}"
+
+- name: ttsim binaries, checksum verified
+  ansible.builtin.get_url:
+    url: "https://github.com/tenstorrent/ttsim/releases/download/{{ ttsim_version }}/{{ item.value.lib }}"
+    dest: "{{ ttsim_root }}/{{ ttsim_version }}/{{ item.key }}/{{ item.value.lib }}"
+    checksum: "sha256:{{ item.value.sha256 }}"
+    mode: "0644"
+  loop: "{{ ttsim_archs | dict2items }}"
+
+- name: SoC descriptors next to each simulator
+  ansible.builtin.copy:
+    src: "{{ ttnn_dir.stdout }}/tt_metal/soc_descriptors/{{ item.value.soc }}"
+    dest: "{{ ttsim_root }}/{{ ttsim_version }}/{{ item.key }}/soc_descriptor.yaml"
+    remote_src: true
+    mode: "0644"
+  loop: "{{ ttsim_archs | dict2items }}"
+
+- name: Environment for login shells
+  ansible.builtin.template:
+    src: ttsim.sh.j2
+    dest: /etc/profile.d/ttsim.sh
+    mode: "0644"

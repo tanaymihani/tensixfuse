@@ -1,0 +1,5 @@
+# Managed by Ansible (tensixfuse ttsim_node role).
+export PATH="{{ tensixfuse_venv }}/bin:$PATH"
+export TT_METAL_SIMULATOR="{{ ttsim_root }}/{{ ttsim_version }}/{{ ttsim_default_arch }}/{{ ttsim_archs[ttsim_default_arch].lib }}"
+export TT_METAL_SLOW_DISPATCH_MODE=1
+export TT_METAL_DISABLE_SFPLOADMACRO=1

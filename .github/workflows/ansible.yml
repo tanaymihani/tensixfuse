@@ -1,0 +1,55 @@
+name: ansible
+
+on:
+  push:
+    branches: [main, sim-bringup]
+    paths:
+      - "deploy/ansible/**"
+      - "scripts/**"
+      - "src/tensixfuse/doctor.py"
+      - ".github/workflows/ansible.yml"
+  workflow_dispatch:
+
+jobs:
+  molecule:
+    name: Molecule (Ubuntu 24.04 container)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install Ansible and Molecule
+        run: |
+          pip install ansible-core molecule "molecule-plugins[docker]" docker
+          ansible-galaxy collection install community.docker
+      - name: molecule test (converge, idempotence, verify)
+        working-directory: deploy/ansible
+        env:
+          TENSIXFUSE_REF: ${{ github.ref_name }}
+          PY_COLORS: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+        run: molecule test
+
+  fresh-vm:
+    name: Provision a fresh runner VM
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Ansible
+        run: pipx install ansible-core
+      - name: First run, timed
+        working-directory: deploy/ansible
+        run: |
+          start=$(date +%s)
+          ansible-playbook site.yml -e tensixfuse_version=${{ github.ref_name }} | tee first.log
+          echo "PROVISION_SECONDS=$(( $(date +%s) - start ))" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Second run changes nothing
+        working-directory: deploy/ansible
+        run: |
+          ansible-playbook site.yml -e tensixfuse_version=${{ github.ref_name }} | tee second.log
+          grep -E "localhost +: ok=[0-9]+ +changed=0 " second.log
+      - name: Health report
+        run: cat /var/lib/tensixfuse/health.json

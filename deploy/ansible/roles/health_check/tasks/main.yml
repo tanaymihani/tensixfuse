@@ -1,0 +1,28 @@
+# Known-answer checks on every simulated chip: a matmul against the host and a
+# bit-exact bfloat8_b round trip. Fails the play if any chip is unhealthy.
+- name: Report directory
+  ansible.builtin.file:
+    path: "{{ health_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Run tensixfuse-doctor per simulated chip
+  ansible.builtin.command:
+    cmd: "{{ tensixfuse_venv }}/bin/tensixfuse-doctor --out {{ health_dir }}/health-{{ item.key }}.json"
+    chdir: "{{ tensixfuse_src }}"
+  environment:
+    TT_METAL_SIMULATOR: "{{ ttsim_root }}/{{ ttsim_version }}/{{ item.key }}/{{ item.value.lib }}"
+    TT_METAL_SLOW_DISPATCH_MODE: "1"
+    TT_METAL_DISABLE_SFPLOADMACRO: "1"
+  loop: "{{ ttsim_archs | dict2items }}"
+  register: doctor
+  changed_when: false
+
+- name: Node report
+  ansible.builtin.copy:
+    dest: "{{ health_dir }}/health.json"
+    content: >-
+      {{ {'host': inventory_hostname,
+          'healthy': doctor.results | map(attribute='rc') | select('ne', 0) | list | length == 0,
+          'chips': doctor.results | map(attribute='stdout') | map('from_json') | list} | to_nice_json }}
+    mode: "0644"

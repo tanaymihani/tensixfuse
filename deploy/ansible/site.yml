@@ -1,0 +1,9 @@
+# Turn a bare Ubuntu 24.04 host into a TensixFuse simulator node, then check it.
+#   ansible-playbook site.yml                 # localhost (inventory.ini)
+#   ansible-playbook -i hosts.ini site.yml    # a fleet
+- name: Simulator nodes
+  hosts: ttsim_nodes
+  become: true
+  roles:
+    - ttsim_node
+    - health_check

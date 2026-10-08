@@ -1,0 +1,6 @@
+- name: Converge
+  hosts: all
+  become: true
+  roles:
+    - ttsim_node
+    - health_check

@@ -1,0 +1,28 @@
+dependency:
+  name: galaxy
+driver:
+  name: docker
+platforms:
+  - name: ttsim-node
+    image: geerlingguy/docker-ubuntu2404-ansible:latest
+    pre_build_image: true
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_ROLES_PATH: ../../roles
+  inventory:
+    group_vars:
+      all:
+        ansible_python_interpreter: /usr/bin/python3
+        tensixfuse_version: "{{ lookup('env', 'TENSIXFUSE_REF') | default('main', true) }}"
+verifier:
+  name: ansible
+scenario:
+  test_sequence:
+    - dependency
+    - destroy
+    - create
+    - converge
+    - idempotence
+    - verify
+    - destroy
