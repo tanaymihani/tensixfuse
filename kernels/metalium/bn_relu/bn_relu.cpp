@@ -104,7 +104,7 @@ std::shared_ptr<distributed::MeshBuffer> dram_buffer(distributed::MeshDevice* de
     return distributed::MeshBuffer::create(whole, local, device);
 }
 
-void make_cb(Program& program, const CoreRangeSet& cores, tt::CBIndex index, uint32_t n_tiles) {
+void make_cb(Program& program, const tt::tt_metal::CoreRangeSet& cores, tt::CBIndex index, uint32_t n_tiles) {
     CreateCircularBuffer(
         program,
         cores,
@@ -149,13 +149,14 @@ int main(int argc, char** argv) {
     distributed::EnqueueWriteMeshBuffer(cq, b_buf, b_tiles, false);
 
     // Spread the channel tiles over a row of cores.
-    const CoreCoord grid = device->compute_with_storage_grid_size();
-    const uint32_t n_cores = std::max<uint32_t>(1, std::min({requested_cores, col_tiles_n, grid.x * grid.y}));
-    std::vector<CoreCoord> core_list;
+    const tt::tt_metal::CoreCoord grid = device->compute_with_storage_grid_size();
+    const auto grid_cores = static_cast<uint32_t>(grid.x * grid.y);
+    const uint32_t n_cores = std::max<uint32_t>(1, std::min<uint32_t>({requested_cores, col_tiles_n, grid_cores}));
+    std::vector<tt::tt_metal::CoreCoord> core_list;
     for (uint32_t i = 0; i < n_cores; ++i) core_list.push_back({i % grid.x, i / grid.x});
-    std::vector<CoreRange> ranges;
+    std::vector<tt::tt_metal::CoreRange> ranges;
     for (const auto& c : core_list) ranges.emplace_back(c, c);
-    const CoreRangeSet cores(ranges);
+    const tt::tt_metal::CoreRangeSet cores(ranges);
 
     Program program = CreateProgram();
     make_cb(program, cores, tt::CBIndex::c_0, 2);   // x
@@ -191,7 +192,7 @@ int main(int argc, char** argv) {
     uint32_t col_start = 0;
     for (uint32_t i = 0; i < n_cores; ++i) {
         const uint32_t n_cols = per_core + (i < extra ? 1 : 0);
-        const CoreCoord& core = core_list[i];
+        const tt::tt_metal::CoreCoord& core = core_list[i];
         SetRuntimeArgs(
             program,
             reader,
