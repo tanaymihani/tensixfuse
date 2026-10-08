@@ -5,9 +5,66 @@ on:
     branches: [sim-bringup]
   workflow_dispatch:
 
+env:
+  TTNN_VERSION: "0.79.0"
+
 jobs:
-  smoke:
+  quant:
+    name: GPT-2 block-float study (Blackhole)
     runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ttnn, CPU torch, transformers
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install "ttnn==$TTNN_VERSION"
+          pip install transformers datasets "numpy<2"
+          pip install --no-deps -e .
+      - run: bash scripts/install_sfpi.sh
+      - run: bash scripts/setup_ttsim.sh blackhole
+      - name: Capture GPT-2 MLP inputs and outputs (CPU)
+        run: python model/gpt2_capture.py --out data/gpt2_mlp.npz
+      - name: Block-float weights and math fidelity on ttsim
+        run: python bench/quant_gpt2.py --data data/gpt2_mlp.npz --out results/quant_gpt2.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quant-gpt2
+          path: results/
+
+  head:
+    name: GPU-CorruptNet head (Blackhole)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ttnn and CPU torch
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install "ttnn==$TTNN_VERSION"
+          pip install --no-deps -e .
+      - run: bash scripts/install_sfpi.sh
+      - run: bash scripts/setup_ttsim.sh blackhole
+      - run: bash scripts/fetch_data.sh
+      - run: python bench/corruptnet_head.py --data data/corruptnet.npz --out results/corruptnet_head.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: corruptnet-head
+          path: results/
+
+  metalium:
+    name: TT-Metalium C++ BatchNorm + ReLU (${{ matrix.arch }})
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
       fail-fast: false
@@ -18,30 +75,35 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install ttnn, CPU torch and this package
+      - name: Install the TT-Metalium SDK packages
         run: |
-          python -m pip install --upgrade pip
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install ttnn==0.79.0
-          pip install --no-deps -e .
-      - name: Install SFPI
-        run: bash scripts/install_sfpi.sh
+          source sfpi-version
+          curl -fsSLO "https://github.com/tenstorrent/sfpi/releases/download/$sfpi_version/sfpi_${sfpi_version}_x86_64_debian.deb"
+          echo "$sfpi_x86_64_debian_deb_hash  sfpi_${sfpi_version}_x86_64_debian.deb" | sha256sum -c -
+          for pkg in tt-metalium tt-metalium-dev tt-metalium-jit; do
+            curl -fsSLO "https://github.com/tenstorrent/tt-metal/releases/download/v$TTNN_VERSION/${pkg}_$TTNN_VERSION.ubuntu24.04_amd64.deb"
+          done
+          sudo apt-get update -q
+          sudo apt-get install -y -q ./sfpi_*.deb ./tt-metalium_*.deb ./tt-metalium-dev_*.deb ./tt-metalium-jit_*.deb
+          rm -f ./*.deb
+          dpkg -L tt-metalium-dev | grep -iE "config\.cmake|host_api\.hpp" | head
+          dpkg -L tt-metalium-jit | grep -E "soc_descriptors/.*(blackhole_140|wormhole_b0_80)" | head
+          dpkg -L tt-metalium | grep -E "\.so" | head
+      - name: Build
+        run: |
+          cmake -S kernels/metalium/bn_relu -B build/bn_relu -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/bn_relu -j
       - name: Set up ttsim
-        run: bash scripts/setup_ttsim.sh ${{ matrix.arch }}
-      - name: Smoke test
-        run: python scripts/ttsim_smoke.py
-      - name: Block-float emulation vs tt-metal's packer
-        if: matrix.arch == 'blackhole'
-        run: python scripts/check_bfp_packing.py
-      - name: Time a GPT-2-sized linear + GELU
-        if: matrix.arch == 'blackhole'
-        timeout-minutes: 45
-        run: python scripts/ttsim_linear_timing.py 128 768 3072
-      - name: Look for the C++ SDK in the wheel
-        if: matrix.arch == 'blackhole'
         run: |
-          TTNN=$(python -c "import os, ttnn; print(os.path.dirname(ttnn.__file__))")
-          find "$TTNN" -name host_api.hpp | head -n 3
-          find "$TTNN" \( -name '*Config.cmake' -o -name '*-config.cmake' \) | head -n 10
-          ls "$TTNN/build/lib" | head -n 20
-          find "$TTNN" -maxdepth 2 -type d | head -n 40
+          pip install numpy
+          bash scripts/setup_ttsim.sh ${{ matrix.arch }}
+      - name: Run on ttsim and check every element
+        run: |
+          pip install --no-deps -e .
+          bash scripts/fetch_data.sh
+          python bench/bn_relu.py --binary build/bn_relu/bn_relu --out results/bn_relu_${{ matrix.arch }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bn-relu-${{ matrix.arch }}
+          path: results/

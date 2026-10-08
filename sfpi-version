@@ -2,3 +2,4 @@
 # Matches ttnn 0.79.0 (tt-metal v0.79.0, tt_metal/sfpi-version).
 sfpi_version='7.78.0'
 sfpi_x86_64_debian_txz_hash='464c64759e441b841d6bc06216dbd470d7a0f188e0ffa9ac8ebb2e404cf244db'
+sfpi_x86_64_debian_deb_hash='6e16e38d6d1ca32abe569e5799e4030c57f766de868346d035e74325dc020ed4'

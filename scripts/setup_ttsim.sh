@@ -39,10 +39,12 @@ fi
 
 # ttsim looks for soc_descriptor.yaml next to the .so.
 soc_path=""
-candidates=("${TT_METAL_HOME:-}")
+candidates=("${TT_METAL_HOME:-}" "${TT_METAL_RUNTIME_ROOT:-}")
 if ttnn_root="$(python3 -c 'import os, ttnn; print(os.path.dirname(os.path.dirname(ttnn.__file__)))' 2>/dev/null)"; then
   candidates+=("$ttnn_root")
 fi
+# System installs from tt-metal's .deb packages.
+candidates+=(/usr/libexec/tt-metalium /usr/share/tt-metalium /opt/tt-metalium /usr/local/share/tt-metalium)
 for base in "${candidates[@]}"; do
   [ -n "$base" ] && [ -d "$base" ] || continue
   soc_path="$(find "$base" -path '*soc_descriptors*' -name "$SOC" 2>/dev/null | head -n 1)"

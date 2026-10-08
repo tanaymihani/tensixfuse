@@ -65,7 +65,7 @@ def quantize_weight(w_kn: np.ndarray, fmt: str) -> np.ndarray:
     """
     if fmt in ("bfloat16", "float32"):
         return as_bf16(w_kn) if fmt == "bfloat16" else w_kn.astype(np.float32)
-    k, n = w_kn.shape
+    n = w_kn.shape[1]
     pad = (-n) % 32
     padded = np.pad(np.asarray(w_kn, dtype=np.float32), ((0, 0), (0, pad)))
     return quantize(padded, fmt)[:, :n]
