@@ -1,0 +1,54 @@
+name: ttsim
+
+# The same tests on simulated Wormhole and Blackhole chips, one job per chip and
+# weight format. Runs on main and on PRs that touch kernels or the pins.
+on:
+  push:
+    branches: [main, sim-bringup]
+  pull_request:
+    paths:
+      - "kernels/**"
+      - "src/**"
+      - "tests/test_ttsim.py"
+      - "bench/baselines.json"
+      - "ttsim-version"
+      - "sfpi-version"
+      - ".github/workflows/ttsim.yml"
+  workflow_dispatch:
+
+env:
+  TTNN_VERSION: "0.79.0"
+
+jobs:
+  ttsim:
+    name: ${{ matrix.arch }} / ${{ matrix.format }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [wormhole, blackhole]
+        format: [bfloat16, bfloat8_b, bfloat4_b]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install ttnn and CPU torch
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install "ttnn==$TTNN_VERSION" pytest
+          pip install --no-deps -e .
+      - name: Cache SFPI and ttsim
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/tensixfuse
+          key: ttsim-${{ hashFiles('ttsim-version', 'ttsim.sha256') }}-${{ matrix.arch }}
+      - run: bash scripts/install_sfpi.sh
+      - run: bash scripts/setup_ttsim.sh ${{ matrix.arch }}
+      - name: Tests on simulated ${{ matrix.arch }}
+        env:
+          TENSIXFUSE_FORMATS: ${{ matrix.format }}
+        run: pytest -q -m ttsim tests/test_ttsim.py

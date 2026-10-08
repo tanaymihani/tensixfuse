@@ -1,0 +1,12 @@
+{
+ "_comment": "Regression gate. A change fails CI if a PCC drops below its floor or a DRAM tile count goes above its baseline. Floors are set a little under measured values; tile counts are exact.",
+ "pcc_floor": {
+  "linear_gelu": {"bfloat16": 0.9999, "bfloat8_b": 0.9995, "bfloat4_b": 0.985},
+  "matmul": 0.9999
+ },
+ "dram_tiles": {
+  "fused 512 block 8x8x4 grid 1x1": 1536,
+  "fused 512 block 4x4x4 grid 4x4 mcast": 1024,
+  "unfused 512 block 4x4x4 grid 4x4 mcast": 2048
+ }
+}

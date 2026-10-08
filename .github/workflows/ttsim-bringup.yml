@@ -3,6 +3,12 @@ name: ttsim bring-up
 on:
   push:
     branches: [sim-bringup]
+    paths:
+      - "kernels/metalium/**"
+      - "bench/quant_gpt2.py"
+      - "bench/corruptnet_head.py"
+      - "bench/bn_relu.py"
+      - "model/**"
   workflow_dispatch:
 
 env:
