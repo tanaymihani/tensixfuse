@@ -1,0 +1,11 @@
+.venv
+.git
+.idea
+data
+results
+build
+**/__pycache__
+**/*.egg-info
+.pytest_cache
+.ruff_cache
+*.jsonl

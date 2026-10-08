@@ -12,6 +12,9 @@ license = { text = "MIT" }
 authors = [{ name = "Tanay Mihani" }]
 dependencies = ["numpy>=1.24"]
 
+[project.scripts]
+tensixfuse-doctor = "tensixfuse.doctor:main"
+
 [project.optional-dependencies]
 sim = ["tt-lang-sim==1.1.6"]
 dev = ["tt-lang-sim==1.1.6", "pytest>=8", "ruff>=0.5"]
