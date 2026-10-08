@@ -39,6 +39,9 @@ jobs:
           curl -fsSL -o ~/.cache/tensixfuse/wormhole_N300.yaml \
             "https://raw.githubusercontent.com/tenstorrent/tt-umd/$UMD_SHA/tests/cluster_descriptor_examples/wormhole_N300.yaml"
           echo "TT_METAL_MOCK_CLUSTER_DESC_PATH=$HOME/.cache/tensixfuse/wormhole_N300.yaml" >> "$GITHUB_ENV"
+          # Preload tensors straight into simulated memory instead of host writes
+          # to the remote chip through its Ethernet core (those time out).
+          echo "TT_METAL_SIMULATOR_DIRECT_TENSOR_WRITES=1" >> "$GITHUB_ENV"
       - run: python model/gpt2_capture.py --out data/gpt2_mlp.npz
       - name: Tensor-parallel MLP on the simulated N300
         run: python bench/tp_mlp_n300.py data/gpt2_mlp.npz --out results/tp_n300.json
