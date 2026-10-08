@@ -4,7 +4,7 @@ name: kubernetes
 # from the Helm chart in deploy/helm, and merges the pods' results.
 on:
   push:
-    branches: [main, sim-bringup]
+    branches: [main]
     paths:
       - "deploy/helm/**"
       - "docker/**"

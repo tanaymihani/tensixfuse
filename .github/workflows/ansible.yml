@@ -2,7 +2,7 @@ name: ansible
 
 on:
   push:
-    branches: [main, sim-bringup]
+    branches: [main]
     paths:
       - "deploy/ansible/**"
       - "scripts/**"

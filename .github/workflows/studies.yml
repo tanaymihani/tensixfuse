@@ -1,12 +1,15 @@
-name: ttsim bring-up
+# GPT-2 block-float study and GPU-CorruptNet's head on ttsim; they write
+# results/quant_gpt2.json and results/corruptnet_head.json.
+name: studies
 
 on:
   push:
-    branches: [sim-bringup]
+    branches: [main]
     paths:
       - "bench/quant_gpt2.py"
       - "bench/corruptnet_head.py"
       - "model/**"
+      - ".github/workflows/studies.yml"
   workflow_dispatch:
 
 env:

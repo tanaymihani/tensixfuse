@@ -4,7 +4,7 @@ name: ttsim
 # weight format. Runs on main and on PRs that touch kernels or the pins.
 on:
   push:
-    branches: [main, sim-bringup]
+    branches: [main]
   pull_request:
     paths:
       - "kernels/**"

@@ -4,7 +4,7 @@ name: metalium
 # SDK packages and runs it on simulated Wormhole and Blackhole chips.
 on:
   push:
-    branches: [main, sim-bringup]
+    branches: [main]
     paths:
       - "kernels/metalium/**"
       - "bench/bn_relu.py"
