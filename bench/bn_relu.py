@@ -77,7 +77,9 @@ def main() -> None:
             )
             if proc.returncode != 0:
                 raise SystemExit(f"bn_relu failed:\n{proc.stdout[-3000:]}\n{proc.stderr[-6000:]}")
-            timings.append(json.loads(proc.stdout.strip().splitlines()[-1]))
+            # ttsim prints its own stats line at exit, after ours.
+            line = next(x for x in reversed(proc.stdout.splitlines()) if x.startswith('{"rows"'))
+            timings.append(json.loads(line))
             outputs.append(np.fromfile(out_path, dtype=np.uint16).reshape(rows, cols))
 
     y = outputs[0]

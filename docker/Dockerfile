@@ -1,6 +1,6 @@
-# TensixFuse on Tenstorrent's simulators: ttnn (tt-metal), the SFPI kernel
-# compiler and ttsim for Wormhole and Blackhole, all pinned to the versions in
-# this repo. Nothing here needs Tenstorrent hardware.
+# TensixFuse on Tenstorrent's simulators: TT-Lang's functional simulator,
+# ttnn (tt-metal), the SFPI kernel compiler and ttsim for Wormhole and Blackhole,
+# all pinned to the versions in this repo. Nothing here needs Tenstorrent hardware.
 #
 #   docker run --rm ghcr.io/tanaymihani/tensixfuse pytest -m ttsim tests/test_ttsim.py
 #   docker run --rm -e TENSIXFUSE_ARCH=wormhole ghcr.io/tanaymihani/tensixfuse tensixfuse-doctor
@@ -15,12 +15,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       python3.12 python3.12-venv ca-certificates curl xz-utils \
-      libnuma1 libhwloc15 libgomp1 \
+      libatomic1 libnuma1 libhwloc15 libgomp1 \
  && rm -rf /var/lib/apt/lists/* \
  && python3.12 -m venv /opt/venv \
  && pip install --upgrade pip \
  && pip install torch --index-url https://download.pytorch.org/whl/cpu \
- && pip install "ttnn==${TTNN_VERSION}" pytest
+ && pip install "ttnn==${TTNN_VERSION}" "tt-lang-sim==1.1.6" pytest
 
 WORKDIR /opt/tensixfuse
 COPY pyproject.toml README.md ttsim-version ttsim.sha256 sfpi-version data.sha256 ./

@@ -1,0 +1,7 @@
+Sweep {{ .Release.Name }}: {{ .Values.shards }} shards over sizes {{ join ", " .Values.sizes }}.
+
+Wait for it and merge the shards:
+  kubectl wait --for=condition=Completed jobset/{{ .Release.Name }} --timeout=30m
+  for p in $(kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }} -o name); do
+    kubectl logs "$p" > "logs/${p#pod/}.log"; done
+  python bench/merge.py logs/*.log

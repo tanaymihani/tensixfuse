@@ -1,0 +1,43 @@
+apiVersion: jobset.x-k8s.io/v1alpha2
+kind: JobSet
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app.kubernetes.io/name: tensixfuse-sweep
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+  failurePolicy:
+    maxRestarts: {{ .Values.maxRestarts }}
+  replicatedJobs:
+    - name: shard
+      replicas: 1
+      template:
+        spec:
+          # Indexed: each pod gets JOB_COMPLETION_INDEX = its shard number.
+          completionMode: Indexed
+          completions: {{ .Values.shards }}
+          parallelism: {{ .Values.shards }}
+          backoffLimit: 0
+          template:
+            metadata:
+              labels:
+                app.kubernetes.io/name: tensixfuse-sweep
+                app.kubernetes.io/instance: {{ .Release.Name }}
+            spec:
+              restartPolicy: Never
+              containers:
+                - name: sweep
+                  image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+                  imagePullPolicy: {{ .Values.image.pullPolicy }}
+                  env:
+                    - name: SHARDS
+                      value: "{{ .Values.shards }}"
+                  command: ["sh", "-c"]
+                  args:
+                    - >-
+                      python bench/fusion.py --shard "${JOB_COMPLETION_INDEX}/${SHARDS}"
+                      --sizes {{ join " " .Values.sizes }}
+                      --out /tmp/shard.json --emit-json
+                  resources:
+                    {{- toYaml .Values.resources | nindent 20 }}

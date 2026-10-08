@@ -1,0 +1,6 @@
+apiVersion: v2
+name: tensixfuse-sweep
+description: The TensixFuse benchmark sweep as a Kubernetes JobSet, one simulator pod per shard
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

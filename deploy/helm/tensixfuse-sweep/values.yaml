@@ -1,0 +1,20 @@
+# Container with tt-lang-sim, ttnn and ttsim (docker/Dockerfile).
+image:
+  repository: ghcr.io/tanaymihani/tensixfuse
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Pods run in parallel; pod i takes every shards-th configuration starting at i.
+shards: 8
+sizes: [256, 512, 1024, 2048]
+
+resources:
+  requests:
+    cpu: "1"
+    memory: 2Gi
+  limits:
+    memory: 4Gi
+
+# A failed shard reruns the whole JobSet this many times before giving up.
+maxRestarts: 1
+ttlSecondsAfterFinished: 3600

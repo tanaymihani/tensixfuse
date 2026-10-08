@@ -1,0 +1,67 @@
+name: sweep
+
+# The full fusion sweep, once on a single runner and once sharded across 8
+# runners, so the two wall-clock times are measured on the same hardware.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, sim-bringup]
+    paths:
+      - "kernels/ttlang/**"
+      - "bench/fusion.py"
+      - "bench/merge.py"
+      - ".github/workflows/sweep.yml"
+
+jobs:
+  shard:
+    name: shard ${{ matrix.shard }}/${{ matrix.shards }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {shard: 0, shards: 1}
+          - {shard: 0, shards: 8}
+          - {shard: 1, shards: 8}
+          - {shard: 2, shards: 8}
+          - {shard: 3, shards: 8}
+          - {shard: 4, shards: 8}
+          - {shard: 5, shards: 8}
+          - {shard: 6, shards: 8}
+          - {shard: 7, shards: 8}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[sim]"
+      - name: Run shard
+        run: |
+          python bench/fusion.py --shard ${{ matrix.shard }}/${{ matrix.shards }} \
+            --out shard.json --emit-json | tee shard.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sweep-${{ matrix.shards }}-${{ matrix.shard }}
+          path: shard.log
+
+  merge:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: shards
+      - name: Merge and compare
+        run: |
+          echo "one runner:";  python3 bench/merge.py shards/sweep-1-0/shard.log --expect 48 --out results/fusion_serial.json
+          echo "8 runners:";   python3 bench/merge.py shards/sweep-8-*/shard.log --expect 48 --out results/fusion.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sweep-results
+          path: results/

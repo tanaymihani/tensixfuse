@@ -73,32 +73,47 @@ def main() -> None:
         help="run with numerics (and a PyTorch check) when block matmuls <= this; else dry-run",
     )
     p.add_argument("--out", default=str(REPO / "results" / "fusion.json"))
+    p.add_argument("--shard", default="0/1", help="i/N: run every N-th configuration from i")
+    p.add_argument(
+        "--emit-json", action="store_true", help="also print the records as one tagged line"
+    )
     args = p.parse_args()
+    shard, n_shards = (int(v) for v in args.shard.split("/"))
 
+    runs = [
+        (size, label, MatmulConfig(size, size, size, *block, grid=grid, mcast=mcast), variant)
+        for size in args.sizes
+        for label, block, grid, mcast in reuse_levels(size)
+        for variant in ("unfused", "fused")
+    ]
+    mine = runs[shard::n_shards]
+    print(f"shard {shard}/{n_shards}: {len(mine)} of {len(runs)} runs", flush=True)
+
+    t_start = time.perf_counter()
     records = []
-    for size in args.sizes:
-        for label, block, grid, mcast in reuse_levels(size):
-            cfg = MatmulConfig(size, size, size, *block, grid=grid, mcast=mcast)
-            full = block_ops(cfg) <= args.max_full_ops
-            for variant in ("unfused", "fused"):
-                rec = run_one(cfg, variant, label, full)
-                records.append(rec)
-                pcc = f"pcc={rec['pcc']:.6f}" if "pcc" in rec else "dry-run"
-                flag = "ok" if rec["matches_model"] else "MISMATCH"
-                print(
-                    f"{size:5d} {label:42s} {variant:8s} "
-                    f"{tiles_to_mib(rec['measured_tiles']):8.1f} MiB  model {flag:8s} "
-                    f"{pcc}  {rec['seconds']}s",
-                    flush=True,
-                )
-                if rec["sim_warnings"]:
-                    print("      sim:", "; ".join(rec["sim_warnings"])[:300], flush=True)
+    for size, label, cfg, variant in mine:
+        rec = run_one(cfg, variant, label, block_ops(cfg) <= args.max_full_ops)
+        records.append(rec)
+        pcc = f"pcc={rec['pcc']:.6f}" if "pcc" in rec else "dry-run"
+        flag = "ok" if rec["matches_model"] else "MISMATCH"
+        print(
+            f"{size:5d} {label:42s} {variant:8s} "
+            f"{tiles_to_mib(rec['measured_tiles']):8.1f} MiB  model {flag:8s} "
+            f"{pcc}  {rec['seconds']}s",
+            flush=True,
+        )
+        if rec["sim_warnings"]:
+            print("      sim:", "; ".join(rec["sim_warnings"])[:300], flush=True)
+    wall = round(time.perf_counter() - t_start, 1)
 
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(records, indent=1))
     bad = [r for r in records if not r["matches_model"]]
-    print(f"\n{len(records)} runs, {len(bad)} mismatches -> {out}")
+    print(f"\n{len(records)} runs in {wall}s, {len(bad)} mismatches -> {out}")
+    if args.emit_json:
+        payload = {"shard": shard, "shards": n_shards, "seconds": wall, "records": records}
+        print("TENSIXFUSE_RESULTS " + json.dumps(payload), flush=True)
     sys.exit(1 if bad else 0)
 
 
