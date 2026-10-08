@@ -48,9 +48,14 @@ def main() -> None:
     shift = bf16_bits(d["bn_shift"])
     rows, cols = x.shape
 
-    # Reference: the same bf16 inputs, fp32 math, rounded to bf16 once at the end.
-    ref = bits_to_f32(x) * bits_to_f32(scale) + bits_to_f32(shift)
+    xf, sf, bf = bits_to_f32(x), bits_to_f32(scale), bits_to_f32(shift)
+    # Reference 1: fp32 math, rounded to bf16 once at the end.
+    ref = xf * sf + bf
     ref_bits = bf16_bits(np.maximum(ref, 0))
+    # Reference 2: what the kernel is written to do. x * scale goes through an
+    # L1 buffer in bf16 before the add, so it's rounded twice.
+    twice = as_bf16(as_bf16(xf * sf) + bf)
+    twice_bits = bf16_bits(np.maximum(twice, 0))
 
     outputs, timings = [], []
     with tempfile.TemporaryDirectory() as tmp:
@@ -83,7 +88,12 @@ def main() -> None:
             outputs.append(np.fromfile(out_path, dtype=np.uint16).reshape(rows, cols))
 
     y = outputs[0]
+    yf = bits_to_f32(y)
     ulp = bf16_ulp_distance(y, ref_bits)
+    ulp_twice = bf16_ulp_distance(y, twice_bits)
+    # Error relative to the output's scale: ULPs blow up next to zero, where a
+    # tiny negative becomes 0 after ReLU and the device lands just above it.
+    scale_of_y = float(np.abs(bits_to_f32(ref_bits)).max())
     result = {
         "arch": os.environ.get("TENSIXFUSE_ARCH", "?"),
         "rows": rows,
@@ -91,10 +101,15 @@ def main() -> None:
         "elements": int(y.size),
         "tiles": timings[0]["tiles"],
         "cores": timings[0]["cores"],
-        "max_ulp": int(ulp.max()),
-        "exact_fraction": float((ulp == 0).mean()),
-        "within_1_ulp_fraction": float((ulp <= 1).mean()),
-        "pcc": pcc(bits_to_f32(y), bits_to_f32(ref_bits)),
+        "exact_vs_single_rounding": float((ulp == 0).mean()),
+        "within_1_ulp_vs_single_rounding": float((ulp <= 1).mean()),
+        "exact_vs_double_rounding": float((ulp_twice == 0).mean()),
+        "within_1_ulp_vs_double_rounding": float((ulp_twice <= 1).mean()),
+        "max_abs_err": float(np.abs(yf - bits_to_f32(ref_bits)).max()),
+        "max_abs_err_relative_to_max_output": float(
+            np.abs(yf - bits_to_f32(ref_bits)).max() / scale_of_y
+        ),
+        "pcc": pcc(yf, bits_to_f32(ref_bits)),
         "relu_zeros": float((y == 0).mean()),
         "runs_identical": bool(np.array_equal(outputs[0], outputs[1])),
         "seconds": [t["seconds"] for t in timings],
