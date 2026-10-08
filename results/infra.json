@@ -38,7 +38,11 @@
    12.9,
    13.1
   ],
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37722979039"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725323135",
+  "images": [
+   "tensixfuse (ttsim target)",
+   "tensixfuse-sweep (sweep target)"
+  ]
  },
  "sweep": {
   "runs": 48,
@@ -56,5 +60,15 @@
   "second_run_changed": 0,
   "molecule": "converge, idempotence, verify passed",
   "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37722979050"
+ },
+ "kubernetes": {
+  "pods": 4,
+  "jobset_seconds": 23,
+  "runs": 24,
+  "model_mismatches": 0,
+  "slowest_pod_compute_s": 20.3,
+  "cluster": "kind",
+  "jobset": "v0.12.0",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725323128"
  }
 }
