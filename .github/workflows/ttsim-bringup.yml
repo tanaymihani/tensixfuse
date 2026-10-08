@@ -4,10 +4,8 @@ on:
   push:
     branches: [sim-bringup]
     paths:
-      - "kernels/metalium/**"
       - "bench/quant_gpt2.py"
       - "bench/corruptnet_head.py"
-      - "bench/bn_relu.py"
       - "model/**"
   workflow_dispatch:
 
@@ -66,50 +64,4 @@ jobs:
         if: always()
         with:
           name: corruptnet-head
-          path: results/
-
-  metalium:
-    name: TT-Metalium C++ BatchNorm + ReLU (${{ matrix.arch }})
-    runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [blackhole, wormhole]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Install the TT-Metalium SDK packages
-        run: |
-          source sfpi-version
-          curl -fsSLO "https://github.com/tenstorrent/sfpi/releases/download/$sfpi_version/sfpi_${sfpi_version}_x86_64_debian.deb"
-          echo "$sfpi_x86_64_debian_deb_hash  sfpi_${sfpi_version}_x86_64_debian.deb" | sha256sum -c -
-          for pkg in tt-metalium tt-metalium-dev tt-metalium-jit; do
-            curl -fsSLO "https://github.com/tenstorrent/tt-metal/releases/download/v$TTNN_VERSION/${pkg}_$TTNN_VERSION.ubuntu24.04_amd64.deb"
-          done
-          sudo apt-get update -q
-          sudo apt-get install -y -q ./sfpi_*.deb ./tt-metalium_*.deb ./tt-metalium-dev_*.deb ./tt-metalium-jit_*.deb
-          rm -f ./*.deb
-          dpkg -L tt-metalium-dev | grep -iE "config\.cmake|host_api\.hpp" | head
-          dpkg -L tt-metalium-jit | grep -E "soc_descriptors/.*(blackhole_140|wormhole_b0_80)" | head
-          dpkg -L tt-metalium | grep -E "\.so" | head
-      - name: Build
-        run: |
-          cmake -S kernels/metalium/bn_relu -B build/bn_relu -DCMAKE_CXX_COMPILER=g++-14 -DCMAKE_BUILD_TYPE=Release
-          cmake --build build/bn_relu -j
-      - name: Set up ttsim
-        run: |
-          pip install numpy
-          bash scripts/setup_ttsim.sh ${{ matrix.arch }}
-      - name: Run on ttsim and check every element
-        run: |
-          pip install --no-deps -e .
-          bash scripts/fetch_data.sh
-          python bench/bn_relu.py --binary build/bn_relu/bn_relu --out results/bn_relu_${{ matrix.arch }}.json
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: bn-relu-${{ matrix.arch }}
           path: results/

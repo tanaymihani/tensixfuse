@@ -1,0 +1,77 @@
+name: metalium
+
+# Builds the hand-written TT-Metalium C++ program against Tenstorrent's released
+# SDK packages and runs it on simulated Wormhole and Blackhole chips.
+on:
+  push:
+    branches: [main, sim-bringup]
+    paths:
+      - "kernels/metalium/**"
+      - "bench/bn_relu.py"
+      - "scripts/**"
+      - "sfpi-version"
+      - "ttsim-version"
+      - ".github/workflows/metalium.yml"
+  pull_request:
+    paths:
+      - "kernels/metalium/**"
+      - ".github/workflows/metalium.yml"
+  workflow_dispatch:
+
+env:
+  TT_METAL_VERSION: "0.79.0"
+  ULFM_DEB: openmpi-ulfm_5.0.7-1_amd64.deb
+  ULFM_SHA256: 954e872d9105e8bf8c31368ff7a5db8670a3d549e2e7eb1ab6072cffcae7984d
+
+jobs:
+  bn-relu:
+    name: BatchNorm + ReLU (${{ matrix.arch }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [blackhole, wormhole]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the TT-Metalium SDK packages
+        run: |
+          source sfpi-version
+          curl -fsSLO "https://github.com/tenstorrent/sfpi/releases/download/$sfpi_version/sfpi_${sfpi_version}_x86_64_debian.deb"
+          echo "$sfpi_x86_64_debian_deb_hash  sfpi_${sfpi_version}_x86_64_debian.deb" | sha256sum -c -
+          # tt-metal links against OpenMPI with ULFM fault tolerance (MPIX_Comm_*).
+          curl -fsSLO "https://github.com/tenstorrent/ompi/releases/download/v5.0.7/$ULFM_DEB"
+          echo "$ULFM_SHA256  $ULFM_DEB" | sha256sum -c -
+          for pkg in tt-metalium tt-metalium-dev tt-metalium-jit; do
+            curl -fsSLO "https://github.com/tenstorrent/tt-metal/releases/download/v$TT_METAL_VERSION/${pkg}_$TT_METAL_VERSION.ubuntu24.04_amd64.deb"
+          done
+          sudo apt-get update -q
+          sudo apt-get install -y -q ./sfpi_*.deb "./$ULFM_DEB" ./tt-metalium_*.deb ./tt-metalium-dev_*.deb ./tt-metalium-jit_*.deb
+          rm -f ./*.deb
+          ULFM_LIB="$(dirname "$(dpkg -L openmpi-ulfm | grep -m1 '/libmpi\.so')")"
+          echo "ULFM_LIB=$ULFM_LIB" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$ULFM_LIB:${LD_LIBRARY_PATH:-}" >> "$GITHUB_ENV"
+          echo "ULFM OpenMPI in $ULFM_LIB"
+      - name: Build
+        run: |
+          cmake -S kernels/metalium/bn_relu -B build/bn_relu -DCMAKE_CXX_COMPILER=g++-14 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXE_LINKER_FLAGS="-L$ULFM_LIB -Wl,-rpath,$ULFM_LIB"
+          cmake --build build/bn_relu -j
+      - name: Set up ttsim
+        run: |
+          pip install numpy
+          bash scripts/setup_ttsim.sh ${{ matrix.arch }}
+      - name: Run on ttsim and check every element
+        run: |
+          pip install --no-deps -e .
+          bash scripts/fetch_data.sh
+          python bench/bn_relu.py --binary build/bn_relu/bn_relu --out results/bn_relu_${{ matrix.arch }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bn-relu-${{ matrix.arch }}
+          path: results/
