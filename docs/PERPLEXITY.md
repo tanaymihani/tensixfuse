@@ -1,6 +1,6 @@
 # GPT-2 on WikiText-2 with low-bit weights: Tenstorrent's block floats next to MX, NVFP4 and INT4
 
-TensixFuse's GPT-2 study ran each MLP block on its own on a simulated Blackhole chip and reported how closely its output tracked fp32 (PCC). That tells you which blocks a format hurts, not what the model loses end to end. So I measured perplexity on the whole WikiText-2 test set with the weights rounded exactly the way each format stores them, and put Tenstorrent's bfloat8_b and bfloat4_b next to the other low-bit formats people use now: OCP's MXFP8 and MXFP4, NVIDIA's NVFP4, and INT4 with one scale per 128 weights.
+TensixFuse's GPT-2 study ran each MLP block on its own on a simulated Blackhole chip and reported how closely its output tracked fp32 (PCC). That tells you which blocks a format hurts, not what the model loses end to end. So I measured perplexity on the whole WikiText-2 test set with the weights rounded the way each format stores them (bit-exact with tt-metal for the block floats, from the specs for the rest), and put Tenstorrent's bfloat8_b and bfloat4_b next to the other low-bit formats people use now: OCP's MXFP8 and MXFP4, NVIDIA's NVFP4, and INT4 with one scale per 128 weights.
 
 The short version: at 8 bits nothing matters. At 4 bits, bfloat4_b is the weakest of the four formats, about half of that is which axis its groups run along, and on a Llama-style model Tenstorrent's own "performance" recipe costs 8% in perplexity.
 
