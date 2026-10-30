@@ -10,9 +10,11 @@ None of this ran on silicon. Device numbers come from Tenstorrent's two simulato
 
 The repo also runs like a small hardware lab with simulated chips: CI on simulated Wormhole and Blackhole, a C++ program built against Tenstorrent's released SDK, a pinned container, the benchmark sweep fanned out across hosts and as a Kubernetes JobSet, and an Ansible playbook that turns a bare Ubuntu machine into a checked simulator node.
 
+TensixFuse is listed in Tenstorrent's [tt-awesome](https://github.com/tenstorrent/tt-awesome/blob/main/entries/kernels/tensixfuse.json) registry of community projects. The fused TT-Lang kernel starts from TT-Lang's own matmul tutorial and the multicast version from tt-lang's SUMMA benchmark; [Builds on](#builds-on) says what came from where and what's mine.
+
 ## In brief
 
-- **Fusion always saves the same 8 MiB. What changes is how much that's worth.** Fusing matmul, bias and ReLU at 1024³ removes two intermediate tensors, 8 MiB written to DRAM and read back. Next to a naive matmul that's 6% of all traffic. Once the matmul reads each input only once, it's half. The simulator agreed with my analytic model tile for tile on all 48 runs.
+- **Fusion always saves the same 8 MiB. What changes is how much that's worth.** Fusing matmul, bias and ReLU at 1024³ removes two intermediate tensors, 8 MiB written to DRAM and read back. Next to a naive matmul that's 6% of all traffic. Once the matmul reads each input only once, it's half. TT-Lang's functional simulator agreed with my analytic model tile for tile on all 48 runs.
 - **Data reuse mattered more than fusion.** Bigger blocks cut DRAM traffic from 132 to 20 MiB, and multicasting input panels over the NoC on a 64-core grid took it to 8 MiB, 16.5x below where I started.
 - **Block-float weights on GPT-2.** bfloat8_b cuts the MLP weights 47% and the worst of the 12 blocks still has PCC 0.99982. bfloat4_b cuts 72% and the worst block falls to 0.961. If you keep one layer in bfloat8_b, it should be `c_fc`, not `c_proj`, which is the opposite of what I expected.
 - **The format, not the chip's arithmetic, is where the error comes from.** A NumPy copy of tt-metal's block-float packer (bit-exact with it on a million values) predicts the simulated chip's PCC to the 5th decimal. The same reasoning says LoFi math fidelity should cost nothing with bfloat4_b weights, whose 3 mantissa bits fit in a single multiplier pass, and it measures that way.
@@ -39,7 +41,7 @@ Unfused, each op is one trip around this loop, and each op's output goes back to
 
 ## Results
 
-Every table here is regenerated from the JSON in [`results/`](results) by `python bench/report.py`, which writes [`docs/RESULTS.md`](docs/RESULTS.md) with all sizes and every run. Each section says which simulator it came from. CI re-runs the studies on every change; across runs every table holds to the precision shown, except that GPT-2 PCCs can move in the 6th decimal (and once in the 5th), because the GPT-2 activations are captured with PyTorch on the runner's CPU, which isn't bit-reproducible across CPU types.
+Every table here is regenerated from the JSON in [`results/`](results) by `python bench/report.py`, which writes [`docs/RESULTS.md`](docs/RESULTS.md) with all sizes and every run. Each section says which simulator it came from. CI re-runs a study whenever its code or model changes; across runs every table holds to the precision shown, except that GPT-2 PCCs can move in the 6th decimal (and once in the 5th), because the GPT-2 activations are captured with PyTorch on the runner's CPU, which isn't bit-reproducible across CPU types.
 
 ### 1. Fusion and data movement
 
@@ -58,7 +60,7 @@ Before running anything I wrote an analytic model of how many tiles each kernel 
 
 ### 2. Block-float weights on GPT-2's MLPs
 
-GPT-2 small has 12 MLP blocks: `c_fc` (768 to 3072), GELU, then `c_proj` (3072 to 768). I captured each block's real input on the first 128 tokens of the WikiText-2 test set and ran the blocks with TTNN on simulated Blackhole at HiFi4, weights in each format and activations in bf16. PCC is against the fp32 PyTorch block.
+GPT-2 small has 12 MLP blocks: `c_fc` (768 to 3072), GELU, then `c_proj` (3072 to 768). I captured each block's real input on the first 128 tokens of the WikiText-2 test set and ran the blocks with TTNN on simulated Blackhole at HiFi4, weights in each format and activations in bf16. PCC is against the fp32 PyTorch block. The matmuls here are TTNN's own `ttnn.linear` kernels, not mine: what I built is the capture, the block-float emulator the results are checked against, and the comparison.
 
 | Weights | MLP weights, 12 blocks | PCC, median block | PCC, worst block |
 |---|---|---|---|
@@ -140,6 +142,16 @@ The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 i
 **Getting the stack to run took more than the kernels did.** The `ttnn` wheel doesn't bundle SFPI, the RISC-V compiler tt-metal uses to build kernels at runtime, so that's pinned and installed separately. The SDK's `libtt_metal.so` needs Tenstorrent's OpenMPI build with ULFM fault tolerance, which the packages don't pull in, so linking failed on `MPIX_Comm_revoke` until I installed it. A slim Ubuntu image also needs `libatomic` and GCC's math libraries for SFPI's compiler. TT-Lang's simulator and the real `ttnn` can't share a Python environment either: with both installed, the simulator picks up the real `ttnn` and the kernels fail, which I found when the Kubernetes pods crashed. So the Dockerfile has two targets. And tt-lang-sim 1.1.6 replaces any kernel error with a `FileNotFoundError` for `ttl/ttl/diagnostics.py`, a file the wheel doesn't ship; [`kernels/ttlang/simfix.py`](kernels/ttlang/simfix.py) prints the real message. Its help text also says the per-core L1 limit is 1,336 KiB, while the code enforces 1,432.
 
 **One run sets the floor for sharding.** Spread over 8 runners, the sweep is bounded by its largest single run, the unblocked 2048³ dry run, which takes about a minute on a hosted runner by itself. Balancing shards by predicted cost keeps the other big runs off that shard, but nothing gets the slowest shard below that one run.
+
+## Builds on
+
+- **TT-Lang's matmul tutorial** (steps 1 to 4). The fused `relu(a @ b + c)` kernel in [`kernels/ttlang/ops.py`](kernels/ttlang/ops.py) is that tutorial's kernel, generalized to other block sizes, grids and activations. The unfused baseline and the elementwise ops are mine.
+- **tt-lang's SUMMA benchmark** ([`benchmarks/matmul/summa_kernel.py`](https://github.com/tenstorrent/tt-lang/blob/main/benchmarks/matmul/summa_kernel.py)). My multicast variant uses its row and column `PipeNet` pattern, with the fused bias and activation added. tt-metal's [`matmul_multicore_reuse_mcast`](https://github.com/tenstorrent/tt-metal/tree/main/tt_metal/programming_examples/matmul/matmul_multicore_reuse_mcast) example does the same thing in TT-Metalium.
+- **tt-metal's `eltwise_binary` and `eltwise_sfpu` programming examples**, for the host and kernel structure of [`kernels/metalium/bn_relu`](kernels/metalium/bn_relu), and tt-metal's FP32 accuracy guide for its SFPU version.
+- **tt-metal's block-float packer** (`blockfloat_common.cpp` at v0.79.0), which [`blockfloat.py`](src/tensixfuse/blockfloat.py) reimplements in NumPy.
+- **TTNN**, whose `ttnn.linear` runs the GPT-2 and GPU-CorruptNet studies on ttsim.
+
+What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's checked against, the block-float emulator and the numerics studies built on it, the BatchNorm program, and the CI, container, Kubernetes and Ansible setup.
 
 ## Limitations
 
