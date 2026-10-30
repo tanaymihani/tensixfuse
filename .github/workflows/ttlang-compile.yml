@@ -45,6 +45,14 @@ jobs:
           pip list 2>/dev/null | grep -iE "^(tt-lang|ttnn|torch) "
       - run: bash scripts/install_sfpi.sh
       - run: bash scripts/setup_ttsim.sh ${{ matrix.arch }}
+      - name: "Known-good kernel first: TT-Lang's matmul tutorial, step 1, at 64^3"
+        continue-on-error: true
+        run: |
+          src="$(python -c 'import os, ttl.tutorials.matmul as m; print(os.path.dirname(m.__file__))')/step_1_single_node_single_tile_block.py"
+          sed 's/M, K, N = 8192, 8192, 8192/M, K, N = 64, 64, 64/' "$src" > /tmp/tutorial_step1.py
+          grep -n "M, K, N =" /tmp/tutorial_step1.py
+          timeout 1200 python /tmp/tutorial_step1.py 2>&1 | grep -v "leaked\|nanobind" | tail -25
+          echo "tutorial exit: ${PIPESTATUS[0]}" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Compile and run on ttsim
         run: python bench/ttlang_compiled.py --runs "${{ inputs.runs || 'fusion' }}" --out results/ttlang_compiled_${{ matrix.arch }}.json
       - uses: actions/upload-artifact@v4
