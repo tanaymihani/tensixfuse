@@ -1,0 +1,71 @@
+# GPT-2 small's WikiText-2 perplexity with low-bit weights, on CPU. Five shards
+# split the formats; the merge job writes results/perplexity.json and puts the
+# table in the run summary.
+name: perplexity
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "bench/perplexity.py"
+      - "src/tensixfuse/formats.py"
+      - "src/tensixfuse/blockfloat.py"
+      - ".github/workflows/perplexity.yml"
+  workflow_dispatch:
+
+jobs:
+  shard:
+    name: perplexity (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: a
+            configs: fp32,mlp:bfloat16,all:bfloat16,mlp:bfloat8_b
+          - name: b
+            configs: all:bfloat8_b,mlp:bfloat4_b,all:bfloat4_b,mlp:bfloat4_b/bfloat8_b
+          - name: c
+            configs: mlp:bfloat8_b/bfloat4_b,mlp:bfloat4_b_k,all:bfloat4_b_k,mlp:mxfp8
+          - name: d
+            configs: all:mxfp8,mlp:mxfp4,all:mxfp4,mlp:nvfp4
+          - name: e
+            configs: all:nvfp4,mlp:int4_g128,all:int4_g128
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install CPU torch, transformers, datasets
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers datasets
+          pip install -e .
+      - name: Perplexity
+        run: python bench/perplexity.py --configs "${{ matrix.configs }}" --out "shards/${{ matrix.name }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ppl-shard-${{ matrix.name }}
+          path: shards/
+
+  merge:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ppl-shard-*
+          merge-multiple: true
+          path: shards
+      - run: python bench/perplexity.py --merge shards/*.json --out results/perplexity.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: perplexity
+          path: results/perplexity.json
