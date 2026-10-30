@@ -127,7 +127,7 @@ Both give identical results on Wormhole and Blackhole, and the same bits on ever
 
 | Piece | What it does | Numbers |
 |---|---|---|
-| CI ([`ci.yml`](.github/workflows/ci.yml)) | Lint and 54 tests (model, block-float emulation, simulator-vs-model, regression gate) on Linux and macOS | on every push |
+| CI ([`ci.yml`](.github/workflows/ci.yml)) | Lint and 72 tests (model, block-float and MX/NVFP4/INT4 emulation, simulator-vs-model, regression gate) on Linux and macOS | on every push |
 | ttsim matrix ([`ttsim.yml`](.github/workflows/ttsim.yml)) | 6 jobs, Wormhole and Blackhole × bf16, bfloat8_b and bfloat4_b, with a pinned simulator and PCC floors in [`bench/baselines.json`](bench/baselines.json) | 7 tests per chip, split by format |
 | Regression gate | A PR fails if a PCC drops below its floor or a kernel's DRAM tile count goes above its baseline | |
 | C++ build ([`metalium.yml`](.github/workflows/metalium.yml)) | Installs tt-metal's SDK packages, builds the program with CMake, runs both kernels on both chips | 3.2M values checked per run |
@@ -188,7 +188,7 @@ What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's
 ```bash
 python3.11 -m venv .venv && source .venv/bin/activate   # Python 3.11 or newer
 pip install -e ".[dev]"                                  # includes tt-lang-sim 1.1.6
-pytest                                                   # 54 tests
+pytest                                                   # 72 tests
 python bench/fusion.py                                   # the fusion sweep, ~3 min
 python bench/report.py                                   # docs/RESULTS.md
 ```
@@ -227,16 +227,18 @@ cd deploy/ansible && ansible-playbook site.yml   # then cat /var/lib/tensixfuse/
 ```
 kernels/ttlang/        fused and unfused matmul, multicast variant, elementwise ops, runner
 kernels/metalium/      bn_relu: host program, reader/writer kernels, FPU and SFPU compute kernels
-src/tensixfuse/        traffic model, block-float emulation, metrics, simulator runner, doctor
-model/                 GPU-CorruptNet export, GPT-2 MLP capture
-bench/                 fusion sweep, GPT-2 and head studies, BatchNorm check, merge, report, baselines
+src/tensixfuse/        traffic model, block-float and MX/NVFP4/INT4 emulation, metrics, simulator runner, doctor
+model/                 GPU-CorruptNet exports, GPT-2 MLP capture
+bench/                 fusion sweep, GPT-2, perplexity and head studies, BatchNorm check, TT-Lang compiler run, merge, report
 tests/                 model, emulation, simulator-vs-model, regression gate, ttsim
+pins/                  ttsim and SFPI pins for the tt-lang 1.1.6 compiler job (its ttnn is 0.74.0)
 docker/                pinned simulator image
 deploy/helm/           JobSet sweep chart
 deploy/ansible/        site.yml, roles/ttsim_node, roles/health_check, molecule/
-.github/workflows/     ci, ttsim, metalium, docker, sweep, kubernetes, ansible, studies, scaleout
+.github/workflows/     ci, ttsim, metalium, docker, sweep, kubernetes, ansible, studies, perplexity, ttlang-compile, scaleout
 results/               every result the tables come from
 docs/RESULTS.md        all the tables, generated
+docs/make_figures.py   the figures in docs/img, drawn from results/
 ```
 
 ## License

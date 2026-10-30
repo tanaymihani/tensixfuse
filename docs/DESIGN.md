@@ -36,6 +36,22 @@ For each decision: what I picked, what it costs, what could break, and how I'd f
 
 **What could break.** If tt-metal changes its packer (rounding, grouping), the emulation goes stale. [`tests/test_ttsim.py`](../tests/test_ttsim.py) checks it bit for bit against ttnn on every ttsim run, outliers included.
 
+## Perplexity: weight-only, on CPU
+
+**Choice.** The WikiText-2 study ([`bench/perplexity.py`](../bench/perplexity.py)) rounds GPT-2's weights through each format and keeps everything else in fp32, then measures perplexity on the whole test set. Running GPT-2 on ttsim at 287k tokens would take days (one MLP block on 128 tokens takes about 8 s), and the per-block study above already showed the emulation tracking the simulated chip to the 5th decimal.
+
+**Grouping.** Each format groups the way it's stored. bfloat8_b and bfloat4_b share an exponent across 16 values along a tile row, which for `ttnn.linear`'s [K, N] weight means 16 output features. MX, NVFP4 and INT4 group along K, the way their specs and the usual kernels lay out a matmul weight. The `bfloat4_b_k` row asks what bfloat4_b would do if the weight were stored transposed, so its groups ran along K too.
+
+**Cost.** Weight-only leaves out what the chip does to activations (bf16 between ops, the math fidelity of each multiply), so LoFi isn't in this table; its per-block cost is in the fidelity sweep above. MX, NVFP4 and INT4 are emulated from their specs with plain round-to-nearest; GPTQ, AWQ and the NVIDIA recipes calibrate or tune scales and would do better than these rows.
+
+**What could break.** [`tests/test_formats.py`](../tests/test_formats.py) pins the formats' edge cases (ties, saturation, MX's clamp when the floor-rounded scale puts a block's largest value past the format's max, which axis each groups along).
+
+## The TT-Lang compiler, with its own pins
+
+**Choice.** The fusion kernels also go through the real TT-Lang compiler and run on ttsim ([`bench/ttlang_compiled.py`](../bench/ttlang_compiled.py)). The tt-lang 1.1.6 wheel requires ttnn 0.74.0, while the rest of the repo is on 0.79.0, so that one job uses the ttsim and SFPI versions tt-metal 0.74.0 pins ([`pins/tt-lang-1.1.6`](../pins/tt-lang-1.1.6)); the setup scripts switch with `TENSIXFUSE_PINS`.
+
+**Why.** The functional simulator is more forgiving than the compiler: it runs Python, so a kernel can do things the compiler won't lower. Compiling them is the check that these are kernels TT-Lang can actually build.
+
 ## GPU-CorruptNet's head
 
 **Choices.** The calibration temperature is folded into W and b so the calibrated head is still one op. The 10 outputs are padded to 32 and sliced off **before** thresholding: zero-padded columns come out as exactly 0.5 on the device, and the model's threshold is `>= 0.5`. The batch is the two test splits together, 4,160 frames, which is exactly 130 tile rows.
@@ -56,7 +72,7 @@ ttnn 0.79.0, ttsim v1.10.8 and SFPI 7.78.0 are the versions tt-metal 0.79.0 pins
 
 ## CI tiers
 
-- Every push: lint and the 54 fast tests on Linux and macOS (functional simulator, emulation, model, regression gate).
+- Every push: lint and the 72 fast tests on Linux and macOS (functional simulator, emulation, model, regression gate).
 - ttsim: 6 jobs over simulated Wormhole and Blackhole and the three weight formats, with PCC floors.
 - C++: built against Tenstorrent's released SDK packages, both kernels on both chips, every element checked.
 - Studies (GPT-2, CorruptNet head) run when their code changes and write the JSON the tables come from. The two-chip N300 run is manual until host writes to the remote chip work.
