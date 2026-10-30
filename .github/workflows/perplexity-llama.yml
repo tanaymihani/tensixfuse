@@ -1,0 +1,69 @@
+# tt_transformers' weight-precision recipes on a Llama-style model (Qwen2.5-0.5B),
+# WikiText-2 perplexity on CPU, one runner per recipe; the merge job writes
+# results/perplexity_qwen.json and puts the table in the run summary.
+name: perplexity-llama
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "bench/perplexity_llama.py"
+      - ".github/workflows/perplexity-llama.yml"
+  workflow_dispatch:
+
+jobs:
+  shard:
+    name: Qwen2.5-0.5B (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: fp32
+            configs: fp32
+          - name: bf16
+            configs: attn=bfloat16+ff13=bfloat16+ff2=bfloat16
+          - name: default
+            configs: attn=bfloat8_b+ff13=bfloat8_b+ff2=bfloat8_b
+          - name: performance
+            configs: attn=bfloat8_b+ff13=bfloat4_b+ff2=bfloat8_b
+          - name: mlp-bfp4
+            configs: attn=bfloat8_b+ff13=bfloat4_b+ff2=bfloat4_b
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install CPU torch, transformers, datasets
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers datasets
+          pip install -e .
+      - name: Perplexity
+        run: python bench/perplexity_llama.py --configs "${{ matrix.configs }}" --out "shards/${{ matrix.name }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qwen-shard-${{ matrix.name }}
+          path: shards/
+
+  merge:
+    needs: shard
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: qwen-shard-*
+          merge-multiple: true
+          path: shards
+      - run: python bench/perplexity_llama.py --merge shards/*.json --out results/perplexity_qwen.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: perplexity-qwen
+          path: results/perplexity_qwen.json
