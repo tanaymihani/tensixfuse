@@ -1,5 +1,6 @@
 {
  "arch": "wormhole",
+ "layer": "layer4.2.bn3",
  "mode": "sfpu",
  "rows": 1568,
  "channels": 2048,
@@ -13,11 +14,16 @@
  "within_1_ulp_vs_double_rounding": 0.9836161087970344,
  "max_abs_err": 0.0625,
  "max_abs_err_relative_to_max_output": 0.001700680237263441,
- "pcc": 0.9999997585054001,
+ "pcc": 0.9999997585055989,
  "relu_zeros": 0.9339967065927933,
+ "nonzero_outputs": 211954,
+ "exact_on_nonzero_vs_single_rounding": 0.9669550940298367,
+ "within_1_ulp_on_nonzero_vs_single_rounding": 1.0,
+ "exact_on_nonzero_vs_double_rounding": 0.37144380384423037,
+ "within_1_ulp_on_nonzero_vs_double_rounding": 0.7517716108212159,
  "runs_identical": true,
  "seconds": [
-  1.69,
-  0.65
+  1.08,
+  0.38
  ]
 }

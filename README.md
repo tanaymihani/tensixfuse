@@ -18,6 +18,7 @@ TensixFuse is listed in Tenstorrent's [tt-awesome](https://github.com/tenstorren
 - **Data reuse mattered more than fusion.** Bigger blocks cut DRAM traffic from 132 to 20 MiB, and multicasting input panels over the NoC on a 64-core grid took it to 8 MiB, 16.5x below where I started.
 - **Block-float weights on GPT-2.** bfloat8_b cuts the MLP weights 47% and the worst of the 12 blocks still has PCC 0.99982. bfloat4_b cuts 72% and the worst block falls to 0.961. If you keep one layer in bfloat8_b, it should be `c_fc`, not `c_proj`, which is the opposite of what I expected.
 - **The format, not the chip's arithmetic, is where the error comes from.** A NumPy copy of tt-metal's block-float packer (bit-exact with it on a million values) predicts the simulated chip's PCC to the 5th decimal. The same reasoning says LoFi math fidelity should cost nothing with bfloat4_b weights, whose 3 mantissa bits fit in a single multiplier pass, and it measures that way.
+- **Whole-model accuracy, against other formats.** With every linear weight in bfloat8_b, GPT-2 small's WikiText-2 perplexity moves 0.24%. At 4 bits, bfloat4_b costs 21% where NVFP4 costs 6.7% at the same 4.5 bits per weight, and about half of that gap is which axis the 16-value groups run along. On Qwen2.5-0.5B, tt_transformers' performance recipe (FF1/FF3 in bfloat4_b) costs 8.0%, its default (all bfloat8_b) 0.13%.
 - **My own model on a simulated Blackhole.** GPU-CorruptNet's head runs as one fused `sigmoid(x @ W + b)`. With bfloat8_b weights, 2 of 4,160 frames get a different label set from PyTorch, and macro-F1 is unchanged (0.9112 seen, 0.8756 unseen).
 - **A TT-Metalium program by hand.** Fused BatchNorm + ReLU for a real ResNet-50 layer, 3.2 million values over 8 cores, with host code and reader, compute and writer kernels. The fp32 version lands every value within one bf16 step of NumPy, with identical results on simulated Wormhole and Blackhole.
 
@@ -63,6 +64,8 @@ On 64 cores without multicast, every core reads its own copy of the A and B bloc
 
 **What that could be worth in time (modelled, not measured).** ttsim doesn't model time, but Tenstorrent publishes peaks for the Wormhole n150: 74 TFLOPS at 16 bits over 72 cores, and 288 GB/s of DRAM bandwidth ([specifications](https://docs.tenstorrent.com/aibs/wormhole/specifications.html)). On the 64 cores this grid uses, the 1024³ multiply needs at least 33 µs of compute. Moving 36 MiB needs at least 131 µs, so without multicast the kernel would be DRAM-bound about 4× over. With multicast, 8 MiB needs 29 µs, just under the compute time: DRAM stops being the limit below about 9 MiB, so the floor is about where more reuse stops paying. Fusion's 8 MiB is worth the most there: unfused with multicast is 16 MiB and 58 µs, fused is 33 µs. These are bounds from two published numbers, with no NoC contention, dispatch or kernel overhead, and no claim that the kernel reaches either peak.
 
+**Through the real compiler: not yet.** The functional simulator runs a kernel as Python, so it accepts things the TT-Lang compiler won't lower. A CI job ([`ttlang-compile.yml`](.github/workflows/ttlang-compile.yml)) installs the tt-lang 1.1.6 compiler with the ttnn, ttsim and SFPI versions it needs and runs the same kernels on a simulated Blackhole. The device comes up and the tensors load, but the compiler rejects every variant at the `@ttl.operation` with `ValueError: Cannot Compare Non-Integer Values`, most likely the Python flags (`if fused:`) inside the kernel bodies. Rewriting the kernels in the form the compiler takes is next.
+
 Before running anything I wrote an analytic model of how many tiles each kernel should move ([`traffic.py`](src/tensixfuse/traffic.py)). The simulator agrees with it tile for tile on all 48 runs: 4 sizes from 256 to 2048, 6 reuse levels, fused and unfused, and [`tests/test_sim_traffic.py`](tests/test_sim_traffic.py) keeps it that way. Every run that computed real values matched PyTorch with PCC 1.000000. That's expected, because the functional simulator does its math in fp32: it checks that the right tiles went to the right place, not the chip's arithmetic. The chip's arithmetic comes from ttsim, in everything below.
 
 ### 2. Block-float weights on GPT-2's MLPs
@@ -94,6 +97,32 @@ Math fidelity is the other knob: the matrix engine multiplies in 1 to 4 passes (
 
 With bfloat4_b weights, LoFi is as good as HiFi4: the weights only carry 3 mantissa bits, and the first pass already uses them all. With bf16 weights LoFi visibly costs, and HiFi3 already matches HiFi4. ttsim can't say how much faster LoFi would run, but one pass instead of four is the point of it.
 
+**The whole model: WikiText-2 perplexity.** PCC per block doesn't say what the model loses end to end, so I also measured GPT-2 small's perplexity on the whole WikiText-2 test set (287,644 tokens, 280 windows of 1,024) with its weights rounded the way each format stores them: bfloat8_b and bfloat4_b through the same bit-exact emulation of tt-metal's packer, next to OCP's MXFP8 and MXFP4, NVIDIA's NVFP4, and INT4 with one scale per 128 weights. It's weight-only (activations stay fp32), on CPU in CI ([`bench/perplexity.py`](bench/perplexity.py)); the write-up is in [`docs/PERPLEXITY.md`](docs/PERPLEXITY.md).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/perplexity-dark.png">
+  <img alt="Bar chart of GPT-2 small's WikiText-2 perplexity above fp32 (29.95) with every linear weight rounded: bfloat16 +0.0%, MXFP8 +0.1%, bfloat8_b +0.2%, NVFP4 +6.7%, INT4 g128 +11.0%, bfloat4_b with groups along K +14.0%, MXFP4 +15.9%, bfloat4_b +21.0%." src="docs/img/perplexity-light.png" width="100%">
+</picture>
+
+| Weights rounded | bfloat8_b | MXFP8 | bfloat4_b | NVFP4 | INT4 g128 | MXFP4 |
+|---|---|---|---|---|---|---|
+| bits per weight | 8.5 | 8.25 | 4.5 | 4.5 | 4.16 | 4.25 |
+| MLP only | +0.06% | -0.43% | +8.4% | +3.1% | +5.4% | +2.4% |
+| every linear weight | +0.24% | +0.11% | +21.0% | +6.7% | +11.0% | +15.9% |
+
+At 8 bits nothing matters: every 8-bit format is within a quarter of a percent of fp32 (29.95). At 4 bits, bfloat4_b is the weakest format here, at the same 4.5 bits as NVFP4: NVFP4's 16-value groups get a fine-grained FP8 scale and floating-point elements, where bfloat4_b's get a power-of-two exponent and 3 bits of mantissa, so small neighbors of a large weight round to zero. Part of the gap is the axis: Tenstorrent's tiles group 16 *output* features per exponent, and the same format grouped along the input dimension instead (the weight stored transposed) cuts the damage from +21.0% to +14.0%. The mixed MLP splits agree with the per-block PCCs: bfloat8_b `c_fc` with bfloat4_b `c_proj` costs 2.6%, the other way around 5.0%. MXFP8 on the MLP came out slightly below fp32, which I read as luck, not a gain.
+
+**tt_transformers' recipes on a Llama-style model.** Tenstorrent's `tt_transformers` keeps every weight in bfloat8_b by default, and its performance setting moves FF1 and FF3 (the gate and up projections) to bfloat4_b, except on Qwen2.5-7B, which its config says degrades. On Qwen2.5-0.5B, a small model of that family with a gated SiLU MLP, the same emulation gives ([`bench/perplexity_llama.py`](bench/perplexity_llama.py)):
+
+| Recipe | Bits per weight | Perplexity | vs fp32 |
+|---|---|---|---|
+| fp32 (the checkpoint is bf16, so bf16 is the same) | 32 | 14.651 | |
+| default: every linear weight bfloat8_b | 8.5 | 14.669 | +0.13% |
+| performance: FF1/FF3 bfloat4_b, the rest bfloat8_b | 6.16 | 15.816 | +7.96% |
+| every MLP weight bfloat4_b | 4.99 | 16.749 | +14.3% |
+
+So the small Qwen degrades under the performance setting too, by 8% in perplexity, while the default costs 0.13%.
+
 ### 3. GPU-CorruptNet's head on a simulated Blackhole
 
 GPU-CorruptNet is a ResNet-50 that flags GPU rendering artifacts in frames, multi-label over 10 artifact types. Its head is one linear layer from 2,048 pooled features to 10 logits, read through a sigmoid with a `>= 0.5` threshold. I ran the backbone on CPU once for the 1,560 seen-content and 2,600 unseen-content test frames (recomputing the head from those features gives GPU-CorruptNet's published 0.911 and 0.876 macro-F1), and ran only the head on the simulator, fused, with the calibration temperature folded into the weights.
@@ -111,12 +140,14 @@ The frames that flip are the ones whose logits sit right at zero, so bfloat4_b's
 
 At inference time BatchNorm is a per-channel scale and shift, so the step after each conv in ResNet-50 is `y = relu(x * s + b)`. I wrote it as a TT-Metalium program in [`kernels/metalium/bn_relu`](kernels/metalium/bn_relu): host code that sets up the device, DRAM buffers, circular buffers and runtime arguments, and three kernels per core. The reader pulls activation tiles over the NoC (and each column's scale and shift once), compute does the math, and the writer sends finished tiles back. The input is the real input to GPU-CorruptNet's `layer4.2.bn3` for 32 frames, channels last: 1,568 × 2,048 values, 3,136 tiles over 8 cores. It's built in CI against tt-metal 0.79.0's released SDK packages and run on simulated Wormhole and Blackhole.
 
-There are two compute kernels:
+One honest caveat: in ResNet-50, `bn3` is followed by the residual add, not by ReLU, so BN + ReLU on its input is a stand-in, and ReLU zeros 93% of its outputs. Zeros match trivially, so the rates that count are the ones on the 6.6% of outputs (211,954) that stay nonzero:
 
-| Kernel | How | Bit-exact vs NumPy | Within 1 bf16 step | PCC |
-|---|---|---|---|---|
-| `fpu` | matrix engine, row broadcast, bf16 intermediate in L1 | 95.40% | 97.67% | 0.999986 |
-| `sfpu` | vector engine, everything in fp32 registers, one rounding at the end | 99.78% | 100.00% | 1.000000 |
+| Kernel | How | Bit-exact, all | Bit-exact, nonzero | Within 1 bf16 step, nonzero | PCC |
+|---|---|---|---|---|---|
+| `fpu` | matrix engine, row broadcast, bf16 intermediate in L1 | 95.40% | 30.28% | 64.68% | 0.999986 |
+| `sfpu` | vector engine, everything in fp32 registers, one rounding at the end | 99.78% | 96.70% | 100.00% | 1.000000 |
+
+`layer4.2.bn2` is followed by ReLU in the real network; [`model/corruptnet_bn2_export.py`](model/corruptnet_bn2_export.py) exports it for the same 32 frames (75% of its outputs are still zero after ReLU), and running the kernels on it is the next step.
 
 Both give identical results on Wormhole and Blackhole, and the same bits on every run. "NumPy" here is the same bf16 inputs in fp32, rounded to bf16 once.
 
@@ -156,7 +187,7 @@ The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 i
 
 **My first BatchNorm kernel rounded twice.** The FPU version stores `x * s` in L1 as bf16 before adding `b`, so it rounds twice, and the matrix engine reads operands at 16 or 19 bits. Against a reference that rounds the same way it matches 98%, not 95%, which pinned down where the rest came from. The SFPU version keeps everything in fp32 registers and lands every element within one bf16 step. On silicon the FPU version should be the faster one; ttsim can't say by how much.
 
-**Getting the stack to run took more than the kernels did.** The `ttnn` wheel doesn't bundle SFPI, the RISC-V compiler tt-metal uses to build kernels at runtime, so that's pinned and installed separately. The SDK's `libtt_metal.so` needs Tenstorrent's OpenMPI build with ULFM fault tolerance, which the packages don't pull in, so linking failed on `MPIX_Comm_revoke` until I installed it. A slim Ubuntu image also needs `libatomic` and GCC's math libraries for SFPI's compiler. TT-Lang's simulator and the real `ttnn` can't share a Python environment either: with both installed, the simulator picks up the real `ttnn` and the kernels fail, which I found when the Kubernetes pods crashed. So the Dockerfile has two targets. And tt-lang-sim 1.1.6 replaces any kernel error with a `FileNotFoundError` for `ttl/ttl/diagnostics.py`, a file the wheel doesn't ship; [`kernels/ttlang/simfix.py`](kernels/ttlang/simfix.py) prints the real message. Its help text also says the per-core L1 limit is 1,336 KiB, while the code enforces 1,432.
+**Getting the stack to run took more than the kernels did.** The `ttnn` wheel doesn't bundle SFPI, the RISC-V compiler tt-metal uses to build kernels at runtime, so that's pinned and installed separately. The SDK's `libtt_metal.so` needs Tenstorrent's OpenMPI build with ULFM fault tolerance, which the packages don't pull in, so linking failed on `MPIX_Comm_revoke` until I installed it. A slim Ubuntu image also needs `libatomic` and GCC's math libraries for SFPI's compiler. TT-Lang's simulator and the real `ttnn` can't share a Python environment either: with both installed, the simulator picks up the real `ttnn` and the kernels fail, which I found when the Kubernetes pods crashed. So the Dockerfile has two targets. And tt-lang-sim 1.1.6 replaces any kernel error with a `FileNotFoundError` for `ttl/ttl/diagnostics.py`, a file the wheel doesn't ship; [`kernels/ttlang/simfix.py`](kernels/ttlang/simfix.py) prints the real message. Its help text also says the per-core L1 limit is 1,336 KiB, while the code enforces 1,432. I reported both upstream, with repros and proposed fixes: [tt-lang#1192](https://github.com/tenstorrent/tt-lang/issues/1192) and [tt-lang#1193](https://github.com/tenstorrent/tt-lang/issues/1193).
 
 **One run sets the floor for sharding.** Spread over 8 runners, the sweep is bounded by its largest single run, the unblocked 2048³ dry run, which takes about a minute on a hosted runner by itself. Balancing shards by predicted cost keeps the other big runs off that shard, but nothing gets the slowest shard below that one run.
 
@@ -180,10 +211,17 @@ What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's
 ## What I would do next
 
 - Run the same kernels on a real Wormhole or Blackhole card and see how much of the DRAM saving turns into time, and what the SFPU BatchNorm costs next to the FPU one.
+- Write the bfloat8_b linear layer myself in TT-Metalium (matmul with bfloat8_b weights, bias and GELU in one kernel) and match `ttnn.linear` bit for bit, instead of comparing against TTNN's kernel.
 - Fuse the whole MLP (`c_fc`, GELU, `c_proj`) so the 128 × 3072 hidden activations stay in L1 across cores and never touch DRAM.
+- Put LoFi into the perplexity table by running the MLPs on ttsim for a slice of WikiText-2. The CPU emulation can't model math fidelity.
+- Move to tt-metal 0.81.1 (it pins ttsim v1.12.1 and SFPI 7.89.0) and re-run every study, as its own change.
 - Finish the tensor-parallel GPT-2 MLP on ttsim's 2-chip N300 build ([`bench/tp_mlp_n300.py`](bench/tp_mlp_n300.py)). Both simulated chips come up and the Ethernet fabric between them initializes, but host writes to the remote chip time out with tt-metal 0.79.0, which matches ttsim's note that multichip support isn't fully merged into mainline yet. My first attempt also stopped on ttsim's strict checks, with UndefinedBehavior in an unpacker reading and writing Float32, which I didn't get to the bottom of.
 
 ## Reproduce
+
+A simulated Blackhole chip in a container: the health check, then the ttsim tests ([`docs/demo.tape`](docs/demo.tape), recorded in CI):
+
+![Terminal: docker run of the TensixFuse image runs tensixfuse-doctor on a simulated Blackhole, then pytest runs the 7 ttsim tests, which pass in about 22 seconds](docs/img/demo.gif)
 
 **TT-Lang simulator (macOS or Linux):**
 
@@ -207,6 +245,14 @@ eval "$(bash scripts/setup_ttsim.sh blackhole)"
 pytest -m ttsim tests/test_ttsim.py
 python model/gpt2_capture.py && python bench/quant_gpt2.py
 bash scripts/fetch_data.sh && python bench/corruptnet_head.py
+```
+
+**Perplexity (CPU, any OS):**
+
+```bash
+pip install torch transformers datasets && pip install -e .
+python bench/perplexity.py --configs fp32,all:bfloat8_b,all:bfloat4_b,all:nvfp4
+python bench/perplexity_llama.py --configs fp32,attn=bfloat8_b+ff13=bfloat4_b+ff2=bfloat8_b
 ```
 
 **The C++ program** needs tt-metal 0.79.0's SDK packages; [`metalium.yml`](.github/workflows/metalium.yml) has the exact install and build steps.

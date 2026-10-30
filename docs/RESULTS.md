@@ -85,13 +85,70 @@ ttsim, simulated Blackhole. Fused `sigmoid(x @ W + b)` over 4160 test frames (13
 
 Padded output columns came out as [0.5] on the device. Thresholding before slicing them off would give 22.92 labels per frame instead of 0.92.
 
+## GPT-2 small: WikiText-2 perplexity with low-bit weights
+
+CPU emulation, weight-only: each format rounds the chosen weights the way it stores them and everything else stays fp32. Whole test set, 287,644 tokens in 280 non-overlapping windows of 1024. `mlp` rounds c_fc and c_proj in all 12 blocks; `all` adds attention's c_attn and c_proj. Bits per weight include the scales. Made by `python bench/perplexity.py` (torch 2.15.0+cpu, transformers 5.22.1).
+
+| Weights | Rounded | Bits per weight | Perplexity | vs fp32 | Weight error (rel. RMS) |
+|---|---|---|---|---|---|
+| fp32 | nothing | 32.00 | 29.951 | +0.00% | 0.0000 |
+| bfloat16 | all linear | 16.00 | 29.950 | -0.00% | 0.0017 |
+| mxfp8 | all linear | 8.25 | 29.985 | +0.11% | 0.0301 |
+| bfloat8_b | all linear | 8.50 | 30.023 | +0.24% | 0.0075 |
+| nvfp4 | all linear | 4.50 | 31.947 | +6.67% | 0.0946 |
+| int4_g128 | all linear | 4.16 | 33.241 | +10.98% | 0.1066 |
+| bfloat4_b_k | all linear | 4.50 | 34.143 | +14.00% | 0.1177 |
+| mxfp4 | all linear | 4.25 | 34.720 | +15.93% | 0.1171 |
+| bfloat4_b | all linear | 4.50 | 36.249 | +21.03% | 0.1187 |
+| mxfp8 | MLP | 8.25 | 29.821 | -0.43% | 0.0301 |
+| bfloat16 | MLP | 16.00 | 29.950 | -0.00% | 0.0017 |
+| bfloat8_b | MLP | 8.50 | 29.967 | +0.06% | 0.0075 |
+| mxfp4 | MLP | 4.25 | 30.669 | +2.40% | 0.1175 |
+| bfloat8_b c_fc, bfloat4_b c_proj | MLP | 6.50 | 30.742 | +2.64% | 0.0825 |
+| nvfp4 | MLP | 4.50 | 30.872 | +3.08% | 0.0944 |
+| bfloat4_b c_fc, bfloat8_b c_proj | MLP | 6.50 | 31.441 | +4.98% | 0.0865 |
+| int4_g128 | MLP | 4.16 | 31.572 | +5.41% | 0.1075 |
+| bfloat4_b_k | MLP | 4.50 | 31.895 | +6.49% | 0.1182 |
+| bfloat4_b | MLP | 4.50 | 32.470 | +8.41% | 0.1193 |
+
+## Qwen/Qwen2.5-0.5B: tt_transformers' weight recipes, WikiText-2 perplexity
+
+CPU emulation, weight-only, like the GPT-2 study. Whole test set, 299,078 tokens in 292 windows of 1024. FF1/FF3 are the gate and up projections, FF2 the down projection; attention is q, k, v and o. Made by `python bench/perplexity_llama.py`.
+
+| Recipe | Bits per weight | Perplexity | vs fp32 |
+|---|---|---|---|
+| bf16 everywhere | 16.00 | 14.651 | -0.00% |
+| fp32 | 32.00 | 14.651 | +0.00% |
+| tt_transformers default: all bfloat8_b | 8.50 | 14.669 | +0.13% |
+| tt_transformers performance: FF1/FF3 bfloat4_b | 6.16 | 15.816 | +7.96% |
+| all MLP weights bfloat4_b | 4.99 | 16.749 | +14.32% |
+
 ## TT-Metalium C++: fused BatchNorm + ReLU
 
-ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into GPU-CorruptNet's layer4.2.bn3 for 32 frames, channels last. `fpu` multiplies and adds on the matrix engine with a bf16 intermediate in L1; `sfpu` does all three steps in fp32 on the vector engine. Compared with NumPy fp32 rounded once to bf16. Made by `python bench/bn_relu.py --binary build/bn_relu/bn_relu --mode fpu|sfpu`.
+ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into one of GPU-CorruptNet's BatchNorm layers for 32 frames, channels last. In ResNet-50, layer4.2.bn2 is followed by ReLU; layer4.2.bn3 is followed by the residual add, so BN + ReLU on it is a stand-in. `fpu` multiplies and adds on the matrix engine with a bf16 intermediate in L1; `sfpu` does all three steps in fp32 on the vector engine. Compared with NumPy fp32 rounded once to bf16. ReLU's zeros match trivially, so the nonzero columns count only the outputs it doesn't zero. Made by `python bench/bn_relu.py --binary build/bn_relu/bn_relu --layer bn2|bn3 --mode fpu|sfpu`.
 
-| Chip | Kernel | Elements | Cores | PCC | Bit-exact | Within 1 bf16 step | Max error / max output | Two runs identical |
-|---|---|---|---|---|---|---|---|---|
-| wormhole | fpu | 3,211,264 | 8 | 0.999986 | 95.40% | 97.67% | 0.68% | True |
-| wormhole | sfpu | 3,211,264 | 8 | 1.000000 | 99.78% | 100.00% | 0.17% | True |
-| blackhole | fpu | 3,211,264 | 8 | 0.999986 | 95.40% | 97.67% | 0.68% | True |
-| blackhole | sfpu | 3,211,264 | 8 | 1.000000 | 99.78% | 100.00% | 0.17% | True |
+| Layer | Chip | Kernel | Elements | Nonzero outputs | PCC | Bit-exact, all | Bit-exact, nonzero | Within 1 bf16 step, nonzero | Max error / max output | Two runs identical |
+|---|---|---|---|---|---|---|---|---|---|---|
+| layer4.2.bn3 | wormhole | fpu | 3,211,264 | 6.6% | 0.999986 | 95.40% | 30.28% | 64.68% | 0.68% | True |
+| layer4.2.bn3 | wormhole | sfpu | 3,211,264 | 6.6% | 1.000000 | 99.78% | 96.70% | 100.00% | 0.17% | True |
+| layer4.2.bn3 | blackhole | fpu | 3,211,264 | 6.6% | 0.999986 | 95.40% | 30.28% | 64.68% | 0.68% | True |
+| layer4.2.bn3 | blackhole | sfpu | 3,211,264 | 6.6% | 1.000000 | 99.78% | 96.70% | 100.00% | 0.17% | True |
+
+## The fusion kernels through the TT-Lang compiler
+
+ttsim. The same kernels as the fusion study, compiled by the TT-Lang compiler instead of run in the functional simulator, at 256³, `y = relu(a @ b + c)`, bf16, checked against PyTorch. Made by `python bench/ttlang_compiled.py`.
+
+| tt-lang | Chip | Data reuse | Variant | Compiled and ran | PCC | Max abs error |
+|---|---|---|---|---|---|---|
+| 1.1.6 | blackhole | 1x1 tile blocks | fused | no | n/a | n/a |
+| 1.1.6 | blackhole | 1x1 tile blocks | unfused | no | n/a | n/a |
+| 1.1.6 | blackhole | 2x2 tile blocks | fused | no | n/a | n/a |
+| 1.1.6 | blackhole | 2x2 tile blocks | unfused | no | n/a | n/a |
+| 1.1.6 | blackhole | 4x4 tile blocks | fused | no | n/a | n/a |
+| 1.1.6 | blackhole | 4x4 tile blocks | unfused | no | n/a | n/a |
+| 1.1.6 | blackhole | 8x8 tile blocks | fused | no | n/a | n/a |
+| 1.1.6 | blackhole | 8x8 tile blocks | unfused | no | n/a | n/a |
+| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid | fused | no | n/a | n/a |
+| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid | unfused | no | n/a | n/a |
+| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid, multicast | fused | no | n/a | n/a |
+| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid, multicast | unfused | no | n/a | n/a |

@@ -168,6 +168,36 @@ def bn_section(runs: list[dict]) -> list[str]:
     return out
 
 
+RECIPES = {
+    "attn=bfloat16+ff13=bfloat16+ff2=bfloat16": "bf16 everywhere",
+    "attn=bfloat8_b+ff13=bfloat8_b+ff2=bfloat8_b": "tt_transformers default: all bfloat8_b",
+    "attn=bfloat8_b+ff13=bfloat4_b+ff2=bfloat8_b": "tt_transformers performance: FF1/FF3 bfloat4_b",
+    "attn=bfloat8_b+ff13=bfloat4_b+ff2=bfloat4_b": "all MLP weights bfloat4_b",
+}
+
+
+def recipe_section(p: dict) -> list[str]:
+    out = [
+        f"## {p['model']}: tt_transformers' weight recipes, WikiText-2 perplexity",
+        "",
+        (
+            f"CPU emulation, weight-only, like the GPT-2 study. Whole test set, {p['test_tokens']:,} "
+            f"tokens in {p['windows']} windows of {p['window']}. FF1/FF3 are the gate and up "
+            "projections, FF2 the down projection; attention is q, k, v and o. Made by "
+            "`python bench/perplexity_llama.py`."
+        ),
+        "",
+        "| Recipe | Bits per weight | Perplexity | vs fp32 |",
+        "|---|---|---|---|",
+    ]
+    for name, c in sorted(p["configs"].items(), key=lambda kv: kv[1]["ppl"]):
+        out.append(
+            f"| {RECIPES.get(name, name)} | {c['bits_per_weight']:.2f} | {c['ppl']:.3f} | "
+            f"{c['ppl_increase_pct']:+.2f}% |"
+        )
+    return out
+
+
 def perplexity_section(p: dict) -> list[str]:
     out = [
         "## GPT-2 small: WikiText-2 perplexity with low-bit weights",
@@ -245,6 +275,8 @@ def main() -> None:
         parts += head_section(head) + [""]
     if ppl := load("perplexity.json"):
         parts += perplexity_section(ppl) + [""]
+    if qwen := load("perplexity_qwen.json"):
+        parts += recipe_section(qwen) + [""]
     bn_runs = [
         load(f"bn_relu{layer}_{a}_{m}.json")
         for layer in ("_bn2", "")

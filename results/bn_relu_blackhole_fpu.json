@@ -1,5 +1,6 @@
 {
  "arch": "blackhole",
+ "layer": "layer4.2.bn3",
  "mode": "fpu",
  "rows": 1568,
  "channels": 2048,
@@ -15,9 +16,14 @@
  "max_abs_err_relative_to_max_output": 0.006802720949053764,
  "pcc": 0.9999861874690457,
  "relu_zeros": 0.9341589480030293,
+ "nonzero_outputs": 211954,
+ "exact_on_nonzero_vs_single_rounding": 0.3028487313284958,
+ "within_1_ulp_on_nonzero_vs_single_rounding": 0.6468337469450919,
+ "exact_on_nonzero_vs_double_rounding": 0.6955896090661181,
+ "within_1_ulp_on_nonzero_vs_double_rounding": 0.7535314266303066,
  "runs_identical": true,
  "seconds": [
-  2.13,
-  0.71
+  2.32,
+  0.77
  ]
 }

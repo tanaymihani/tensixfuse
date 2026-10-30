@@ -1,0 +1,116 @@
+{
+ "tt_lang": "1.1.6",
+ "ttnn": "unknown",
+ "arch": "blackhole",
+ "simulator": "libttsim_bh.so",
+ "runs": [
+  {
+   "label": "1x1 tile blocks",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 3.1,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:37.849\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 94, in main\n    make_matmul(cfg, epilogue=\"bias_act\", act=args.act)(a_t, b_t, c_t, y_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1485, in _compile_kernel\n    raise type(e)(formatted) from None\nValueError: ValueError: Cannot Compare Non-Integer Values\n  --> /home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/ops.py:49:1\n   |\n49 |     @ttl.operation(grid=(cols, rows))\n   | ^\n   |\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "1x1 tile blocks",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 1.7,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:40.890\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 99, in main\n    make_matmul(cfg)(a_t, b_t, c_t, y1_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1442, in _compile_kernel\n    cb_configs = _collect_cb_configs(threads)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1069, in _collect_cb_configs\n    val = cell.cell_contents\n          ^^^^^^^^^^^^^^^^^^\nValueError: Cell is empty\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "2x2 tile blocks",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 1.7,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:42.657\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 94, in main\n    make_matmul(cfg, epilogue=\"bias_act\", act=args.act)(a_t, b_t, c_t, y_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1485, in _compile_kernel\n    raise type(e)(formatted) from None\nValueError: ValueError: Cannot Compare Non-Integer Values\n  --> /home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/ops.py:49:1\n   |\n49 |     @ttl.operation(grid=(cols, rows))\n   | ^\n   |\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "2x2 tile blocks",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 1.8,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:44.372\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 99, in main\n    make_matmul(cfg)(a_t, b_t, c_t, y1_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1442, in _compile_kernel\n    cb_configs = _collect_cb_configs(threads)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1069, in _collect_cb_configs\n    val = cell.cell_contents\n          ^^^^^^^^^^^^^^^^^^\nValueError: Cell is empty\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "4x4 tile blocks",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 2.0,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:46.320\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 94, in main\n    make_matmul(cfg, epilogue=\"bias_act\", act=args.act)(a_t, b_t, c_t, y_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1485, in _compile_kernel\n    raise type(e)(formatted) from None\nValueError: ValueError: Cannot Compare Non-Integer Values\n  --> /home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/ops.py:49:1\n   |\n49 |     @ttl.operation(grid=(cols, rows))\n   | ^\n   |\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "4x4 tile blocks",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 2.0,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:48.338\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 99, in main\n    make_matmul(cfg)(a_t, b_t, c_t, y1_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1442, in _compile_kernel\n    cb_configs = _collect_cb_configs(threads)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1069, in _collect_cb_configs\n    val = cell.cell_contents\n          ^^^^^^^^^^^^^^^^^^\nValueError: Cell is empty\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "8x8 tile blocks",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 1.9,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:50.260\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 94, in main\n    make_matmul(cfg, epilogue=\"bias_act\", act=args.act)(a_t, b_t, c_t, y_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1485, in _compile_kernel\n    raise type(e)(formatted) from None\nValueError: ValueError: Cannot Compare Non-Integer Values\n  --> /home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/ops.py:49:1\n   |\n49 |     @ttl.operation(grid=(cols, rows))\n   | ^\n   |\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "8x8 tile blocks",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 1.9,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:52.172\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 99, in main\n    make_matmul(cfg)(a_t, b_t, c_t, y1_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1442, in _compile_kernel\n    cb_configs = _collect_cb_configs(threads)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1069, in _collect_cb_configs\n    val = cell.cell_contents\n          ^^^^^^^^^^^^^^^^^^\nValueError: Cell is empty\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "4x4 blocks per core, 2x2 grid",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 1.9,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:54.022\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 94, in main\n    make_matmul(cfg, epilogue=\"bias_act\", act=args.act)(a_t, b_t, c_t, y_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1485, in _compile_kernel\n    raise type(e)(formatted) from None\nValueError: ValueError: Cannot Compare Non-Integer Values\n  --> /home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/ops.py:49:1\n   |\n49 |     @ttl.operation(grid=(cols, rows))\n   | ^\n   |\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "4x4 blocks per core, 2x2 grid",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 1.8,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:55.872\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 99, in main\n    make_matmul(cfg)(a_t, b_t, c_t, y1_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1442, in _compile_kernel\n    cb_configs = _collect_cb_configs(threads)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1069, in _collect_cb_configs\n    val = cell.cell_contents\n          ^^^^^^^^^^^^^^^^^^\nValueError: Cell is empty\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "4x4 blocks per core, 2x2 grid, multicast",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 2.0,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:57.673\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 94, in main\n    make_matmul(cfg, epilogue=\"bias_act\", act=args.act)(a_t, b_t, c_t, y_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1485, in _compile_kernel\n    raise type(e)(formatted) from None\nValueError: ValueError: Cannot Compare Non-Integer Values\n  --> /home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/ops.py:126:1\n    |\n126 |     @ttl.operation(grid=(cols, rows))\n    | ^\n    |\n - ... skipped remainder\n - ... skipped remainder"
+  },
+  {
+   "label": "4x4 blocks per core, 2x2 grid, multicast",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 1.8,
+   "ok": false,
+   "error": "\u001b[32m2026-10-30 12:51:59.696\u001b[0m | \u001b[34m\u001b[1mDEBUG   \u001b[0m | \u001b[36mttnn\u001b[0m:\u001b[36m<module>\u001b[0m:\u001b[36m79\u001b[0m - \u001b[34m\u001b[1mInitial ttnn.CONFIG:\nConfig{cache_path=/home/runner/.cache/ttnn,model_cache_path=/home/runner/.cache/ttnn/models,tmp_dir=/tmp/ttnn,enable_model_cache=false,enable_fast_runtime_mode=true,throw_exception_on_fallback=false,enable_logging=false,enable_graph_report=false,enable_graph_python_stack_traces=false,enable_detailed_buffer_report=false,enable_detailed_tensor_report=false,enable_comparison_mode=false,comparison_mode_should_raise_exception=false,comparison_mode_pcc=0.9999,root_report_path=generated/ttnn/reports,report_name=std::nullopt,std::nullopt}\u001b[0m\nTraceback (most recent call last):\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 125, in <module>\n    main()\n  File \"/home/runner/work/tensixfuse/tensixfuse/kernels/ttlang/run_matmul.py\", line 99, in main\n    make_matmul(cfg)(a_t, b_t, c_t, y1_t)\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1860, in _wrapper\n    compiled_kernel = _compile_kernel(\n                      ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1442, in _compile_kernel\n    cb_configs = _collect_cb_configs(threads)\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/ttl/ttl_api.py\", line 1069, in _collect_cb_configs\n    val = cell.cell_contents\n          ^^^^^^^^^^^^^^^^^^\nValueError: Cell is empty\n - ... skipped remainder\n - ... skipped remainder"
+  }
+ ]
+}

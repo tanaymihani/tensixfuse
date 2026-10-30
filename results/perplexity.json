@@ -1,0 +1,221 @@
+{
+ "model": "openai-community/gpt2",
+ "dataset": "wikitext-2-raw-v1 test",
+ "test_tokens": 287644,
+ "window": 1024,
+ "windows": 280,
+ "torch": "2.15.0+cpu",
+ "transformers": "5.22.1",
+ "cpu": "x86_64",
+ "configs": {
+  "fp32": {
+   "ppl": 29.950595245039224,
+   "nll": 973766.8725585938,
+   "predicted_tokens": 286440,
+   "params_quantized": 0,
+   "bits_per_weight": 32.0,
+   "quantized_mib": 0.0,
+   "weight_rel_rmse": 0.0,
+   "seconds": 631.3,
+   "ppl_increase_pct": 0.0
+  },
+  "mlp:bfloat16": {
+   "ppl": 29.94954479822433,
+   "nll": 973756.826171875,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 16.0,
+   "quantized_mib": 108.0,
+   "weight_rel_rmse": 0.0016880663933025494,
+   "seconds": 642.3,
+   "ppl_increase_pct": -0.003507265235636048
+  },
+  "all:bfloat16": {
+   "ppl": 29.95016827161752,
+   "nll": 973762.7890625,
+   "predicted_tokens": 286440,
+   "params_quantized": 84934656,
+   "bits_per_weight": 16.0,
+   "quantized_mib": 162.0,
+   "weight_rel_rmse": 0.0016860157548976538,
+   "seconds": 638.7,
+   "ppl_increase_pct": -0.0014255924405182085
+  },
+  "mlp:bfloat8_b": {
+   "ppl": 29.967367968756367,
+   "nll": 973927.2377929688,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 8.5,
+   "quantized_mib": 57.375,
+   "weight_rel_rmse": 0.007484192965843181,
+   "seconds": 631.6,
+   "ppl_increase_pct": 0.05600130341290033
+  },
+  "all:bfloat8_b": {
+   "ppl": 30.023381252713456,
+   "nll": 974462.1352539062,
+   "predicted_tokens": 286440,
+   "params_quantized": 84934656,
+   "bits_per_weight": 8.5,
+   "quantized_mib": 86.0625,
+   "weight_rel_rmse": 0.007471380126108914,
+   "seconds": 649.3,
+   "ppl_increase_pct": 0.24302023742346357
+  },
+  "mlp:bfloat4_b": {
+   "ppl": 32.470366573055635,
+   "nll": 996905.1166992188,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 4.5,
+   "quantized_mib": 30.375,
+   "weight_rel_rmse": 0.11925741699901726,
+   "seconds": 654.7,
+   "ppl_increase_pct": 8.413092652753761
+  },
+  "all:bfloat4_b": {
+   "ppl": 36.24876744212563,
+   "nll": 1028435.716796875,
+   "predicted_tokens": 286440,
+   "params_quantized": 84934656,
+   "bits_per_weight": 4.5,
+   "quantized_mib": 45.5625,
+   "weight_rel_rmse": 0.11868609467115497,
+   "seconds": 657.9,
+   "ppl_increase_pct": 21.02853764861179
+  },
+  "mlp:bfloat4_b/bfloat8_b": {
+   "ppl": 31.440864130069432,
+   "nll": 987676.1850585938,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 6.5,
+   "quantized_mib": 43.875,
+   "weight_rel_rmse": 0.08645439837724607,
+   "seconds": 656.7,
+   "ppl_increase_pct": 4.975757152195648
+  },
+  "mlp:bfloat8_b/bfloat4_b": {
+   "ppl": 30.74245824238533,
+   "nll": 981241.6689453125,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 6.5,
+   "quantized_mib": 43.875,
+   "weight_rel_rmse": 0.08248625130805681,
+   "seconds": 433.3,
+   "ppl_increase_pct": 2.643897361196057
+  },
+  "mlp:bfloat4_b_k": {
+   "ppl": 31.895251294274896,
+   "nll": 991786.2221679688,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 4.5,
+   "quantized_mib": 30.375,
+   "weight_rel_rmse": 0.11823029097925991,
+   "seconds": 432.6,
+   "ppl_increase_pct": 6.492879468089274
+  },
+  "all:bfloat4_b_k": {
+   "ppl": 34.1430291387212,
+   "nll": 1011293.1596679688,
+   "predicted_tokens": 286440,
+   "params_quantized": 84934656,
+   "bits_per_weight": 4.5,
+   "quantized_mib": 45.5625,
+   "weight_rel_rmse": 0.11766715277202894,
+   "seconds": 428.5,
+   "ppl_increase_pct": 13.997831626990354
+  },
+  "mlp:mxfp8": {
+   "ppl": 29.82062746235414,
+   "nll": 972521.1884765625,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 8.25,
+   "quantized_mib": 55.6875,
+   "weight_rel_rmse": 0.030140470196226548,
+   "seconds": 427.9,
+   "ppl_increase_pct": -0.4339405665288454
+  },
+  "all:mxfp8": {
+   "ppl": 29.98493815011692,
+   "nll": 974095.1313476562,
+   "predicted_tokens": 286440,
+   "params_quantized": 84934656,
+   "bits_per_weight": 8.25,
+   "quantized_mib": 83.53125,
+   "weight_rel_rmse": 0.030059791947724703,
+   "seconds": 659.0,
+   "ppl_increase_pct": 0.11466518376921364
+  },
+  "mlp:mxfp4": {
+   "ppl": 30.66850032263328,
+   "nll": 980551.7426757812,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 4.25,
+   "quantized_mib": 28.6875,
+   "weight_rel_rmse": 0.11752205341119641,
+   "seconds": 655.9,
+   "ppl_increase_pct": 2.3969643064538637
+  },
+  "all:mxfp4": {
+   "ppl": 34.72048373971065,
+   "nll": 1016097.154296875,
+   "predicted_tokens": 286440,
+   "params_quantized": 84934656,
+   "bits_per_weight": 4.25,
+   "quantized_mib": 43.03125,
+   "weight_rel_rmse": 0.11706919916599216,
+   "seconds": 658.1,
+   "ppl_increase_pct": 15.925855415048806
+  },
+  "mlp:nvfp4": {
+   "ppl": 30.87188544386002,
+   "nll": 982445.0634765625,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 4.5,
+   "quantized_mib": 30.375,
+   "weight_rel_rmse": 0.09442512774370039,
+   "seconds": 657.5,
+   "ppl_increase_pct": 3.0760330179861572
+  },
+  "all:nvfp4": {
+   "ppl": 31.94698655786047,
+   "nll": 992250.4619140625,
+   "predicted_tokens": 286440,
+   "params_quantized": 84934656,
+   "bits_per_weight": 4.5,
+   "quantized_mib": 45.5625,
+   "weight_rel_rmse": 0.09460594743011158,
+   "seconds": 656.8,
+   "ppl_increase_pct": 6.665614811618514
+  },
+  "mlp:int4_g128": {
+   "ppl": 31.57195933980938,
+   "nll": 988868.0366210938,
+   "predicted_tokens": 286440,
+   "params_quantized": 56623104,
+   "bits_per_weight": 4.15625,
+   "quantized_mib": 28.0546875,
+   "weight_rel_rmse": 0.10753290818113449,
+   "seconds": 649.2,
+   "ppl_increase_pct": 5.41346200803372
+  },
+  "all:int4_g128": {
+   "ppl": 33.24064816490283,
+   "nll": 1003620.8725585938,
+   "predicted_tokens": 286440,
+   "params_quantized": 84934656,
+   "bits_per_weight": 4.15625,
+   "quantized_mib": 42.08203125,
+   "weight_rel_rmse": 0.10664645833545733,
+   "seconds": 651.9,
+   "ppl_increase_pct": 10.984933330861079
+  }
+ }
+}

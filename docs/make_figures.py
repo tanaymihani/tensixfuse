@@ -174,69 +174,75 @@ def perplexity() -> None:
         return
     res = json.loads(src.read_text())
     base = res["configs"]["fp32"]["ppl"]
-    points = [
-        (c["bits_per_weight"], c["ppl"], name.split(":")[1])
+    rows = sorted(
+        (
+            (c["ppl"] / base - 1) * 100,
+            c["ppl"],
+            c["bits_per_weight"],
+            name.split(":")[1],
+        )
         for name, c in res["configs"].items()
         if name.startswith("all:")
-    ]
-    families = list(dict.fromkeys(FAMILY[f][0] for _, _, f in points if f != "bfloat16"))
+    )
+    families = ["Tenstorrent block float", "OCP MX / NVFP4", "INT4, group of 128", "bfloat16"]
     for mode, t in THEMES.items():
-        colors = dict(zip(families, (t["s1"], t["s2"], t["s3"]), strict=False))
-        colors["bfloat16"] = t["ink2"]
+        colors = dict(zip(families, (t["s1"], t["s2"], t["s3"], t["ink2"]), strict=True))
         fig, ax = plt.subplots(figsize=(8, 4.5), dpi=200)
         fig.patch.set_facecolor(t["surface"])
         style_axes(ax, t)
-        ax.xaxis.grid(False)
-        ax.axhline(base, color=t["ink2"], linewidth=1)
-        ax.text(
-            16.6, base, f"fp32 {base:.2f}", va="center", ha="left", fontsize=8.5, color=t["ink2"]
-        )
+        ax.yaxis.grid(False)
+        ax.xaxis.grid(True, color=t["grid"], linewidth=1)
+        y = list(range(len(rows)))[::-1]
         seen = set()
-        for bits, ppl, fmt in sorted(points):
-            fam, label = FAMILY[fmt]
-            ax.scatter(
-                bits,
-                ppl,
-                s=70,
+        for yi, (pct, ppl, bits, fmt) in zip(y, rows, strict=True):
+            fam = FAMILY[fmt][0]
+            ax.barh(
+                yi,
+                max(pct, 0.05),
+                height=0.5,
                 color=colors[fam],
-                edgecolor=t["surface"],
-                linewidth=2,
-                zorder=3,
                 label=None if fam in seen else fam,
             )
             seen.add(fam)
-            ax.annotate(
-                f"{label}  {ppl:.2f}",
-                (bits, ppl),
-                xytext=(8, 0),
-                textcoords="offset points",
+            ax.text(
+                max(pct, 0) + 0.3,
+                yi,
+                f"+{max(pct, 0):.1f}%  ({ppl:.2f})",
                 va="center",
                 fontsize=8.5,
                 color=t["ink"],
             )
-        ax.set_yscale("log")
-        ax.set_xlim(3.5, 18.5)
-        ax.set_xlabel("bits per weight, scales included", fontsize=9.5, color=t["ink2"])
-        ax.set_ylabel("perplexity (log scale)", fontsize=9.5, color=t["ink2"])
+        ax.set_yticks(y)
+        ax.set_yticklabels(
+            [
+                f"{FAMILY[f][1].replace(chr(10), ' ')}, {f'{b:.2f}'.rstrip('0').rstrip('.')} bits"
+                for _, _, b, f in rows
+            ],
+            fontsize=8.5,
+            color=t["ink"],
+        )
+        ax.set_xlim(0, max(r[0] for r in rows) * 1.25)
+        ax.set_xlabel(f"perplexity above fp32 ({base:.2f}), %", fontsize=9.5, color=t["ink2"])
         fig.suptitle(
-            "GPT-2 small on WikiText-2: every linear weight in the 12 blocks rounded",
-            x=0.06,
+            "GPT-2 small on WikiText-2, every linear weight rounded",
+            x=0.03,
             ha="left",
             fontsize=13,
             fontweight="bold",
             color=t["ink"],
         )
-        ax.set_title(
-            f"Full test set, {res['windows']} windows of {res['window']} tokens; "
-            "weight-only, everything else fp32. Lower is better",
-            loc="left",
+        fig.text(
+            0.03,
+            0.875,
+            f"Whole test set, {res['windows']} windows of {res['window']} tokens; weight-only, "
+            "everything else fp32. Bits per weight include the scales",
             fontsize=8.5,
             color=t["ink2"],
         )
         leg = ax.legend(frameon=False, fontsize=8.5, loc="upper right")
         for text in leg.get_texts():
             text.set_color(t["ink"])
-        fig.subplots_adjust(left=0.09, right=0.97, top=0.84, bottom=0.13)
+        fig.subplots_adjust(left=0.33, right=0.97, top=0.84, bottom=0.13)
         fig.savefig(OUT / f"perplexity-{mode}.png", facecolor=t["surface"])
         plt.close(fig)
 

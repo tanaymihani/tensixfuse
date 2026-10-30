@@ -1,0 +1,67 @@
+{
+ "model": "Qwen/Qwen2.5-0.5B",
+ "dataset": "wikitext-2-raw-v1 test",
+ "test_tokens": 299078,
+ "window": 1024,
+ "windows": 292,
+ "torch": "2.15.0+cpu",
+ "transformers": "5.22.1",
+ "cpu": "x86_64",
+ "configs": {
+  "attn=bfloat16+ff13=bfloat16+ff2=bfloat16": {
+   "ppl": 14.65064830105264,
+   "nll": 801898.4979248047,
+   "predicted_tokens": 298716,
+   "params_quantized": 357826560,
+   "bits_per_weight": 16.0,
+   "quantized_mib": 682.5,
+   "weight_rel_rmse": 0.0,
+   "seconds": 1298.6,
+   "ppl_increase_pct": -2.4927653385908854e-06
+  },
+  "attn=bfloat8_b+ff13=bfloat8_b+ff2=bfloat8_b": {
+   "ppl": 14.6690991033879,
+   "nll": 802274.4595947266,
+   "predicted_tokens": 298716,
+   "params_quantized": 357826560,
+   "bits_per_weight": 8.5,
+   "quantized_mib": 362.578125,
+   "weight_rel_rmse": 0.007858952229320234,
+   "seconds": 2201.0,
+   "ppl_increase_pct": 0.12593597423069536
+  },
+  "fp32": {
+   "ppl": 14.650648666258931,
+   "nll": 801898.5053710938,
+   "predicted_tokens": 298716,
+   "params_quantized": 0,
+   "bits_per_weight": 32.0,
+   "quantized_mib": 0.0,
+   "weight_rel_rmse": 0.0,
+   "seconds": 1767.7,
+   "ppl_increase_pct": 0.0
+  },
+  "attn=bfloat8_b+ff13=bfloat4_b+ff2=bfloat4_b": {
+   "ppl": 16.74884765109273,
+   "nll": 841880.1026611328,
+   "predicted_tokens": 298716,
+   "params_quantized": 357826560,
+   "bits_per_weight": 4.992307692307692,
+   "quantized_mib": 212.953125,
+   "weight_rel_rmse": 0.110634753465152,
+   "seconds": 2185.9,
+   "ppl_increase_pct": 14.321543247883906
+  },
+  "attn=bfloat8_b+ff13=bfloat4_b+ff2=bfloat8_b": {
+   "ppl": 15.816362595949162,
+   "nll": 824768.3216552734,
+   "predicted_tokens": 298716,
+   "params_quantized": 357826560,
+   "bits_per_weight": 6.161538461538462,
+   "quantized_mib": 262.828125,
+   "weight_rel_rmse": 0.09346358810166638,
+   "seconds": 1075.6,
+   "ppl_increase_pct": 7.956739365233156
+  }
+ }
+}
