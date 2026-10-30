@@ -20,7 +20,7 @@ TensixFuse is listed in Tenstorrent's [tt-awesome](https://github.com/tenstorren
 - **The format, not the chip's arithmetic, is where the error comes from.** A NumPy copy of tt-metal's block-float packer (bit-exact with it on a million values) predicts the simulated chip's PCC to the 5th decimal. The same reasoning says LoFi math fidelity should cost nothing with bfloat4_b weights, whose 3 mantissa bits fit in a single multiplier pass, and it measures that way.
 - **Whole-model accuracy, against other formats.** With every linear weight in bfloat8_b, GPT-2 small's WikiText-2 perplexity moves 0.24%. At 4 bits, bfloat4_b costs 21% where NVFP4 costs 6.7% at the same 4.5 bits per weight, and about half of that gap is which axis the 16-value groups run along. On Qwen2.5-0.5B, tt_transformers' performance recipe (FF1/FF3 in bfloat4_b) costs 8.0%, its default (all bfloat8_b) 0.13%.
 - **My own model on a simulated Blackhole.** GPU-CorruptNet's head runs as one fused `sigmoid(x @ W + b)`. With bfloat8_b weights, 2 of 4,160 frames get a different label set from PyTorch, and macro-F1 is unchanged (0.9112 seen, 0.8756 unseen).
-- **A TT-Metalium program by hand.** Fused BatchNorm + ReLU for a real ResNet-50 layer, 3.2 million values over 8 cores, with host code and reader, compute and writer kernels. The fp32 version lands every value within one bf16 step of NumPy, with identical results on simulated Wormhole and Blackhole.
+- **A TT-Metalium program by hand.** Fused BatchNorm + ReLU on a real ResNet-50 layer's input, 3.2 million values over 8 cores, with host code and reader, compute and writer kernels. The fp32 version lands every value within one bf16 step of NumPy, with identical results on simulated Wormhole and Blackhole.
 
 ## How a tile moves
 
@@ -209,6 +209,8 @@ What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's
 - TT-Lang's functional simulator computes with PyTorch in fp32 and stores bfloat8_b as bf16, so it can check data movement but not numerics. Every accuracy number comes from ttsim.
 - GPU-CorruptNet's head is small (20,490 parameters), and its backbone ran on CPU. GPT-2 small is a small model, and bigger LLMs have larger outliers, so bfloat4_b would likely do worse on them.
 - The sweep's fan-out speedup is real but modest, because the sweep is short and one run dominates it.
+- The perplexity numbers are CPU emulation of the weights only: activations stay fp32, and math fidelity (LoFi) isn't modelled. The other formats are plain round-to-nearest, without the calibration GPTQ, AWQ or NVIDIA's recipes would add.
+- My TT-Lang kernels have only run in the functional simulator. They don't get through the TT-Lang compiler yet (TT-Lang's own tutorial kernel does, in the same CI job).
 
 ## What I would do next
 
