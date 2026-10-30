@@ -8,6 +8,8 @@ Writes docs/img/:
   (results/perplexity.json, skipped until it exists)
 - tile-trip-{light,dark}.svg: how a tile moves through a Tensix core
 - blockfloat-{light,dark}.svg: what a 32x32 tile costs in each format
+- summa-{light,dark}.svg: the multicast pattern, with its DRAM numbers
+- infra-{light,dark}.svg: CI, images, where they run, results
 """
 
 from __future__ import annotations
@@ -405,12 +407,158 @@ def blockfloat() -> None:
         )
 
 
+def summa() -> None:
+    runs = json.loads((REPO / "results" / "fusion.json").read_text())
+    at = {
+        r["mcast"]: r["dram"]["total"] * 2048 / 2**20
+        for r in runs
+        if r["M"] == 1024 and r["grid"] == [8, 8] and r["variant"] == "fused"
+    }
+    n, cell, gap, gx, gy = 4, 62, 18, 150, 96
+    pitch = cell + gap
+    for mode, t in THEMES.items():
+        body = (
+            f'<text x="{gx - 110}" y="34" font-size="15" font-weight="600" fill="{t["ink"]}">'
+            "Multicast: one core per row reads A, one per column reads B</text>\n"
+            f'<text x="{gx - 110}" y="56" font-size="12" fill="{t["ink2"]}">'
+            "4×4 cores shown; the study runs 8×8. The pattern is tt-lang's SUMMA benchmark."
+            "</text>\n"
+        )
+        for r in range(n):
+            for c in range(n):
+                x, y = gx + c * pitch, gy + r * pitch
+                if c == 0 and r == 0:
+                    fill, stroke, sw = t["s1"], t["s2"], 4
+                elif c == 0:
+                    fill, stroke, sw = t["s1"], t["s1"], 1
+                elif r == 0:
+                    fill, stroke, sw = t["s2"], t["s2"], 1
+                else:
+                    fill, stroke, sw = t["plane"], t["grid"], 1
+                body += (
+                    f'<rect x="{x}" y="{y}" width="{cell}" height="{cell}" rx="7" '
+                    f'fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>\n'
+                )
+        for r in range(n):  # A: DRAM -> column 0, then along the row
+            y = gy + r * pitch + cell / 2
+            body += arrow(gx - 64, y, gx, t)
+            body += (
+                f'<line x1="{gx + cell}" y1="{y}" x2="{gx + (n - 1) * pitch + cell / 2 - 7}" '
+                f'y2="{y}" stroke="{t["s1"]}" stroke-width="2.5"/>\n'
+                f'<path d="M{gx + (n - 1) * pitch + cell / 2 - 8},{y - 5} '
+                f"L{gx + (n - 1) * pitch + cell / 2 + 2},{y} "
+                f'L{gx + (n - 1) * pitch + cell / 2 - 8},{y + 5} Z" fill="{t["s1"]}"/>\n'
+            )
+        for c in range(n):  # B: DRAM -> row 0, then down the column
+            x = gx + c * pitch + cell / 2
+            body += (
+                f'<line x1="{x}" y1="{gy - 30}" x2="{x}" y2="{gy - 7}" stroke="{t["ink2"]}" '
+                f'stroke-width="1.5"/>\n'
+                f'<path d="M{x - 4.5},{gy - 8} L{x},{gy} L{x + 4.5},{gy - 8} Z" '
+                f'fill="{t["ink2"]}"/>\n'
+                f'<line x1="{x + 14}" y1="{gy + cell}" x2="{x + 14}" '
+                f'y2="{gy + (n - 1) * pitch + cell / 2 - 7}" stroke="{t["s2"]}" '
+                f'stroke-width="2.5"/>\n'
+                f'<path d="M{x + 9},{gy + (n - 1) * pitch + cell / 2 - 8} '
+                f"L{x + 14},{gy + (n - 1) * pitch + cell / 2 + 2} "
+                f'L{x + 19},{gy + (n - 1) * pitch + cell / 2 - 8} Z" fill="{t["s2"]}"/>\n'
+            )
+        body += f'<text x="{gx - 96}" y="{gy - 12}" font-size="11" fill="{t["ink2"]}">from DRAM</text>\n'
+        tx = gx + n * pitch + 40
+        lines = [
+            (t["s1"], "reads a row of A blocks from DRAM, multicasts it along its row"),
+            (t["s2"], "reads a column of B blocks, multicasts it down its column"),
+            (t["surface"], "(the corner core does both)"),
+            (t["plane"], "every other core gets A and B over the NoC"),
+        ]
+        for i, (color, text) in enumerate(lines):
+            y = gy + 8 + i * 30
+            body += swatch(tx, y, color) + (
+                f'<text x="{tx + 18}" y="{y + 10}" font-size="12.5" fill="{t["ink"]}">'
+                f"{text}</text>\n"
+            )
+        y0 = gy + 158
+        body += (
+            f'<text x="{tx}" y="{y0}" font-size="12.5" fill="{t["ink2"]}">'
+            "Fused matmul + bias + ReLU at 1024³, 4×4 tile blocks per core, 64 cores:</text>\n"
+            f'<text x="{tx}" y="{y0 + 30}" font-size="15" fill="{t["ink"]}">every core reads its '
+            f'own A and B: <tspan font-weight="700">{at[False]:.0f} MiB</tspan> from DRAM</text>\n'
+            f'<text x="{tx}" y="{y0 + 58}" font-size="15" fill="{t["ink"]}">with multicast: '
+            f'<tspan font-weight="700">{at[True]:.0f} MiB</tspan>, each tensor read once</text>\n'
+        )
+        (OUT / f"summa-{mode}.svg").write_text(
+            svg(980, gy + n * pitch + 16, t, body, "SUMMA-style multicast on a grid of cores")
+        )
+
+
+def infra() -> None:
+    jobs = [
+        "lint + tests, Linux and macOS",
+        "ttsim: Wormhole, Blackhole × 3 formats",
+        "C++ build against tt-metal's SDK",
+        "studies, perplexity, TT-Lang compiler",
+        "the fusion sweep, 8 cost-balanced shards",
+        "the sweep as a JobSet on kind (Helm)",
+        "Ansible + Molecule: bare Ubuntu to sim node",
+    ]
+    outputs = [
+        ("Results", "results/*.json, which bench/report.py turns into the docs"),
+        ("Images", "2 images, each tested, then pushed to GHCR"),
+        ("Checks", "PCC floors and DRAM-tile baselines gate every PR"),
+    ]
+    for mode, t in THEMES.items():
+        body = (
+            f'<text x="20" y="30" font-size="13" fill="{t["ink2"]}">Every simulator, compiler '
+            "and SDK version is pinned with a checksum.</text>\n"
+        )
+        y0 = 52
+        body += box(20, y0 + 96, 150, 64, t, "git push", "PRs, main, weekly")
+        ax, aw, ah = 210, 300, 46 + 22 * len(jobs)
+        body += (
+            f'<rect x="{ax}" y="{y0}" width="{aw}" height="{ah}" rx="10" fill="{t["wash"]}" '
+            f'stroke="{t["s1"]}" stroke-width="2"/>\n'
+            f'<text x="{ax + 16}" y="{y0 + 28}" font-size="15" font-weight="600" '
+            f'fill="{t["ink"]}">GitHub Actions</text>\n'
+        )
+        for j, job in enumerate(jobs):
+            body += (
+                f'<text x="{ax + 16}" y="{y0 + 54 + 22 * j}" font-size="12" '
+                f'fill="{t["ink2"]}">{job}</text>\n'
+            )
+        body += arrow(170, y0 + 128, ax, t)
+        ox, ow, oh = ax + aw + 60, 400, 58
+        for i, (title, text) in enumerate(outputs):
+            oy = y0 + 8 + i * (oh + 22)
+            body += (
+                f'<rect x="{ox}" y="{oy}" width="{ow}" height="{oh}" rx="10" '
+                f'fill="{t["plane"]}" stroke="{t["grid"]}"/>\n'
+                f'<text x="{ox + 14}" y="{oy + 24}" font-size="14" font-weight="600" '
+                f'fill="{t["ink"]}">{title}</text>\n'
+                f'<text x="{ox + 14}" y="{oy + 44}" font-size="12" fill="{t["ink2"]}">'
+                f"{text}</text>\n"
+                f'<line x1="{ax + aw}" y1="{y0 + ah / 2}" x2="{ox - 7}" y2="{oy + oh / 2}" '
+                f'stroke="{t["ink2"]}" stroke-width="1.5"/>\n'
+                f'<circle cx="{ox - 4}" cy="{oy + oh / 2}" r="4" fill="{t["ink2"]}"/>\n'
+            )
+        (OUT / f"infra-{mode}.svg").write_text(
+            svg(
+                ox + ow + 20,
+                y0 + ah + 20,
+                t,
+                body,
+                "How the repo runs: CI, images, checks, results",
+            )
+        )
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     staircase()
     perplexity()
     tile_trip()
     blockfloat()
+    summa()
+    infra()
     print("figures ->", OUT.relative_to(REPO))
 
 

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 432" width="980" height="432" role="img" aria-label="SUMMA-style multicast on a grid of cores">
+<title>SUMMA-style multicast on a grid of cores</title>
+<rect width="980" height="432" fill="#fcfcfb"/>
+<g font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<text x="40" y="34" font-size="15" font-weight="600" fill="#0b0b0b">Multicast: one core per row reads A, one per column reads B</text>
+<text x="40" y="56" font-size="12" fill="#52514e">4×4 cores shown; the study runs 8×8. The pattern is tt-lang's SUMMA benchmark.</text>
+<rect x="150" y="96" width="62" height="62" rx="7" fill="#2a78d6" stroke="#eb6834" stroke-width="4"/>
+<rect x="230" y="96" width="62" height="62" rx="7" fill="#eb6834" stroke="#eb6834" stroke-width="1"/>
+<rect x="310" y="96" width="62" height="62" rx="7" fill="#eb6834" stroke="#eb6834" stroke-width="1"/>
+<rect x="390" y="96" width="62" height="62" rx="7" fill="#eb6834" stroke="#eb6834" stroke-width="1"/>
+<rect x="150" y="176" width="62" height="62" rx="7" fill="#2a78d6" stroke="#2a78d6" stroke-width="1"/>
+<rect x="230" y="176" width="62" height="62" rx="7" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<rect x="310" y="176" width="62" height="62" rx="7" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<rect x="390" y="176" width="62" height="62" rx="7" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<rect x="150" y="256" width="62" height="62" rx="7" fill="#2a78d6" stroke="#2a78d6" stroke-width="1"/>
+<rect x="230" y="256" width="62" height="62" rx="7" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<rect x="310" y="256" width="62" height="62" rx="7" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<rect x="390" y="256" width="62" height="62" rx="7" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<rect x="150" y="336" width="62" height="62" rx="7" fill="#2a78d6" stroke="#2a78d6" stroke-width="1"/>
+<rect x="230" y="336" width="62" height="62" rx="7" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<rect x="310" y="336" width="62" height="62" rx="7" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<rect x="390" y="336" width="62" height="62" rx="7" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<line x1="86" y1="127.0" x2="143" y2="127.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M142,122.5 L150,127.0 L142,131.5 Z" fill="#52514e"/>
+<line x1="212" y1="127.0" x2="414.0" y2="127.0" stroke="#2a78d6" stroke-width="2.5"/>
+<path d="M413.0,122.0 L423.0,127.0 L413.0,132.0 Z" fill="#2a78d6"/>
+<line x1="86" y1="207.0" x2="143" y2="207.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M142,202.5 L150,207.0 L142,211.5 Z" fill="#52514e"/>
+<line x1="212" y1="207.0" x2="414.0" y2="207.0" stroke="#2a78d6" stroke-width="2.5"/>
+<path d="M413.0,202.0 L423.0,207.0 L413.0,212.0 Z" fill="#2a78d6"/>
+<line x1="86" y1="287.0" x2="143" y2="287.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M142,282.5 L150,287.0 L142,291.5 Z" fill="#52514e"/>
+<line x1="212" y1="287.0" x2="414.0" y2="287.0" stroke="#2a78d6" stroke-width="2.5"/>
+<path d="M413.0,282.0 L423.0,287.0 L413.0,292.0 Z" fill="#2a78d6"/>
+<line x1="86" y1="367.0" x2="143" y2="367.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M142,362.5 L150,367.0 L142,371.5 Z" fill="#52514e"/>
+<line x1="212" y1="367.0" x2="414.0" y2="367.0" stroke="#2a78d6" stroke-width="2.5"/>
+<path d="M413.0,362.0 L423.0,367.0 L413.0,372.0 Z" fill="#2a78d6"/>
+<line x1="181.0" y1="66" x2="181.0" y2="89" stroke="#52514e" stroke-width="1.5"/>
+<path d="M176.5,88 L181.0,96 L185.5,88 Z" fill="#52514e"/>
+<line x1="195.0" y1="158" x2="195.0" y2="360.0" stroke="#eb6834" stroke-width="2.5"/>
+<path d="M190.0,359.0 L195.0,369.0 L200.0,359.0 Z" fill="#eb6834"/>
+<line x1="261.0" y1="66" x2="261.0" y2="89" stroke="#52514e" stroke-width="1.5"/>
+<path d="M256.5,88 L261.0,96 L265.5,88 Z" fill="#52514e"/>
+<line x1="275.0" y1="158" x2="275.0" y2="360.0" stroke="#eb6834" stroke-width="2.5"/>
+<path d="M270.0,359.0 L275.0,369.0 L280.0,359.0 Z" fill="#eb6834"/>
+<line x1="341.0" y1="66" x2="341.0" y2="89" stroke="#52514e" stroke-width="1.5"/>
+<path d="M336.5,88 L341.0,96 L345.5,88 Z" fill="#52514e"/>
+<line x1="355.0" y1="158" x2="355.0" y2="360.0" stroke="#eb6834" stroke-width="2.5"/>
+<path d="M350.0,359.0 L355.0,369.0 L360.0,359.0 Z" fill="#eb6834"/>
+<line x1="421.0" y1="66" x2="421.0" y2="89" stroke="#52514e" stroke-width="1.5"/>
+<path d="M416.5,88 L421.0,96 L425.5,88 Z" fill="#52514e"/>
+<line x1="435.0" y1="158" x2="435.0" y2="360.0" stroke="#eb6834" stroke-width="2.5"/>
+<path d="M430.0,359.0 L435.0,369.0 L440.0,359.0 Z" fill="#eb6834"/>
+<text x="54" y="84" font-size="11" fill="#52514e">from DRAM</text>
+<rect x="510" y="104" width="11" height="11" rx="2" fill="#2a78d6"/>
+<text x="528" y="114" font-size="12.5" fill="#0b0b0b">reads a row of A blocks from DRAM, multicasts it along its row</text>
+<rect x="510" y="134" width="11" height="11" rx="2" fill="#eb6834"/>
+<text x="528" y="144" font-size="12.5" fill="#0b0b0b">reads a column of B blocks, multicasts it down its column</text>
+<rect x="510" y="164" width="11" height="11" rx="2" fill="#fcfcfb"/>
+<text x="528" y="174" font-size="12.5" fill="#0b0b0b">(the corner core does both)</text>
+<rect x="510" y="194" width="11" height="11" rx="2" fill="#f3f2ee"/>
+<text x="528" y="204" font-size="12.5" fill="#0b0b0b">every other core gets A and B over the NoC</text>
+<text x="510" y="254" font-size="12.5" fill="#52514e">Fused matmul + bias + ReLU at 1024³, 4×4 tile blocks per core, 64 cores:</text>
+<text x="510" y="284" font-size="15" fill="#0b0b0b">every core reads its own A and B: <tspan font-weight="700">36 MiB</tspan> from DRAM</text>
+<text x="510" y="312" font-size="15" fill="#0b0b0b">with multicast: <tspan font-weight="700">8 MiB</tspan>, each tensor read once</text>
+</g>
+</svg>

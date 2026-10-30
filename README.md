@@ -54,6 +54,13 @@ Every table here is regenerated from the JSON in [`results/`](results) by `pytho
 | 4×4 blocks per core, 8×8 grid | 64 | 44 MiB | 36 MiB | 18% |
 | same, with A and B multicast | 64 | 16 MiB | 8 MiB | 50% |
 
+On 64 cores without multicast, every core reads its own copy of the A and B blocks it needs, so each panel of A is read once per column of cores. With multicast, one core per row reads A and one per column reads B, and they pass the blocks to the rest of their row or column over the NoC:
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/summa-dark.svg">
+  <img alt="A 4 by 4 grid of cores. The cores in the first column read rows of A blocks from DRAM and multicast them along their rows; the cores in the first row read columns of B blocks and multicast them down their columns. At 1024 cubed on 64 cores, fused traffic drops from 36 MiB to 8 MiB." src="docs/img/summa-light.svg" width="100%">
+</picture>
+
 Before running anything I wrote an analytic model of how many tiles each kernel should move ([`traffic.py`](src/tensixfuse/traffic.py)). The simulator agrees with it tile for tile on all 48 runs: 4 sizes from 256 to 2048, 6 reuse levels, fused and unfused, and [`tests/test_sim_traffic.py`](tests/test_sim_traffic.py) keeps it that way. Every run that computed real values matched PyTorch with PCC 1.000000. That's expected, because the functional simulator does its math in fp32: it checks that the right tiles went to the right place, not the chip's arithmetic. The chip's arithmetic comes from ttsim, in everything below.
 
 ### 2. Block-float weights on GPT-2's MLPs
@@ -112,6 +119,11 @@ There are two compute kernels:
 Both give identical results on Wormhole and Blackhole, and the same bits on every run. "NumPy" here is the same bf16 inputs in fp32, rounded to bf16 once.
 
 ### 5. Infrastructure
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/infra-dark.svg">
+  <img alt="A push starts GitHub Actions: lint and tests on Linux and macOS, the ttsim matrix, the C++ build, the studies, the sharded sweep, the JobSet on kind and the Ansible role. They produce results, tested images pushed to GHCR, and the PCC and DRAM-tile checks that gate pull requests." src="docs/img/infra-light.svg" width="100%">
+</picture>
 
 | Piece | What it does | Numbers |
 |---|---|---|
