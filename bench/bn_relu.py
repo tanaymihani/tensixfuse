@@ -1,14 +1,18 @@
 """Run the TT-Metalium BatchNorm + ReLU program on ttsim and check every element.
 
-Takes the real input to GPU-CorruptNet's layer4.2.bn3 (32 frames, channels
-last) and that layer's folded scale and shift, writes them as raw bf16, runs
-the C++ binary twice, and compares the output with NumPy:
+Takes the real input to one of GPU-CorruptNet's BatchNorm layers (32 frames,
+channels last) and that layer's folded scale and shift, writes them as raw
+bf16, runs the C++ binary twice, and compares the output with NumPy:
 
 - how many bf16 steps (ULPs) each element is from the fp32 reference rounded
-  to bf16, and how many match it exactly
+  to bf16, and how many match it exactly, over all outputs and over the ones
+  ReLU doesn't zero (zeros match trivially)
 - whether two runs give the same bits
 
-    python bench/bn_relu.py --binary build/bn_relu/bn_relu --out results/bn_relu.json
+layer4.2.bn2 is followed by ReLU in ResNet-50. layer4.2.bn3 is followed by the
+residual add, so BN + ReLU on its input is a stand-in, kept for comparison.
+
+    python bench/bn_relu.py --binary build/bn_relu/bn_relu --layer bn2 --out results/x.json
 """
 
 from __future__ import annotations
@@ -37,16 +41,20 @@ def bits_to_f32(bits: np.ndarray) -> np.ndarray:
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--binary", required=True)
-    p.add_argument("--data", default="data/corruptnet.npz")
+    p.add_argument("--layer", choices=("bn2", "bn3"), default="bn3")
+    p.add_argument("--data", default="data", help="directory with the exported .npz files")
     p.add_argument("--cores", type=int, default=8)
     p.add_argument("--mode", choices=("fpu", "sfpu"), default="fpu")
     p.add_argument("--out", default="results/bn_relu.json")
     args = p.parse_args()
 
-    d = np.load(args.data)
-    x = bf16_bits(d["bn_input_nhwc"])
-    scale = bf16_bits(d["bn_scale"])
-    shift = bf16_bits(d["bn_shift"])
+    if args.layer == "bn2":
+        d = np.load(Path(args.data) / "corruptnet_bn2.npz")
+        keys = ("bn2_input_nhwc", "bn2_scale", "bn2_shift")
+    else:
+        d = np.load(Path(args.data) / "corruptnet.npz")
+        keys = ("bn_input_nhwc", "bn_scale", "bn_shift")
+    x, scale, shift = (bf16_bits(d[k]) for k in keys)
     rows, cols = x.shape
 
     xf, sf, bf = bits_to_f32(x), bits_to_f32(scale), bits_to_f32(shift)
@@ -99,8 +107,10 @@ def main() -> None:
     # Error relative to the output's scale: ULPs blow up next to zero, where a
     # tiny negative becomes 0 after ReLU and the device lands just above it.
     scale_of_y = float(np.abs(bits_to_f32(ref_bits)).max())
+    live = ref_bits != 0  # outputs ReLU doesn't zero in the reference
     result = {
         "arch": os.environ.get("TENSIXFUSE_ARCH", "?"),
+        "layer": f"layer4.2.{args.layer}",
         "mode": args.mode,
         "rows": rows,
         "channels": cols,
@@ -118,6 +128,11 @@ def main() -> None:
         ),
         "pcc": pcc(yf, bits_to_f32(ref_bits)),
         "relu_zeros": float((y == 0).mean()),
+        "nonzero_outputs": int(live.sum()),
+        "exact_on_nonzero_vs_single_rounding": float((ulp[live] == 0).mean()),
+        "within_1_ulp_on_nonzero_vs_single_rounding": float((ulp[live] <= 1).mean()),
+        "exact_on_nonzero_vs_double_rounding": float((ulp_twice[live] == 0).mean()),
+        "within_1_ulp_on_nonzero_vs_double_rounding": float((ulp_twice[live] <= 1).mean()),
         "runs_identical": bool(np.array_equal(outputs[0], outputs[1])),
         "seconds": [t["seconds"] for t in timings],
     }
