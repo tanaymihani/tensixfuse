@@ -1,0 +1,5 @@
+# SFPI toolchain for the tt-lang 1.1.6 wheel, which requires ttnn 0.74.0.
+# Matches tt-metal v0.74.0's tt_metal/sfpi-version.
+sfpi_version='7.64.0'
+sfpi_x86_64_debian_txz_hash='375c229f7422c07f1cc668c940fe66e14db5221dff5e7a2ab2c36d8121fd1c0b'
+sfpi_x86_64_debian_deb_hash='d077a1e9d6430ee27be08b3abdf339731dafb3720d00f5e1f677bf39b4459f22'

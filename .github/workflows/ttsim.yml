@@ -1,12 +1,22 @@
 name: ttsim
 
 # The same tests on simulated Wormhole and Blackhole chips, one job per chip and
-# weight format. Runs on main and on PRs that touch kernels or the pins, and
-# weekly: the pinned stack should still install and pass, and the newest ttsim
-# release is tried against it (that job reports, it doesn't fail the run).
+# weight format. Runs on pushes and PRs that touch kernels, code or the pins,
+# and weekly: the pinned stack should still install and pass, and the newest
+# ttsim release is tried against it (that job reports, it doesn't fail the run).
 on:
   push:
     branches: [main]
+    paths:
+      - "kernels/**"
+      - "src/**"
+      - "scripts/**"
+      - "tests/test_ttsim.py"
+      - "bench/baselines.json"
+      - "ttsim-version"
+      - "ttsim.sha256"
+      - "sfpi-version"
+      - ".github/workflows/ttsim.yml"
   pull_request:
     paths:
       - "kernels/**"

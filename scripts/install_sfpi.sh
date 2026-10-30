@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Install the pinned SFPI toolchain where the ttnn wheel looks for it
 # (<ttnn>/runtime/sfpi), so no root is needed. Pass a directory to override.
+# TENSIXFUSE_PINS picks another set of pins (e.g. pins/tt-lang-1.1.6).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PINS="${TENSIXFUSE_PINS:-$ROOT}"
 # shellcheck source=/dev/null
-source "$ROOT/sfpi-version"
+source "$PINS/sfpi-version"
 
 DEST="${1:-$(python3 -c 'import os, ttnn; print(os.path.join(os.path.dirname(ttnn.__file__), "runtime", "sfpi"))')}"
 STAMP="$DEST/.tensixfuse-sfpi-$sfpi_version"

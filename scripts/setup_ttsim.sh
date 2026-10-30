@@ -11,7 +11,8 @@ set -euo pipefail
 
 ARCH="${1:-blackhole}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="$(tr -d '[:space:]' < "$ROOT/ttsim-version")"
+PINS="${TENSIXFUSE_PINS:-$ROOT}"  # another set of pins, e.g. pins/tt-lang-1.1.6
+VERSION="$(tr -d '[:space:]' < "$PINS/ttsim-version")"
 SIM_DIR="${2:-$HOME/.cache/tensixfuse/ttsim/$VERSION/$ARCH}"
 
 case "$ARCH" in
@@ -28,7 +29,7 @@ if [ ! -f "$SIM_DIR/$LIB" ]; then
   mv "$SIM_DIR/$LIB.part" "$SIM_DIR/$LIB"
 fi
 
-expected="$(awk -v f="$LIB" '$2 == f {print $1}' "$ROOT/ttsim.sha256")"
+expected="$(awk -v f="$LIB" '$2 == f {print $1}' "$PINS/ttsim.sha256")"
 actual="$(sha256sum "$SIM_DIR/$LIB" 2>/dev/null || shasum -a 256 "$SIM_DIR/$LIB")"
 actual="${actual%% *}"
 if [ -z "$expected" ] || [ "$expected" != "$actual" ]; then

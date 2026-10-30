@@ -1,0 +1,54 @@
+# The fusion study's TT-Lang kernels through the real TT-Lang compiler, run on
+# ttsim. tt-lang 1.1.6 requires ttnn 0.74.0, so this job uses the simulator and
+# SFPI that tt-metal 0.74.0 pins (pins/tt-lang-1.1.6), not the repo's main pins.
+name: ttlang-compile
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "kernels/ttlang/**"
+      - "bench/ttlang_compiled.py"
+      - "pins/tt-lang-1.1.6/**"
+      - "scripts/install_sfpi.sh"
+      - "scripts/setup_ttsim.sh"
+      - ".github/workflows/ttlang-compile.yml"
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: "quick or fusion"
+        default: "fusion"
+
+env:
+  TENSIXFUSE_PINS: pins/tt-lang-1.1.6
+
+jobs:
+  compile:
+    name: TT-Lang compiler on simulated ${{ matrix.arch }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [blackhole]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tt-lang (with its ttnn) and CPU torch
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install tt-lang==1.1.6
+          pip install --no-deps -e .
+          pip list 2>/dev/null | grep -iE "^(tt-lang|ttnn|torch) "
+      - run: bash scripts/install_sfpi.sh
+      - run: bash scripts/setup_ttsim.sh ${{ matrix.arch }}
+      - name: Compile and run on ttsim
+        run: python bench/ttlang_compiled.py --runs "${{ inputs.runs || 'fusion' }}" --out results/ttlang_compiled_${{ matrix.arch }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ttlang-compiled-${{ matrix.arch }}
+          path: results/ttlang_compiled_*.json
