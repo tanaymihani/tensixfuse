@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 360" width="1000" height="360" role="img" aria-label="What one 32x32 tile costs in bf16 and the block floats">
+<title>What one 32x32 tile costs in bf16 and the block floats</title>
+<rect width="1000" height="360" fill="#1a1a19"/>
+<g font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect x="40" y="70" width="112" height="112" fill="#262624" stroke="#383835"/>
+<line x1="40" y1="77" x2="152" y2="77" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="84" x2="152" y2="84" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="91" x2="152" y2="91" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="98" x2="152" y2="98" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="105" x2="152" y2="105" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="112" x2="152" y2="112" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="119" x2="152" y2="119" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="126" x2="152" y2="126" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="133" x2="152" y2="133" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="140" x2="152" y2="140" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="147" x2="152" y2="147" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="154" x2="152" y2="154" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="161" x2="152" y2="161" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="168" x2="152" y2="168" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="175" x2="152" y2="175" stroke="#383835" stroke-width="0.5"/>
+<rect x="158" y="70" width="112" height="112" fill="#262624" stroke="#383835"/>
+<line x1="158" y1="77" x2="270" y2="77" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="84" x2="270" y2="84" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="91" x2="270" y2="91" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="98" x2="270" y2="98" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="105" x2="270" y2="105" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="112" x2="270" y2="112" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="119" x2="270" y2="119" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="126" x2="270" y2="126" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="133" x2="270" y2="133" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="140" x2="270" y2="140" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="147" x2="270" y2="147" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="154" x2="270" y2="154" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="161" x2="270" y2="161" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="168" x2="270" y2="168" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="175" x2="270" y2="175" stroke="#383835" stroke-width="0.5"/>
+<rect x="40" y="188" width="112" height="112" fill="#262624" stroke="#383835"/>
+<line x1="40" y1="195" x2="152" y2="195" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="202" x2="152" y2="202" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="209" x2="152" y2="209" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="216" x2="152" y2="216" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="223" x2="152" y2="223" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="230" x2="152" y2="230" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="237" x2="152" y2="237" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="244" x2="152" y2="244" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="251" x2="152" y2="251" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="258" x2="152" y2="258" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="265" x2="152" y2="265" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="272" x2="152" y2="272" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="279" x2="152" y2="279" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="286" x2="152" y2="286" stroke="#383835" stroke-width="0.5"/>
+<line x1="40" y1="293" x2="152" y2="293" stroke="#383835" stroke-width="0.5"/>
+<rect x="158" y="188" width="112" height="112" fill="#262624" stroke="#383835"/>
+<line x1="158" y1="195" x2="270" y2="195" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="202" x2="270" y2="202" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="209" x2="270" y2="209" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="216" x2="270" y2="216" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="223" x2="270" y2="223" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="230" x2="270" y2="230" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="237" x2="270" y2="237" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="244" x2="270" y2="244" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="251" x2="270" y2="251" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="258" x2="270" y2="258" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="265" x2="270" y2="265" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="272" x2="270" y2="272" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="279" x2="270" y2="279" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="286" x2="270" y2="286" stroke="#383835" stroke-width="0.5"/>
+<line x1="158" y1="293" x2="270" y2="293" stroke="#383835" stroke-width="0.5"/>
+<rect x="40" y="91" width="112" height="7" fill="#3987e5"/>
+<text x="40" y="56" font-size="13" font-weight="600" fill="#f0efec">one 32×32 tile = four 16×16 faces</text>
+<rect x="40" y="316" width="11" height="11" rx="2" fill="#3987e5"/>
+<text x="56" y="326" font-size="12" fill="#f0efec">16 values in a face row share one exponent</text>
+<text x="360" y="72" font-size="13" font-weight="600" fill="#f0efec">bfloat16 <tspan font-weight="400" fill="#c3c2b7">16 bits per value</tspan></text>
+<rect x="360" y="78" width="552.96" height="26" rx="3" fill="#c3c2b7" fill-opacity="0.45"/>
+<text x="922.96" y="96" font-size="13" fill="#f0efec">2,048 B</text>
+<text x="360" y="146" font-size="13" font-weight="600" fill="#f0efec">bfloat8_b <tspan font-weight="400" fill="#c3c2b7">sign + 7-bit mantissa, 8.5 bits per value</tspan></text>
+<rect x="360" y="152" width="16.28" height="26" rx="3" fill="#d95926"/>
+<rect x="378.28" y="152" width="275.48" height="26" rx="3" fill="#3987e5"/>
+<text x="663.76" y="170" font-size="13" fill="#f0efec">1,088 B</text>
+<text x="360" y="220" font-size="13" font-weight="600" fill="#f0efec">bfloat4_b <tspan font-weight="400" fill="#c3c2b7">sign + 3-bit mantissa, 4.5 bits per value</tspan></text>
+<rect x="360" y="226" width="16.28" height="26" rx="3" fill="#d95926"/>
+<rect x="378.28" y="226" width="137.24" height="26" rx="3" fill="#3987e5"/>
+<text x="525.52" y="244" font-size="13" fill="#f0efec">576 B</text>
+<rect x="360" y="294" width="11" height="11" rx="2" fill="#d95926"/>
+<text x="376" y="304" font-size="12" fill="#c3c2b7">64 exponent bytes, one per 16 values</text>
+<rect x="620" y="294" width="11" height="11" rx="2" fill="#3987e5"/>
+<text x="636" y="304" font-size="12" fill="#c3c2b7">signs and mantissas</text>
+</g>
+</svg>

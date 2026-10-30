@@ -25,17 +25,10 @@ TensixFuse is listed in Tenstorrent's [tt-awesome](https://github.com/tenstorren
 
 Every op on a Tensix core is the same loop. Each core has five small RISC-V processors: two move data (reader and writer) and three drive the compute engine (unpack, math, pack). They hand 32×32 tiles to each other through circular buffers in the core's 1.4 MiB of SRAM (L1), and the cores talk to DRAM and to each other over two NoCs.
 
-```mermaid
-flowchart LR
-    D[("DRAM")] -->|"NoC read"| R["reader"]
-    R --> CB1["circular buffer<br/>(L1)"]
-    CB1 --> U["unpack"]
-    U --> M["math<br/>FPU / SFPU"]
-    M --> P["pack"]
-    P --> CB2["circular buffer<br/>(L1)"]
-    CB2 --> W["writer"]
-    W -->|"NoC write"| D
-```
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/tile-trip-dark.svg">
+  <img alt="A tile's trip: DRAM, NoC read, reader, a circular buffer in L1, unpack, math on the FPU or SFPU, pack, another circular buffer, writer, NoC write, back to DRAM. Fused, the bias add and the activation happen in the math stage." src="docs/img/tile-trip-light.svg" width="100%">
+</picture>
 
 Unfused, each op is one trip around this loop, and each op's output goes back to DRAM before the next op reads it in again. Fused, the bias add and the activation happen in the math stage before pack, so those intermediates never leave the core.
 
@@ -46,6 +39,11 @@ Every table here is regenerated from the JSON in [`results/`](results) by `pytho
 ### 1. Fusion and data movement
 
 `y = relu(a @ b + c)`, M = K = N = 1024, bf16, on TT-Lang's simulator (tt-lang-sim 1.1.6). "Unfused" is the same matmul followed by separate add and ReLU operations, written in TT-Lang with the same blocking, so fusion is the only difference. DRAM traffic is tiles read plus tiles written, from the simulator's trace, at 2 KiB per tile.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/staircase-dark.png">
+  <img alt="Bar chart of DRAM traffic at 1024 cubed: fused traffic falls from 132 MiB with 1x1 tile blocks to 68, 36 and 20 MiB with bigger blocks on one core, 36 MiB on 64 cores, and 8 MiB with multicast, the compulsory floor. Unfusing adds the same 8 MiB to every bar." src="docs/img/staircase-light.png" width="100%">
+</picture>
 
 | Matmul data reuse | Cores | Unfused | Fused | Fusion saves |
 |---|---|---|---|---|
@@ -69,6 +67,11 @@ GPT-2 small has 12 MLP blocks: `c_fc` (768 to 3072), GELU, then `c_proj` (3072 t
 | bfloat4_b | 30.4 MiB | 0.97698 | 0.96066 |
 | bfloat4_b `c_fc`, bfloat8_b `c_proj` | 43.9 MiB | 0.98623 | 0.97500 |
 | bfloat8_b `c_fc`, bfloat4_b `c_proj` | 43.9 MiB | 0.99050 | 0.98332 |
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/blockfloat-dark.svg">
+  <img alt="A 32x32 tile is four 16x16 faces; the 16 values in a face row share one exponent. Per tile: bfloat16 2,048 bytes; bfloat8_b 1,088 bytes (64 exponent bytes plus signs and 7-bit mantissas); bfloat4_b 576 bytes (64 exponent bytes plus signs and 3-bit mantissas)." src="docs/img/blockfloat-light.svg" width="100%">
+</picture>
 
 bfloat8_b and bfloat4_b store one 8-bit exponent for every 16 values, and each value keeps a sign and 7 or 3 bits of mantissa (hidden bit included) measured against the largest value in its group. A 32×32 tile is 1,024 values plus 64 shared exponents: 1,088 bytes for bfloat8_b and 576 for bfloat4_b, against 2,048 for bf16. In bfloat4_b, a value 16x or more smaller than the largest in its group is always stored as zero, and between 15 and 19% of the weights in every layer here end up as zero.
 

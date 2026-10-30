@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1268 262" width="1268" height="262" role="img" aria-label="How a tile moves through a Tensix core">
+<title>How a tile moves through a Tensix core</title>
+<rect width="1268" height="262" fill="#fcfcfb"/>
+<g font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+<rect x="196" y="30" width="876" height="160" rx="14" fill="none" stroke="#52514e" stroke-width="1"/>
+<text x="212" y="56" font-size="13" font-weight="600" fill="#52514e">one Tensix core (a chip has a grid of them; the study uses up to 64)</text>
+<path d="M24,86 v54 a50,10 0 0 0 100,0 v-54" fill="#f3f2ee" stroke="#e4e3df"/>
+<ellipse cx="74" cy="86" rx="50" ry="10" fill="#f3f2ee" stroke="#e4e3df"/>
+<text x="74" y="120" text-anchor="middle" font-size="15" font-weight="600" fill="#0b0b0b">DRAM</text>
+<text x="74" y="137" text-anchor="middle" font-size="11" fill="#52514e">a, b, c</text>
+<line x1="124" y1="118.0" x2="209" y2="118.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M208,113.5 L216,118.0 L208,122.5 Z" fill="#52514e"/>
+<text x="170.0" y="109.0" text-anchor="middle" font-size="11" fill="#52514e">NoC read</text>
+<rect x="216" y="88" width="104" height="60" rx="8" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<text x="268.0" y="115.0" text-anchor="middle" font-size="15" font-weight="600" fill="#0b0b0b">reader</text>
+<text x="268.0" y="133.0" text-anchor="middle" font-size="11" fill="#52514e">data movement core</text>
+<line x1="320" y1="118.0" x2="331" y2="118.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M330,113.5 L338,118.0 L330,122.5 Z" fill="#52514e"/>
+<rect x="338" y="88" width="104" height="60" rx="8" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<text x="390.0" y="115.0" text-anchor="middle" font-size="15" font-weight="600" fill="#0b0b0b">buffer</text>
+<text x="390.0" y="133.0" text-anchor="middle" font-size="11" fill="#52514e">L1 SRAM</text>
+<line x1="442" y1="118.0" x2="453" y2="118.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M452,113.5 L460,118.0 L452,122.5 Z" fill="#52514e"/>
+<rect x="460" y="88" width="104" height="60" rx="8" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<text x="512.0" y="115.0" text-anchor="middle" font-size="15" font-weight="600" fill="#0b0b0b">unpack</text>
+<text x="512.0" y="133.0" text-anchor="middle" font-size="11" fill="#52514e">TRISC 0</text>
+<line x1="564" y1="118.0" x2="575" y2="118.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M574,113.5 L582,118.0 L574,122.5 Z" fill="#52514e"/>
+<rect x="582" y="88" width="104" height="60" rx="8" fill="#e3eefb" stroke="#2a78d6" stroke-width="2"/>
+<text x="634.0" y="115.0" text-anchor="middle" font-size="15" font-weight="600" fill="#0b0b0b">math</text>
+<text x="634.0" y="133.0" text-anchor="middle" font-size="11" fill="#52514e">FPU · SFPU</text>
+<line x1="686" y1="118.0" x2="697" y2="118.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M696,113.5 L704,118.0 L696,122.5 Z" fill="#52514e"/>
+<rect x="704" y="88" width="104" height="60" rx="8" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<text x="756.0" y="115.0" text-anchor="middle" font-size="15" font-weight="600" fill="#0b0b0b">pack</text>
+<text x="756.0" y="133.0" text-anchor="middle" font-size="11" fill="#52514e">TRISC 2</text>
+<line x1="808" y1="118.0" x2="819" y2="118.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M818,113.5 L826,118.0 L818,122.5 Z" fill="#52514e"/>
+<rect x="826" y="88" width="104" height="60" rx="8" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<text x="878.0" y="115.0" text-anchor="middle" font-size="15" font-weight="600" fill="#0b0b0b">buffer</text>
+<text x="878.0" y="133.0" text-anchor="middle" font-size="11" fill="#52514e">L1 SRAM</text>
+<line x1="930" y1="118.0" x2="941" y2="118.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M940,113.5 L948,118.0 L940,122.5 Z" fill="#52514e"/>
+<rect x="948" y="88" width="104" height="60" rx="8" fill="#f3f2ee" stroke="#e4e3df" stroke-width="1"/>
+<text x="1000.0" y="115.0" text-anchor="middle" font-size="15" font-weight="600" fill="#0b0b0b">writer</text>
+<text x="1000.0" y="133.0" text-anchor="middle" font-size="11" fill="#52514e">data movement core</text>
+<line x1="1052" y1="118.0" x2="1137" y2="118.0" stroke="#52514e" stroke-width="1.5"/>
+<path d="M1136,113.5 L1144,118.0 L1136,122.5 Z" fill="#52514e"/>
+<text x="1098.0" y="109.0" text-anchor="middle" font-size="11" fill="#52514e">NoC write</text>
+<path d="M1144,86 v54 a50,10 0 0 0 100,0 v-54" fill="#f3f2ee" stroke="#e4e3df"/>
+<ellipse cx="1194" cy="86" rx="50" ry="10" fill="#f3f2ee" stroke="#e4e3df"/>
+<text x="1194" y="120" text-anchor="middle" font-size="15" font-weight="600" fill="#0b0b0b">DRAM</text>
+<text x="1194" y="137" text-anchor="middle" font-size="11" fill="#52514e">y</text>
+<line x1="634.0" y1="148" x2="634.0" y2="200" stroke="#2a78d6" stroke-width="1.5"/>
+<text x="634.0" y="218" text-anchor="middle" font-size="12.5" fill="#0b0b0b">fused: + bias and activation happen here, before pack</text>
+</g>
+</svg>
