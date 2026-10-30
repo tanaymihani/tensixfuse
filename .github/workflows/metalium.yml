@@ -70,7 +70,9 @@ jobs:
           pip install --no-deps -e .
           bash scripts/fetch_data.sh
           for mode in fpu sfpu; do
-            python bench/bn_relu.py --binary build/bn_relu/bn_relu --mode $mode \
+            python bench/bn_relu.py --binary build/bn_relu/bn_relu --layer bn2 --mode $mode \
+              --out results/bn_relu_bn2_${{ matrix.arch }}_$mode.json
+            python bench/bn_relu.py --binary build/bn_relu/bn_relu --layer bn3 --mode $mode \
               --out results/bn_relu_${{ matrix.arch }}_$mode.json
           done
       - uses: actions/upload-artifact@v4
