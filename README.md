@@ -179,7 +179,7 @@ The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 i
 
 **L1 sets the block size.** With every buffer double-buffered, an 8×8 block takes 1 MiB of buffers and a 16×16 block takes 3,670,016 bytes, and the simulator warns that this is over its per-core limit of 1,466,368 bytes (1,432 KiB).
 
-**I guessed the wrong layer.** Tenstorrent's `tt_transformers` performance mode puts the up and gate projections (FF1, FF3) in bfloat4_b with LoFi and keeps the down projection (FF2) in bfloat8_b. For GPT-2 that's bfloat4_b `c_fc` with bfloat8_b `c_proj`, so I expected that split to win. It's the worse one for GPT-2 small: at the same 43.9 MiB, keeping `c_fc` in bfloat8_b instead gives a worst block of 0.983 against 0.975. Llama's MLP is gated and uses SiLU, so this says nothing about Llama, only that the split is worth measuring per model.
+**I guessed the wrong layer.** Tenstorrent's `tt_transformers` performance mode puts the up and gate projections (FF1, FF3) in bfloat4_b with LoFi and keeps the down projection (FF2) in bfloat8_b. For GPT-2 that's bfloat4_b `c_fc` with bfloat8_b `c_proj`, so I expected that split to win. It's the worse one for GPT-2 small: at the same 43.9 MiB, keeping `c_fc` in bfloat8_b instead gives a worst block of 0.983 against 0.975. Llama's MLP is gated and uses SiLU, so this says nothing about Llama, only that the split is worth measuring per model. On Qwen2.5-0.5B, which is gated, the recipe as tt_transformers ships it costs 8% in perplexity (section 2); I haven't tried the opposite split there.
 
 **The error is in the format, not the arithmetic.** I wrote the block-float packer again in NumPy from tt-metal's source and checked it against ttnn on about a million values, outliers and rounding ties included: zero mismatches. Running the GPT-2 blocks on CPU with weights rounded that way gives the same PCC as the simulated chip to the 5th decimal in every configuration. So at HiFi4 the chip adds nothing measurable; the loss is the format itself. That's also why LoFi is free for bfloat4_b weights.
 
@@ -198,8 +198,10 @@ The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 i
 - **tt-metal's `eltwise_binary` and `eltwise_sfpu` programming examples**, for the host and kernel structure of [`kernels/metalium/bn_relu`](kernels/metalium/bn_relu), and tt-metal's FP32 accuracy guide for its SFPU version.
 - **tt-metal's block-float packer** (`blockfloat_common.cpp` at v0.79.0), which [`blockfloat.py`](src/tensixfuse/blockfloat.py) reimplements in NumPy.
 - **TTNN**, whose `ttnn.linear` runs the GPT-2 and GPU-CorruptNet studies on ttsim.
+- **The other formats' definitions**, for [`formats.py`](src/tensixfuse/formats.py): the OCP Microscaling (MX) spec v1.0 for MXFP8 and MXFP4, NVIDIA's two-level NVFP4 scheme, and the INT4 group-of-128 layout GPTQ and AWQ store weights in (without their calibration).
+- **tt_transformers' precision settings** (`models/tt_transformers/tt/model_config.py` in tt-metal), the recipes the Qwen study tests, and **Tenstorrent's published card specs** for the modelled roofline.
 
-What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's checked against, the block-float emulator and the numerics studies built on it, the BatchNorm program, and the CI, container, Kubernetes and Ansible setup.
+What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's checked against, the block-float emulator and the numerics and perplexity studies built on it, the BatchNorm program, and the CI, container, Kubernetes and Ansible setup.
 
 ## Limitations
 
