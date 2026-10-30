@@ -134,25 +134,95 @@ def bn_section(runs: list[dict]) -> list[str]:
         "## TT-Metalium C++: fused BatchNorm + ReLU",
         "",
         (
-            "ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into GPU-CorruptNet's "
-            "layer4.2.bn3 for 32 frames, channels last. `fpu` multiplies and adds on the matrix engine with "
-            "a bf16 intermediate in L1; `sfpu` does all three steps in fp32 on the vector engine. "
-            "Compared with NumPy fp32 rounded once to bf16. "
-            "Made by `python bench/bn_relu.py --binary build/bn_relu/bn_relu --mode fpu|sfpu`."
+            "ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into one of "
+            "GPU-CorruptNet's BatchNorm layers for 32 frames, channels last. In ResNet-50, layer4.2.bn2 "
+            "is followed by ReLU; layer4.2.bn3 is followed by the residual add, so BN + ReLU on it is a "
+            "stand-in. `fpu` multiplies and adds on the matrix engine with a bf16 intermediate in L1; "
+            "`sfpu` does all three steps in fp32 on the vector engine. Compared with NumPy fp32 rounded "
+            "once to bf16. ReLU's zeros match trivially, so the nonzero columns count only the outputs "
+            "it doesn't zero. Made by `python bench/bn_relu.py --binary build/bn_relu/bn_relu "
+            "--layer bn2|bn3 --mode fpu|sfpu`."
         ),
         "",
         (
-            "| Chip | Kernel | Elements | Cores | PCC | Bit-exact | Within 1 bf16 step | "
-            "Max error / max output | Two runs identical |"
+            "| Layer | Chip | Kernel | Elements | Nonzero outputs | PCC | Bit-exact, all | "
+            "Bit-exact, nonzero | Within 1 bf16 step, nonzero | Max error / max output | "
+            "Two runs identical |"
         ),
-        "|---|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for r in runs:
+        nz = r.get("nonzero_outputs")
+        nz_cells = (
+            f"{nz / r['elements']:.1%} | {r['exact_on_nonzero_vs_single_rounding']:.2%} | "
+            f"{r['within_1_ulp_on_nonzero_vs_single_rounding']:.2%}"
+            if nz is not None
+            else "n/a | n/a | n/a"
+        )
         out.append(
-            f"| {r['arch']} | {r['mode']} | {r['elements']:,} | {r['cores']} | {r['pcc']:.6f} | "
-            f"{r['exact_vs_single_rounding']:.2%} | {r['within_1_ulp_vs_single_rounding']:.2%} | "
+            f"| {r.get('layer', 'layer4.2.bn3')} | {r['arch']} | {r['mode']} | {r['elements']:,} | "
+            f"{nz_cells.split(' | ')[0]} | {r['pcc']:.6f} | {r['exact_vs_single_rounding']:.2%} | "
+            f"{' | '.join(nz_cells.split(' | ')[1:])} | "
             f"{r['max_abs_err_relative_to_max_output']:.2%} | {r['runs_identical']} |"
         )
+    return out
+
+
+def perplexity_section(p: dict) -> list[str]:
+    out = [
+        "## GPT-2 small: WikiText-2 perplexity with low-bit weights",
+        "",
+        (
+            f"CPU emulation, weight-only: each format rounds the chosen weights the way it stores them "
+            f"and everything else stays fp32. Whole test set, {p['test_tokens']:,} tokens in "
+            f"{p['windows']} non-overlapping windows of {p['window']}. `mlp` rounds c_fc and c_proj in "
+            "all 12 blocks; `all` adds attention's c_attn and c_proj. Bits per weight include the "
+            "scales. Made by `python bench/perplexity.py` (torch "
+            f"{p['torch']}, transformers {p['transformers']})."
+        ),
+        "",
+        "| Weights | Rounded | Bits per weight | Perplexity | vs fp32 | Weight error (rel. RMS) |",
+        "|---|---|---|---|---|---|",
+    ]
+    configs = p["configs"]
+    order = sorted(
+        configs,
+        key=lambda n: (n != "fp32", n.split(":")[0] if ":" in n else "", configs[n]["ppl"]),
+    )
+    for name in order:
+        c = configs[name]
+        scope, fmt = name.split(":") if ":" in name else ("", name)
+        scope = {"mlp": "MLP", "all": "all linear", "": "nothing"}[scope]
+        out.append(
+            f"| {fmt.replace('/', ' c_fc, ') + (' c_proj' if '/' in fmt else '')} | {scope} | "
+            f"{c['bits_per_weight']:.2f} | {c['ppl']:.3f} | {c['ppl_increase_pct']:+.2f}% | "
+            f"{c['weight_rel_rmse']:.4f} |"
+        )
+    return out
+
+
+def compiled_section(runs: list[dict]) -> list[str]:
+    out = [
+        "## The fusion kernels through the TT-Lang compiler",
+        "",
+        (
+            "ttsim. The same kernels as the fusion study, compiled by the TT-Lang compiler instead of "
+            "run in the functional simulator, at 256³, `y = relu(a @ b + c)`, bf16, checked against "
+            "PyTorch. Made by `python bench/ttlang_compiled.py`."
+        ),
+        "",
+        "| tt-lang | Chip | Data reuse | Variant | Compiled and ran | PCC | Max abs error |",
+        "|---|---|---|---|---|---|---|",
+    ]
+    for res in runs:
+        for r in res["runs"]:
+            ok = "yes" if r["ok"] else "no"
+            pcc = f"{r['pcc']:.6f}" if "pcc" in r else "n/a"
+            err = f"{r['max_abs_err']:.3g}" if "max_abs_err" in r else "n/a"
+            out.append(
+                f"| {res['tt_lang']} | {res['arch']} | {r['label']} | {r['variant']} | {ok} | "
+                f"{pcc} | {err} |"
+            )
     return out
 
 
@@ -173,11 +243,19 @@ def main() -> None:
         parts += quant_section(quant) + [""]
     if head := load("corruptnet_head.json"):
         parts += head_section(head) + [""]
+    if ppl := load("perplexity.json"):
+        parts += perplexity_section(ppl) + [""]
     bn_runs = [
-        load(f"bn_relu_{a}_{m}.json") for a in ("wormhole", "blackhole") for m in ("fpu", "sfpu")
+        load(f"bn_relu{layer}_{a}_{m}.json")
+        for layer in ("_bn2", "")
+        for a in ("wormhole", "blackhole")
+        for m in ("fpu", "sfpu")
     ]
     if any(bn_runs):
         parts += bn_section([r for r in bn_runs if r]) + [""]
+    compiled = [load(f"ttlang_compiled_{a}.json") for a in ("wormhole", "blackhole")]
+    if any(compiled):
+        parts += compiled_section([r for r in compiled if r]) + [""]
     dest = REPO / "docs" / "RESULTS.md"
     dest.parent.mkdir(exist_ok=True)
     dest.write_text("\n".join(parts))
