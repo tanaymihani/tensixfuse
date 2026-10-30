@@ -58,7 +58,11 @@ def run_one(label, size, block, grid, mcast, variant, act, timeout):
         record["ok"] = record.get("pcc", 0) > 0.999
     else:
         record["ok"] = False
-        record["error"] = "\n".join((err or out or "").strip().splitlines()[-25:])
+        # ttnn's bindings print a long list of nanobind "leaked" warnings at
+        # exit after an error; drop them so the traceback survives the cut.
+        lines = (err or out or "").strip().splitlines()
+        lines = [ln for ln in lines if "leaked" not in ln and "nanobind" not in ln]
+        record["error"] = "\n".join(lines[-40:])
     return record
 
 
