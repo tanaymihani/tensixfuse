@@ -1,7 +1,9 @@
 name: ttsim
 
 # The same tests on simulated Wormhole and Blackhole chips, one job per chip and
-# weight format. Runs on main and on PRs that touch kernels or the pins.
+# weight format. Runs on main and on PRs that touch kernels or the pins, and
+# weekly: the pinned stack should still install and pass, and the newest ttsim
+# release is tried against it (that job reports, it doesn't fail the run).
 on:
   push:
     branches: [main]
@@ -14,6 +16,8 @@ on:
       - "ttsim-version"
       - "sfpi-version"
       - ".github/workflows/ttsim.yml"
+  schedule:
+    - cron: "23 7 * * 1"
   workflow_dispatch:
 
 env:
@@ -51,4 +55,41 @@ jobs:
       - name: Tests on simulated ${{ matrix.arch }}
         env:
           TENSIXFUSE_FORMATS: ${{ matrix.format }}
+        run: pytest -q -m ttsim tests/test_ttsim.py
+
+  newest-ttsim:
+    name: newest ttsim release / ${{ matrix.arch }}
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [wormhole, blackhole]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install ttnn and CPU torch
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install "ttnn==$TTNN_VERSION" pytest
+          pip install --no-deps -e .
+      - run: bash scripts/install_sfpi.sh
+      - name: Point the pin at the newest ttsim release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="$(gh release view --repo tenstorrent/ttsim --json tagName --jq .tagName)"
+          lib="$([ "${{ matrix.arch }}" = wormhole ] && echo libttsim_wh.so || echo libttsim_bh.so)"
+          curl -fsSL --retry 3 -o "/tmp/$lib" "https://github.com/tenstorrent/ttsim/releases/download/$tag/$lib"
+          echo "$(sha256sum "/tmp/$lib" | cut -d' ' -f1)  $lib" > ttsim.sha256
+          echo "$tag" > ttsim-version
+          echo "ttsim $tag against ttnn $TTNN_VERSION (pinned ttsim: $(git show HEAD:ttsim-version))" >> "$GITHUB_STEP_SUMMARY"
+      - run: bash scripts/setup_ttsim.sh ${{ matrix.arch }}
+      - name: Tests on simulated ${{ matrix.arch }}
         run: pytest -q -m ttsim tests/test_ttsim.py
