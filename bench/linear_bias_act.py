@@ -84,35 +84,15 @@ def run_ttnn(x_t, w_t, b_t, fmt: str, act: str) -> np.ndarray:
         ttnn.close_device(device)
 
 
-def main() -> None:
-    p = argparse.ArgumentParser()
-    p.add_argument("--binary", required=True)
-    p.add_argument("--M", type=int, default=128)
-    p.add_argument("--K", type=int, default=768)
-    p.add_argument("--N", type=int, default=3072)
-    p.add_argument("--act", choices=("none", "relu", "gelu"), default="gelu")
-    p.add_argument("--fmt", choices=("bfp8", "bf16"), default="bfp8")
-    p.add_argument("--cores", type=int, default=8)
-    p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--skip-ttnn", action="store_true")
-    p.add_argument("--out", default="results/linear_bias_act.json")
-    args = p.parse_args()
-
-    import torch
-
-    torch.manual_seed(args.seed)
-    x_t = torch.randn(args.M, args.K).to(torch.bfloat16)
-    w_t = (torch.randn(args.K, args.N) * 0.02).to(torch.bfloat16)
-    b_t = (torch.randn(args.N) * 0.02).to(torch.bfloat16)
-    x, w, b = x_t.float().numpy(), w_t.float().numpy(), b_t.float().numpy()
-
+def run_mine(binary, x_t, w_t, b_t, shape, act, fmt, cores):
+    m, k, n = shape
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
         bf16_bits(x_t).tofile(tmp / "x.bin")
-        w.astype(np.float32).tofile(tmp / "w.bin")  # bf16 values, exactly, as fp32
+        w_t.float().numpy().astype(np.float32).tofile(tmp / "w.bin")  # bf16 values, exactly
         bf16_bits(b_t).tofile(tmp / "b.bin")
-        cmd = [args.binary, *(str(tmp / f) for f in ("x.bin", "w.bin", "b.bin", "y.bin"))]
-        cmd += [str(args.M), str(args.K), str(args.N), args.act, args.fmt, str(args.cores)]
+        cmd = [binary, *(str(tmp / f) for f in ("x.bin", "w.bin", "b.bin", "y.bin"))]
+        cmd += [str(m), str(k), str(n), act, fmt, str(cores)]
         proc = subprocess.run(
             cmd, capture_output=True, text=True, check=False, env=os.environ.copy()
         )
@@ -122,39 +102,69 @@ def main() -> None:
             )
         # ttsim prints its own stats line at exit, after ours.
         line = next(s for s in reversed(proc.stdout.splitlines()) if s.startswith('{"rows"'))
-        timing = json.loads(line)
-        mine = np.fromfile(tmp / "y.bin", dtype=np.uint16).reshape(args.M, args.N)
+        return np.fromfile(tmp / "y.bin", dtype=np.uint16).reshape(m, n), json.loads(line)
 
-    ref = reference(x, w, b, args.fmt, args.act)
-    result = {
+
+def main() -> None:
+    p = argparse.ArgumentParser()
+    p.add_argument("--binary", required=True)
+    p.add_argument("--M", type=int, default=128)
+    p.add_argument("--K", type=int, default=768)
+    p.add_argument("--N", type=int, default=3072)
+    p.add_argument("--acts", default="none,gelu", help="comma-separated: none, relu, gelu")
+    p.add_argument("--fmt", choices=("bfp8", "bf16"), default="bfp8")
+    p.add_argument("--cores", type=int, default=8)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--skip-ttnn", default="", help="why ttnn.linear isn't run here, if it isn't")
+    p.add_argument("--out", default="results/linear_bias_act.json")
+    args = p.parse_args()
+
+    import torch
+
+    torch.manual_seed(args.seed)
+    shape = (args.M, args.K, args.N)
+    x_t = torch.randn(args.M, args.K).to(torch.bfloat16)
+    w_t = (torch.randn(args.K, args.N) * 0.02).to(torch.bfloat16)
+    b_t = (torch.randn(args.N) * 0.02).to(torch.bfloat16)
+    x, w, b = x_t.float().numpy(), w_t.float().numpy(), b_t.float().numpy()
+
+    out = {
         "arch": os.environ.get("TENSIXFUSE_ARCH", "?"),
-        "shape": [args.M, args.K, args.N],
-        "act": args.act,
+        "shape": list(shape),
         "weights": TT_FORMAT[args.fmt],
-        "cores": timing["cores"],
-        "seconds": timing["seconds"],
-        "pcc_mine_vs_fp32": pcc(bits_to_f32(mine), ref),
-        "max_abs_err_mine_vs_fp32": float(np.abs(bits_to_f32(mine) - ref).max()),
-        "exact_vs_fp32_rounded_once": float(
-            (mine == bf16_bits(torch.from_numpy(as_bf16(ref)).to(torch.bfloat16))).mean()
-        ),
+        "ttnn_skipped": args.skip_ttnn or None,
+        "runs": {},
     }
-    if not args.skip_ttnn:
-        theirs = run_ttnn(x_t, w_t, b_t, args.fmt, args.act).reshape(args.M, args.N)
-        ulp = bf16_ulp_distance(mine, theirs)
-        result.update(
-            {
-                "pcc_ttnn_vs_fp32": pcc(bits_to_f32(theirs), ref),
-                "bit_exact_vs_ttnn": float((mine == theirs).mean()),
-                "within_1_ulp_vs_ttnn": float((ulp <= 1).mean()),
-                "max_ulp_vs_ttnn": int(ulp.max()),
-                "elements": int(mine.size),
-            }
-        )
-    print(json.dumps(result))
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(result, indent=1))
+    for act in args.acts.split(","):
+        mine, timing = run_mine(args.binary, x_t, w_t, b_t, shape, act, args.fmt, args.cores)
+        ref = reference(x, w, b, args.fmt, act)
+        once = bf16_bits(torch.from_numpy(as_bf16(ref)).to(torch.bfloat16)).reshape(mine.shape)
+        r = {
+            "cores": timing["cores"],
+            "seconds": timing["seconds"],
+            "pcc_mine_vs_fp32": pcc(bits_to_f32(mine), ref),
+            "max_abs_err_mine_vs_fp32": float(np.abs(bits_to_f32(mine) - ref).max()),
+            "exact_mine_vs_fp32_rounded_once": float((mine == once).mean()),
+        }
+        if not args.skip_ttnn:
+            theirs = run_ttnn(x_t, w_t, b_t, args.fmt, act).reshape(mine.shape)
+            ulp = bf16_ulp_distance(mine, theirs)
+            r.update(
+                {
+                    "pcc_ttnn_vs_fp32": pcc(bits_to_f32(theirs), ref),
+                    "exact_ttnn_vs_fp32_rounded_once": float((theirs == once).mean()),
+                    "bit_exact_vs_ttnn": float((mine == theirs).mean()),
+                    "within_1_ulp_vs_ttnn": float((ulp <= 1).mean()),
+                    "max_ulp_vs_ttnn": int(ulp.max()),
+                }
+            )
+        r["elements"] = int(mine.size)
+        out["runs"][act] = r
+        print(act, json.dumps(r), flush=True)
+    dest = Path(args.out)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(out, indent=1))
+    print("->", dest)
 
 
 if __name__ == "__main__":

@@ -128,8 +128,15 @@ jobs:
           bash scripts/setup_ttsim.sh ${{ matrix.arch }}
       - name: My linear layer and ttnn.linear on ttsim, compared bit for bit
         run: |
+          # On Wormhole, ttnn.linear with fp32 accumulation and a fused bias stops
+          # on ttsim's undefined-behavior check in the unpacker; mine is checked
+          # against fp32 alone there.
+          skip=""
+          if [ "${{ matrix.arch }}" = wormhole ]; then
+            skip="ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole"
+          fi
           python bench/linear_bias_act.py --binary build/linear_bias_act/linear_bias_act \
-            --out results/linear_bias_act_${{ matrix.arch }}.json
+            --acts none,gelu --skip-ttnn "$skip" --out results/linear_bias_act_${{ matrix.arch }}.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
