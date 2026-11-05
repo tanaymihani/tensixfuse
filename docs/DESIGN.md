@@ -52,6 +52,10 @@ For each decision: what I picked, what it costs, what could break, and how I'd f
 
 **Why.** The functional simulator is more forgiving than the compiler: it runs Python, so a kernel can do things the compiler won't lower. Compiling them is the check that these are kernels TT-Lang can actually build.
 
+**What it took.** A kernel may only capture ints, floats, tensors, dataflow buffers and pipes; an `if` needs an integer value (a comparison, not a captured Python bool); and it can only call TT-Lang's own functions, not helpers or a function passed in. So [`ops.py`](../kernels/ttlang/ops.py) picks one kernel body per variant in Python inside the operation. With pipes in the operation, the compiler also proves which cores produce and consume each buffer: the multicast compute kernel can't have bounds checks built from node coordinates, and a pipe's source can't be one of its own destinations when the same thread sends before it receives, which would deadlock. The simulator accepted both.
+
+**What could break.** The rewrite has to move the same tiles. [`tests/test_sim_traffic.py`](../tests/test_sim_traffic.py) still requires the simulator's counts to equal the model, and the sweep re-checks all 48 runs.
+
 ## GPU-CorruptNet's head
 
 **Choices.** The calibration temperature is folded into W and b so the calibrated head is still one op. The 10 outputs are padded to 32 and sliced off **before** thresholding: zero-padded columns come out as exactly 0.5 on the device, and the model's threshold is `>= 0.5`. The batch is the two test splits together, 4,160 frames, which is exactly 130 tile rows.

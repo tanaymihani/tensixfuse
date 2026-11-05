@@ -1,0 +1,284 @@
+{
+ "tt_lang": "1.1.6",
+ "ttnn": "unknown",
+ "arch": "wormhole",
+ "simulator": "libttsim_wh.so",
+ "runs": [
+  {
+   "label": "1x1 tile blocks",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 3.6,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    1,
+    1,
+    1
+   ],
+   "grid": [
+    1,
+    1
+   ],
+   "mcast": false,
+   "pcc": 0.999994695186615,
+   "max_abs_err": 0.03253531455993652,
+   "ok": true
+  },
+  {
+   "label": "1x1 tile blocks",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 5.1,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    1,
+    1,
+    1
+   ],
+   "grid": [
+    1,
+    1
+   ],
+   "mcast": false,
+   "pcc": 0.999994695186615,
+   "max_abs_err": 0.03253531455993652,
+   "ok": true
+  },
+  {
+   "label": "2x2 tile blocks",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 3.2,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    2,
+    2,
+    2
+   ],
+   "grid": [
+    1,
+    1
+   ],
+   "mcast": false,
+   "pcc": 0.999995768070221,
+   "max_abs_err": 0.027906417846679688,
+   "ok": true
+  },
+  {
+   "label": "2x2 tile blocks",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 4.8,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    2,
+    2,
+    2
+   ],
+   "grid": [
+    1,
+    1
+   ],
+   "mcast": false,
+   "pcc": 0.999995768070221,
+   "max_abs_err": 0.027906417846679688,
+   "ok": true
+  },
+  {
+   "label": "4x4 tile blocks",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 3.2,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    4,
+    4,
+    4
+   ],
+   "grid": [
+    1,
+    1
+   ],
+   "mcast": false,
+   "pcc": 0.9999956488609314,
+   "max_abs_err": 0.02539539337158203,
+   "ok": true
+  },
+  {
+   "label": "4x4 tile blocks",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 4.9,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    4,
+    4,
+    4
+   ],
+   "grid": [
+    1,
+    1
+   ],
+   "mcast": false,
+   "pcc": 0.9999956488609314,
+   "max_abs_err": 0.02539539337158203,
+   "ok": true
+  },
+  {
+   "label": "8x8 tile blocks",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 3.3,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    8,
+    8,
+    4
+   ],
+   "grid": [
+    1,
+    1
+   ],
+   "mcast": false,
+   "pcc": 0.9999956488609314,
+   "max_abs_err": 0.02539539337158203,
+   "ok": true
+  },
+  {
+   "label": "8x8 tile blocks",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 4.9,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    8,
+    8,
+    4
+   ],
+   "grid": [
+    1,
+    1
+   ],
+   "mcast": false,
+   "pcc": 0.9999956488609314,
+   "max_abs_err": 0.02539539337158203,
+   "ok": true
+  },
+  {
+   "label": "4x4 blocks per core, 2x2 grid",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 3.2,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    4,
+    4,
+    4
+   ],
+   "grid": [
+    2,
+    2
+   ],
+   "mcast": false,
+   "pcc": 0.9999956488609314,
+   "max_abs_err": 0.02539539337158203,
+   "ok": true
+  },
+  {
+   "label": "4x4 blocks per core, 2x2 grid",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 4.9,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    4,
+    4,
+    4
+   ],
+   "grid": [
+    2,
+    2
+   ],
+   "mcast": false,
+   "pcc": 0.9999956488609314,
+   "max_abs_err": 0.02539539337158203,
+   "ok": true
+  },
+  {
+   "label": "4x4 blocks per core, 2x2 grid, multicast",
+   "size": 256,
+   "variant": "fused",
+   "act": "relu",
+   "seconds": 3.2,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    4,
+    4,
+    4
+   ],
+   "grid": [
+    2,
+    2
+   ],
+   "mcast": true,
+   "pcc": 0.9999956488609314,
+   "max_abs_err": 0.02539539337158203,
+   "ok": true
+  },
+  {
+   "label": "4x4 blocks per core, 2x2 grid, multicast",
+   "size": 256,
+   "variant": "unfused",
+   "act": "relu",
+   "seconds": 3.2,
+   "M": 256,
+   "K": 256,
+   "N": 256,
+   "block": [
+    4,
+    4,
+    4
+   ],
+   "grid": [
+    2,
+    2
+   ],
+   "mcast": true,
+   "pcc": 0.9999956488609314,
+   "max_abs_err": 0.02539539337158203,
+   "ok": true
+  }
+ ]
+}

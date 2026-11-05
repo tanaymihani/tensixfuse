@@ -144,15 +144,27 @@ ttsim. The same kernels as the fusion study, compiled by the TT-Lang compiler in
 
 | tt-lang | Chip | Data reuse | Variant | Compiled and ran | PCC | Max abs error |
 |---|---|---|---|---|---|---|
-| 1.1.6 | blackhole | 1x1 tile blocks | fused | no | n/a | n/a |
-| 1.1.6 | blackhole | 1x1 tile blocks | unfused | no | n/a | n/a |
-| 1.1.6 | blackhole | 2x2 tile blocks | fused | no | n/a | n/a |
-| 1.1.6 | blackhole | 2x2 tile blocks | unfused | no | n/a | n/a |
-| 1.1.6 | blackhole | 4x4 tile blocks | fused | no | n/a | n/a |
-| 1.1.6 | blackhole | 4x4 tile blocks | unfused | no | n/a | n/a |
-| 1.1.6 | blackhole | 8x8 tile blocks | fused | no | n/a | n/a |
-| 1.1.6 | blackhole | 8x8 tile blocks | unfused | no | n/a | n/a |
-| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid | fused | no | n/a | n/a |
-| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid | unfused | no | n/a | n/a |
-| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid, multicast | fused | no | n/a | n/a |
-| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid, multicast | unfused | no | n/a | n/a |
+| 1.1.6 | wormhole | 1x1 tile blocks | fused | yes | 0.999995 | 0.0325 |
+| 1.1.6 | wormhole | 1x1 tile blocks | unfused | yes | 0.999995 | 0.0325 |
+| 1.1.6 | wormhole | 2x2 tile blocks | fused | yes | 0.999996 | 0.0279 |
+| 1.1.6 | wormhole | 2x2 tile blocks | unfused | yes | 0.999996 | 0.0279 |
+| 1.1.6 | wormhole | 4x4 tile blocks | fused | yes | 0.999996 | 0.0254 |
+| 1.1.6 | wormhole | 4x4 tile blocks | unfused | yes | 0.999996 | 0.0254 |
+| 1.1.6 | wormhole | 8x8 tile blocks | fused | yes | 0.999996 | 0.0254 |
+| 1.1.6 | wormhole | 8x8 tile blocks | unfused | yes | 0.999996 | 0.0254 |
+| 1.1.6 | wormhole | 4x4 blocks per core, 2x2 grid | fused | yes | 0.999996 | 0.0254 |
+| 1.1.6 | wormhole | 4x4 blocks per core, 2x2 grid | unfused | yes | 0.999996 | 0.0254 |
+| 1.1.6 | wormhole | 4x4 blocks per core, 2x2 grid, multicast | fused | yes | 0.999996 | 0.0254 |
+| 1.1.6 | wormhole | 4x4 blocks per core, 2x2 grid, multicast | unfused | yes | 0.999996 | 0.0254 |
+| 1.1.6 | blackhole | 1x1 tile blocks | fused | yes | 1.000000 | 0.0325 |
+| 1.1.6 | blackhole | 1x1 tile blocks | unfused | yes | 1.000000 | 0.0325 |
+| 1.1.6 | blackhole | 2x2 tile blocks | fused | yes | 1.000000 | 0.0279 |
+| 1.1.6 | blackhole | 2x2 tile blocks | unfused | yes | 1.000000 | 0.0279 |
+| 1.1.6 | blackhole | 4x4 tile blocks | fused | yes | 1.000000 | 0.0254 |
+| 1.1.6 | blackhole | 4x4 tile blocks | unfused | yes | 1.000000 | 0.0254 |
+| 1.1.6 | blackhole | 8x8 tile blocks | fused | yes | 1.000000 | 0.0254 |
+| 1.1.6 | blackhole | 8x8 tile blocks | unfused | yes | 1.000000 | 0.0254 |
+| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid | fused | yes | 1.000000 | 0.0254 |
+| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid | unfused | yes | 1.000000 | 0.0254 |
+| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid, multicast | fused | yes | 1.000000 | 0.0254 |
+| 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid, multicast | unfused | yes | 1.000000 | 0.0254 |
