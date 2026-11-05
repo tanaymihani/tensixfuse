@@ -14,7 +14,7 @@
  "within_1_ulp_vs_double_rounding": 0.9745583047672194,
  "max_abs_err": 0.0625,
  "max_abs_err_relative_to_max_output": 0.0045045046135783195,
- "pcc": 0.99999984775922,
+ "pcc": 0.9999998477592186,
  "relu_zeros": 0.7464873644770408,
  "nonzero_outputs": 203524,
  "exact_on_nonzero_vs_single_rounding": 0.9834024488512412,
@@ -23,7 +23,7 @@
  "within_1_ulp_on_nonzero_vs_double_rounding": 0.8996432853127887,
  "runs_identical": true,
  "seconds": [
-  1.26,
-  0.16
+  1.04,
+  0.15
  ]
 }

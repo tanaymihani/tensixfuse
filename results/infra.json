@@ -1,12 +1,13 @@
 {
- "_comment": "Measured in CI on GitHub-hosted runners, on main; each entry links to its run. Wall-clock times vary between runs.",
+ "_comment": "Measured in CI on GitHub-hosted runners, on main with tt-metal 0.81.1 unless an entry says otherwise; each entry links to its run. Wall-clock times vary between runs.",
  "ci": {
-  "tests": 54,
+  "tests": 72,
+  "skipped": 1,
   "platforms": [
    "ubuntu-latest",
    "macos-latest"
   ],
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795257"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893262"
  },
  "ttsim_matrix": {
   "jobs": 6,
@@ -20,55 +21,58 @@
    "bfloat4_b"
   ],
   "tests_per_chip": 7,
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795284"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893049"
  },
  "metalium": {
   "chips": 2,
-  "kernels": [
-   "fpu",
-   "sfpu"
+  "programs": [
+   "bn_relu (fpu, sfpu)",
+   "linear_bias_act"
   ],
-  "values_checked_per_run": 3211264,
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795305"
+  "bn_values_per_kernel_per_chip": 4014080,
+  "linear_outputs_per_chip": 2359296,
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893266"
  },
  "studies": {
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795335"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893104"
  },
  "docker": {
-  "ttsim_image": "2.08 GB",
-  "sweep_image": "1.1 GB",
+  "ttsim_image": "2.15 GB",
+  "sweep_image": "1.14 GB",
   "ttsim_tests_per_chip": 7,
   "seconds_per_chip": [
-   16.83,
-   16.68
+   20.56,
+   20.62
   ],
-  "sweep_in_image": "12 runs in 14.3 s, 0 mismatches",
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795399"
+  "sweep_in_image": "12 runs in 17.6 s, 0 mismatches",
+  "note": "with tt-metal 0.79.0 the image was 2.08 GB and the tests took 16.8 s per chip",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893041"
  },
  "sweep": {
   "runs": 48,
   "one_runner_job_s": 184,
   "eight_runners_slowest_job_s": 71,
   "merge_job_s": 5,
-  "note": "bounded by the largest single run, the unblocked 2048^3 dry run; an earlier run measured 242 s vs 110 s",
+  "note": "bounded by the largest single run, the unblocked 2048^3 dry run; an earlier run measured 242 s vs 110 s; measured Oct 8 (the sweep doesn't use ttnn, so the version move doesn't touch it)",
   "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795342"
  },
  "kubernetes": {
   "pods": 4,
-  "jobset_seconds": 18,
+  "jobset_seconds": 23,
   "runs": 24,
   "model_mismatches": 0,
   "cluster": "kind",
   "jobset": "v0.12.0",
-  "note": "an earlier run took 23 s",
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795233"
+  "note": "earlier runs took 18 and 23 s",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893056",
+  "slowest_shard_s": 19.9
  },
  "ansible": {
-  "first_run_s": 98,
+  "first_run_s": 112,
   "first_run_changed": 11,
   "second_run_changed": 0,
   "molecule": "converge, idempotence, verify passed",
-  "note": "an earlier run took 90 s",
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/37725795309"
+  "note": "the two runs before took 104 s (main, tt-metal 0.79.0) and 79 s (the 0.81.1 branch)",
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018894020"
  }
 }

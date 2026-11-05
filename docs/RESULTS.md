@@ -140,22 +140,22 @@ ttsim, built against tt-metal 0.81.1's SDK packages. Input: what goes into one o
 
 ## TT-Metalium C++: my bfloat8_b linear layer against ttnn.linear
 
-ttsim, built against tt-metal 0.81.1's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape (128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4, seeded random data. `fp32` accumulates in fp32 destination registers with an fp32 buffer for the sum, `bf16` in bf16 for both (ttnn.linear's fp32_dest_acc_en on and off). Compared bit for bit with ttnn.linear at the same settings on the same simulated chip, and both with fp32 math on the same rounded inputs. `gelu_after_round` rounds the sum to bf16 before GELU. Made by `python bench/linear_bias_act.py`.
+ttsim, built against tt-metal 0.81.1's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape (128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4, seeded random data. `fp32` accumulates in fp32 destination registers with an fp32 buffer for the sum, `bf16` in bf16 for both (ttnn.linear's fp32_dest_acc_en on and off). Compared bit for bit with ttnn.linear at the same settings on the same simulated chip, and both with fp32 math on the same rounded inputs. `gelu_after_round` rounds the sum to bf16 before GELU. ttnn.linear runs twice: as called by default, where its activation runs as a separate op after the matmul, and with `core_grid` (4 x 8 cores), where the activation goes into the matmul kernel. Made by `python bench/linear_bias_act.py`.
 
-| Chip | Accumulation | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | Equal to fp32 rounded once: mine | ttnn | PCC vs fp32: mine | ttnn |
-|---|---|---|---|---|---|---|---|---|
-| blackhole | fp32 | none | 100.00% | 0 | 85.44% | 85.44% | 0.9999985 | 0.9999985 |
-| blackhole | fp32 | gelu | 75.38% | 4 | 84.30% | 69.85% | 0.9999983 | 0.9999958 |
-| blackhole | fp32 | gelu_after_round | 99.37% | 1 | 69.88% | 69.85% | 0.9999958 | 0.9999958 |
-| blackhole | bf16 | none | 100.00% | 0 | 9.81% | 9.81% | 0.9999019 | 0.9999019 |
-| blackhole | bf16 | gelu | 100.00% | 0 | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
-| blackhole | bf16 | gelu_after_round | 100.00% | 0 | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
-| wormhole | fp32 | none | n/a | n/a | 85.44% | n/a | 0.9999985 | n/a |
-| wormhole | fp32 | gelu | n/a | n/a | 84.30% | n/a | 0.9999983 | n/a |
-| wormhole | fp32 | gelu_after_round | n/a | n/a | 69.88% | n/a | 0.9999958 | n/a |
-| wormhole | bf16 | none | 100.00% | 0 | 9.81% | 9.81% | 0.9999019 | 0.9999019 |
-| wormhole | bf16 | gelu | 100.00% | 0 | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
-| wormhole | bf16 | gelu_after_round | 100.00% | 0 | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
+| Chip | Accumulation | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | Bit-exact vs ttnn.linear with core_grid | Equal to fp32 rounded once: mine | ttnn | ttnn with core_grid | PCC vs fp32: mine | ttnn |
+|---|---|---|---|---|---|---|---|---|---|---|
+| blackhole | fp32 | none | 100.00% | 0 | 100.00% | 85.44% | 85.44% | 85.44% | 0.9999985 | 0.9999985 |
+| blackhole | fp32 | gelu | 75.38% | 4 | 100.00% | 84.30% | 69.85% | 84.30% | 0.9999983 | 0.9999958 |
+| blackhole | fp32 | gelu_after_round | 99.37% | 1 | 75.47% | 69.88% | 69.85% | 84.30% | 0.9999958 | 0.9999958 |
+| blackhole | bf16 | none | 100.00% | 0 | 100.00% | 9.81% | 9.81% | 9.81% | 0.9999019 | 0.9999019 |
+| blackhole | bf16 | gelu | 100.00% | 0 | 100.00% | 17.10% | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
+| blackhole | bf16 | gelu_after_round | 100.00% | 0 | 100.00% | 17.10% | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
+| wormhole | fp32 | none | n/a | n/a | n/a | 85.44% | n/a | n/a | 0.9999985 | n/a |
+| wormhole | fp32 | gelu | n/a | n/a | n/a | 84.30% | n/a | n/a | 0.9999983 | n/a |
+| wormhole | fp32 | gelu_after_round | n/a | n/a | n/a | 69.88% | n/a | n/a | 0.9999958 | n/a |
+| wormhole | bf16 | none | 100.00% | 0 | 100.00% | 9.81% | 9.81% | 9.81% | 0.9999019 | 0.9999019 |
+| wormhole | bf16 | gelu | 100.00% | 0 | 100.00% | 17.10% | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
+| wormhole | bf16 | gelu_after_round | 100.00% | 0 | 100.00% | 17.10% | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
 
 No ttnn.linear column on wormhole with fp32 accumulation: ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole.
 
@@ -189,3 +189,13 @@ ttsim. The same kernels as the fusion study, compiled by the TT-Lang compiler in
 | 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid | unfused | yes | 1.000000 | 0.0254 |
 | 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid, multicast | fused | yes | 1.000000 | 0.0254 |
 | 1.1.6 | blackhole | 4x4 blocks per core, 2x2 grid, multicast | unfused | yes | 1.000000 | 0.0254 |
+
+## Two simulated chips: GPT-2's MLP split across an N300
+
+ttsim v1.12.1, its 2-chip Wormhole build (2 chips), ttnn 0.81.1, bf16. `c_fc` is split by columns and `c_proj` by rows, so each chip computes half of the hidden units and a partial `c_proj` output; the two partials are added by the host. PCC of each block's output against fp32 PyTorch, on the same 128 tokens of WikiText-2 as the block-float study. Made by `python bench/tp_mlp_n300.py` (the manual `scaleout` workflow).
+
+| Block | PCC vs fp32 | Partial per chip |
+|---|---|---|
+| 0 | 0.99991 | 192 KiB |
+| 6 | 0.99980 | 192 KiB |
+| 11 | 0.99993 | 192 KiB |

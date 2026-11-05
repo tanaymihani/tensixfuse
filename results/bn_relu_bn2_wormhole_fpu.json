@@ -23,7 +23,7 @@
  "within_1_ulp_on_nonzero_vs_double_rounding": 0.903102336825141,
  "runs_identical": true,
  "seconds": [
-  1.29,
+  1.43,
   0.14
  ]
 }

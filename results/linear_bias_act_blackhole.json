@@ -10,7 +10,7 @@
  "runs": {
   "fp32:none": {
    "cores": 8,
-   "seconds": 5.56,
+   "seconds": 5.1,
    "pcc_mine_vs_fp32": 0.9999985395542617,
    "max_abs_err_mine_vs_fp32": 0.008686304092407227,
    "exact_mine_vs_fp32_rounded_once": 0.8543879191080729,
@@ -19,11 +19,14 @@
    "bit_exact_vs_ttnn": 1.0,
    "within_1_ulp_vs_ttnn": 1.0,
    "max_ulp_vs_ttnn": 0,
+   "exact_ttnn_core_grid_vs_fp32_rounded_once": 0.8543879191080729,
+   "bit_exact_vs_ttnn_core_grid": 1.0,
+   "max_ulp_vs_ttnn_core_grid": 0,
    "elements": 393216
   },
   "fp32:gelu": {
    "cores": 8,
-   "seconds": 5.27,
+   "seconds": 4.91,
    "pcc_mine_vs_fp32": 0.9999983110149946,
    "max_abs_err_mine_vs_fp32": 0.009714841842651367,
    "exact_mine_vs_fp32_rounded_once": 0.8430150349934896,
@@ -33,11 +36,14 @@
    "within_1_ulp_vs_ttnn": 0.9997736612955729,
    "max_ulp_vs_ttnn": 4,
    "ttnn_gelu_same_as_separate_gelu_op": 1.0,
+   "exact_ttnn_core_grid_vs_fp32_rounded_once": 0.8430150349934896,
+   "bit_exact_vs_ttnn_core_grid": 1.0,
+   "max_ulp_vs_ttnn_core_grid": 0,
    "elements": 393216
   },
   "fp32:gelu_after_round": {
    "cores": 8,
-   "seconds": 5.42,
+   "seconds": 5.01,
    "pcc_mine_vs_fp32": 0.9999957762274296,
    "max_abs_err_mine_vs_fp32": 0.014900445938110352,
    "exact_mine_vs_fp32_rounded_once": 0.6988423665364584,
@@ -47,11 +53,14 @@
    "within_1_ulp_vs_ttnn": 1.0,
    "max_ulp_vs_ttnn": 1,
    "ttnn_gelu_same_as_separate_gelu_op": 1.0,
+   "exact_ttnn_core_grid_vs_fp32_rounded_once": 0.8430150349934896,
+   "bit_exact_vs_ttnn_core_grid": 0.7547403971354166,
+   "max_ulp_vs_ttnn_core_grid": 4,
    "elements": 393216
   },
   "bf16:none": {
    "cores": 8,
-   "seconds": 5.08,
+   "seconds": 4.69,
    "pcc_mine_vs_fp32": 0.9999019460593239,
    "max_abs_err_mine_vs_fp32": 0.07141876220703125,
    "exact_mine_vs_fp32_rounded_once": 0.0980682373046875,
@@ -60,11 +69,14 @@
    "bit_exact_vs_ttnn": 1.0,
    "within_1_ulp_vs_ttnn": 1.0,
    "max_ulp_vs_ttnn": 0,
+   "exact_ttnn_core_grid_vs_fp32_rounded_once": 0.0980682373046875,
+   "bit_exact_vs_ttnn_core_grid": 1.0,
+   "max_ulp_vs_ttnn_core_grid": 0,
    "elements": 393216
   },
   "bf16:gelu": {
    "cores": 8,
-   "seconds": 5.47,
+   "seconds": 4.97,
    "pcc_mine_vs_fp32": 0.9998628199695191,
    "max_abs_err_mine_vs_fp32": 0.07649970054626465,
    "exact_mine_vs_fp32_rounded_once": 0.1709925333658854,
@@ -74,11 +86,14 @@
    "within_1_ulp_vs_ttnn": 1.0,
    "max_ulp_vs_ttnn": 0,
    "ttnn_gelu_same_as_separate_gelu_op": 1.0,
+   "exact_ttnn_core_grid_vs_fp32_rounded_once": 0.1709925333658854,
+   "bit_exact_vs_ttnn_core_grid": 1.0,
+   "max_ulp_vs_ttnn_core_grid": 0,
    "elements": 393216
   },
   "bf16:gelu_after_round": {
    "cores": 8,
-   "seconds": 5.42,
+   "seconds": 5.09,
    "pcc_mine_vs_fp32": 0.9998628199695191,
    "max_abs_err_mine_vs_fp32": 0.07649970054626465,
    "exact_mine_vs_fp32_rounded_once": 0.1709925333658854,
@@ -88,6 +103,9 @@
    "within_1_ulp_vs_ttnn": 1.0,
    "max_ulp_vs_ttnn": 0,
    "ttnn_gelu_same_as_separate_gelu_op": 1.0,
+   "exact_ttnn_core_grid_vs_fp32_rounded_once": 0.1709925333658854,
+   "bit_exact_vs_ttnn_core_grid": 1.0,
+   "max_ulp_vs_ttnn_core_grid": 0,
    "elements": 393216
   }
  }

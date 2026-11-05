@@ -291,28 +291,37 @@ def linear_section(runs: list[dict]) -> list[str]:
             "destination registers with an fp32 buffer for the sum, `bf16` in bf16 for both (ttnn.linear's "
             "fp32_dest_acc_en on and off). Compared bit for bit with ttnn.linear at the same settings on the same "
             "simulated chip, and both with fp32 math on the same rounded inputs. `gelu_after_round` rounds the "
-            "sum to bf16 before GELU. Made by `python bench/linear_bias_act.py`."
+            "sum to bf16 before GELU. ttnn.linear runs twice: as called by default, where its activation runs "
+            "as a separate op after the matmul, and with `core_grid` (4 x 8 cores), where the activation goes "
+            "into the matmul kernel. Made by `python bench/linear_bias_act.py`."
         ),
         "",
         (
             "| Chip | Accumulation | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | "
-            "Equal to fp32 rounded once: mine | ttnn | PCC vs fp32: mine | ttnn |"
+            "Bit-exact vs ttnn.linear with core_grid | "
+            "Equal to fp32 rounded once: mine | ttnn | ttnn with core_grid | PCC vs fp32: mine | ttnn |"
         ),
-        "|---|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for res in runs:
         for key, r in res["runs"].items():
             acc, act = key.split(":") if ":" in key else ("fp32", key)
+            grid = "n/a", "n/a"
+            if "bit_exact_vs_ttnn_core_grid" in r:
+                grid = (
+                    f"{r['bit_exact_vs_ttnn_core_grid']:.2%}",
+                    f"{r['exact_ttnn_core_grid_vs_fp32_rounded_once']:.2%}",
+                )
             if "bit_exact_vs_ttnn" in r:
                 cells = (
-                    f"{r['bit_exact_vs_ttnn']:.2%} | {r['max_ulp_vs_ttnn']} | "
+                    f"{r['bit_exact_vs_ttnn']:.2%} | {r['max_ulp_vs_ttnn']} | {grid[0]} | "
                     f"{r['exact_mine_vs_fp32_rounded_once']:.2%} | "
-                    f"{r['exact_ttnn_vs_fp32_rounded_once']:.2%} | "
+                    f"{r['exact_ttnn_vs_fp32_rounded_once']:.2%} | {grid[1]} | "
                     f"{r['pcc_mine_vs_fp32']:.7f} | {r['pcc_ttnn_vs_fp32']:.7f}"
                 )
             else:
                 cells = (
-                    f"n/a | n/a | {r['exact_mine_vs_fp32_rounded_once']:.2%} | n/a | "
+                    f"n/a | n/a | n/a | {r['exact_mine_vs_fp32_rounded_once']:.2%} | n/a | n/a | "
                     f"{r['pcc_mine_vs_fp32']:.7f} | n/a"
                 )
             out.append(f"| {res['arch']} | {acc} | {act} | {cells} |")
