@@ -26,6 +26,10 @@ on:
         description: "GPT-2 MLP blocks to run"
         required: false
         default: "0 6 11"
+      minutes:
+        description: "job time limit; with the fabric on, one block takes more than an hour"
+        required: false
+        default: "60"
 
 env:
   TTNN_VERSION: "0.81.1"
@@ -35,7 +39,7 @@ env:
 jobs:
   n300:
     runs-on: ubuntu-22.04
-    timeout-minutes: 60
+    timeout-minutes: ${{ fromJSON(inputs.minutes || '60') }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
