@@ -15,6 +15,10 @@ on:
         description: "extra arguments for bench/tp_mlp_n300.py, e.g. --no-fabric"
         required: false
         default: ""
+      discover:
+        description: "let UMD find the two simulated chips itself instead of reading tt-umd's N300 example file"
+        type: boolean
+        default: false
 
 env:
   TTNN_VERSION: "0.81.1"
@@ -52,12 +56,18 @@ jobs:
           echo "$TAG" > ttsim-version
           echo "ttsim $TAG on the N300 (pinned: $(git show HEAD:ttsim-version))" >> "$GITHUB_STEP_SUMMARY"
       - name: Two-chip simulator and N300 cluster descriptor
+        env:
+          DISCOVER: ${{ inputs.discover }}
         run: |
           bash scripts/setup_ttsim.sh n300
-          mkdir -p ~/.cache/tensixfuse
-          curl -fsSL -o ~/.cache/tensixfuse/wormhole_N300.yaml \
-            "https://raw.githubusercontent.com/tenstorrent/tt-umd/$UMD_SHA/tests/cluster_descriptor_examples/wormhole_N300.yaml"
-          echo "TT_METAL_MOCK_CLUSTER_DESC_PATH=$HOME/.cache/tensixfuse/wormhole_N300.yaml" >> "$GITHUB_ENV"
+          # With a cluster file set, tt-metal hands it to UMD instead of letting
+          # UMD discover the simulated chips and the Ethernet links between them.
+          if [ "$DISCOVER" != "true" ]; then
+            mkdir -p ~/.cache/tensixfuse
+            curl -fsSL -o ~/.cache/tensixfuse/wormhole_N300.yaml \
+              "https://raw.githubusercontent.com/tenstorrent/tt-umd/$UMD_SHA/tests/cluster_descriptor_examples/wormhole_N300.yaml"
+            echo "TT_METAL_MOCK_CLUSTER_DESC_PATH=$HOME/.cache/tensixfuse/wormhole_N300.yaml" >> "$GITHUB_ENV"
+          fi
           # Preload tensors straight into simulated memory instead of host writes
           # to the remote chip through its Ethernet core (those time out).
           echo "TT_METAL_SIMULATOR_DIRECT_TENSOR_WRITES=1" >> "$GITHUB_ENV"
