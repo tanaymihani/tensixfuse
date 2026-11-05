@@ -32,6 +32,11 @@ from tensixfuse.metrics import bf16_ulp_distance, pcc
 TT_FORMAT = {"bfp8": "bfloat8_b", "bf16": "bfloat16"}
 
 
+def core_grid(ttnn):
+    """4 x 8 cores: one row of output tiles per core row, 12 columns per core. Fits both chips."""
+    return ttnn.CoreGrid(y=4, x=8)
+
+
 def bf16_bits(t) -> np.ndarray:
     """Raw bits of a torch bf16 tensor."""
     import torch
@@ -85,7 +90,21 @@ def run_ttnn(x_t, w_t, b_t, fmt: str, act: str, acc: str) -> np.ndarray:
             # The same with GELU as its own op on the bf16 output of the linear.
             y0 = ttnn.linear(x, w, bias=b, compute_kernel_config=cfg)
             post = bf16_bits(ttnn.to_torch(ttnn.gelu(y0)).to(torch.bfloat16))
-        return fused, post
+        # Without a core grid, ttnn's matmul.cpp runs the activation as a separate op after the
+        # matmul; with one, it goes into the kernel.
+        try:
+            y_grid = ttnn.linear(
+                x,
+                w,
+                bias=b,
+                activation=ttnn_act,
+                compute_kernel_config=cfg,
+                core_grid=core_grid(ttnn),
+            )
+            grid = bf16_bits(ttnn.to_torch(y_grid).to(torch.bfloat16))
+        except RuntimeError as e:  # recorded, so one failing config doesn't stop the others
+            grid = str(e).splitlines()[0][:300]
+        return fused, post, grid
     finally:
         ttnn.close_device(device)
 
@@ -159,7 +178,7 @@ def main() -> None:
             "exact_mine_vs_fp32_rounded_once": float((mine == once).mean()),
         }
         if acc not in skip:
-            theirs, post = run_ttnn(x_t, w_t, b_t, args.fmt, act, acc)
+            theirs, post, grid = run_ttnn(x_t, w_t, b_t, args.fmt, act, acc)
             theirs = theirs.reshape(mine.shape)
             ulp = bf16_ulp_distance(mine, theirs)
             r.update(
@@ -174,6 +193,17 @@ def main() -> None:
             if post is not None:
                 r["ttnn_gelu_same_as_separate_gelu_op"] = float(
                     (theirs == post.reshape(mine.shape)).mean()
+                )
+            if isinstance(grid, str):
+                r["ttnn_core_grid_error"] = grid
+            else:
+                grid = grid.reshape(mine.shape)
+                r.update(
+                    {
+                        "exact_ttnn_core_grid_vs_fp32_rounded_once": float((grid == once).mean()),
+                        "bit_exact_vs_ttnn_core_grid": float((mine == grid).mean()),
+                        "max_ulp_vs_ttnn_core_grid": int(bf16_ulp_distance(mine, grid).max()),
+                    }
                 )
         r["elements"] = int(mine.size)
         out["runs"][f"{acc}:{act}"] = r
