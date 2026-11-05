@@ -5,19 +5,19 @@ tensixfuse_root: /opt/tensixfuse
 tensixfuse_venv: "{{ tensixfuse_root }}/venv"
 tensixfuse_src: "{{ tensixfuse_root }}/src"
 
-ttnn_version: "0.79.0"
+ttnn_version: "0.81.1"
 tt_lang_sim_version: "1.1.6"
 torch_index_url: https://download.pytorch.org/whl/cpu
 
-ttsim_version: v1.10.8
+ttsim_version: v1.12.1
 ttsim_root: /opt/ttsim
 ttsim_archs:
   blackhole:
     lib: libttsim_bh.so
     soc: blackhole_140_arch.yaml
-    sha256: 8432cd36f4d8c8fa26bec130bd66916ffbb02e2278419be4484d2dee81fa730f
+    sha256: 30483f6bf83fb07c77ffb2c63a246c4b2303b2374e5a7177de9cd89fea43a486
   wormhole:
     lib: libttsim_wh.so
     soc: wormhole_b0_80_arch.yaml
-    sha256: ba2f287f674483e1facb1f1697645ec86231b60c481d9bceb5d6a7da3adb7788
+    sha256: 8db3f17d908ac0a8e8a87a3ef02f133f20c3f8520e9221a8751a9105ce4dbf3a
 ttsim_default_arch: blackhole

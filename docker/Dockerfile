@@ -35,7 +35,7 @@ CMD ["python", "bench/fusion.py", "--sizes", "256", "512"]
 
 # ttnn on ttsim, both chips.
 FROM base AS ttsim
-ARG TTNN_VERSION=0.79.0
+ARG TTNN_VERSION=0.81.1
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       libatomic1 libnuma1 libhwloc15 libgomp1 \

@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
 
 env:
-  TTNN_VERSION: "0.79.0"
-  # tt-umd as pinned by tt-metal v0.79.0 (tt_metal/third_party/umd)
-  UMD_SHA: f9173df20bec9bb93e5c92407e701e604ddef33d
+  TTNN_VERSION: "0.81.1"
+  # tt-umd as pinned by tt-metal v0.81.1 (tt_metal/third_party/umd)
+  UMD_SHA: 889651ea5525379cc6bf1807e56404661b48a76d
 
 jobs:
   n300:
