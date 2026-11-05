@@ -1,0 +1,97 @@
+name: upstream-test
+
+# Runs a branch of my tt-lang fork the way tt-lang's own CI does, for the PRs I
+# send upstream (their CI waits for a maintainer to start it): the simulator
+# tests as in tt-lang's call-test-sim.yml, then the wheel smoke test against a
+# tt-lang-sim wheel built from the branch and against an older one from PyPI,
+# which is what tt-lang's publish workflows do when they rebuild an older tag.
+# Manual.
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "branch or commit of tanaymihani/tt-lang"
+        required: true
+      tests:
+        description: "pytest paths for the simulator tests"
+        required: false
+        default: "test/sim/"
+      old_wheel:
+        description: "older tt-lang-sim release from PyPI for the smoke test"
+        required: false
+        default: "1.1.6"
+      before:
+        description: "optional commit whose smoke-test script should also run against the older wheel"
+        required: false
+        default: ""
+
+jobs:
+  sim-tests:
+    name: simulator tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: tanaymihani/tt-lang
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.10"
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r dev-requirements.txt
+      - name: Simulator tests
+        env:
+          PYTHONPATH: ${{ github.workspace }}:${{ github.workspace }}/python:${{ github.workspace }}/examples
+          TTLANG_SIM_ONLY: "1"
+          TESTS: ${{ inputs.tests }}
+        run: |
+          read -ra paths <<< "$TESTS"
+          pytest "${paths[@]}" -v -n auto
+
+  wheel-smoke-test:
+    name: wheel smoke test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: tanaymihani/tt-lang
+          ref: ${{ inputs.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.10"
+      - name: Build the tt-lang-sim wheel from the branch
+        env:
+          TTLANG_VERSION_OVERRIDE: "1.1.99"
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip wheel packaging/sim --wheel-dir=dist --no-deps --no-build-isolation
+      - name: Smoke test, wheel built from the branch
+        run: |
+          python -m venv /tmp/new && source /tmp/new/bin/activate
+          pip install -q --extra-index-url https://download.pytorch.org/whl/cpu dist/tt_lang_sim-*.whl
+          python .github/scripts/smoke-test-wheel.py
+      - name: Smoke test, older wheel from PyPI
+        env:
+          OLD: ${{ inputs.old_wheel }}
+        run: |
+          python -m venv /tmp/old && source /tmp/old/bin/activate
+          pip install -q --extra-index-url https://download.pytorch.org/whl/cpu "tt-lang-sim==$OLD"
+          python .github/scripts/smoke-test-wheel.py
+      - name: The earlier commit's smoke test, older wheel
+        if: inputs.before != ''
+        env:
+          BEFORE: ${{ inputs.before }}
+        run: |
+          source /tmp/old/bin/activate
+          git show "$BEFORE:.github/scripts/smoke-test-wheel.py" > /tmp/smoke-before.py
+          if python /tmp/smoke-before.py; then
+            echo "passed at $BEFORE" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "failed at $BEFORE (exit $?)" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
