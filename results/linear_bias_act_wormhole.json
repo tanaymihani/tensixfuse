@@ -6,30 +6,73 @@
   3072
  ],
  "weights": "bfloat8_b",
- "ttnn_skipped": "ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole",
+ "ttnn_skipped": {
+  "fp32": "ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole"
+ },
  "runs": {
-  "none": {
+  "fp32:none": {
    "cores": 8,
-   "seconds": 4.38,
+   "seconds": 3.04,
    "pcc_mine_vs_fp32": 0.999998539554264,
    "max_abs_err_mine_vs_fp32": 0.008686304092407227,
    "exact_mine_vs_fp32_rounded_once": 0.8543879191080729,
    "elements": 393216
   },
-  "gelu": {
+  "fp32:gelu": {
    "cores": 8,
-   "seconds": 4.15,
+   "seconds": 2.93,
    "pcc_mine_vs_fp32": 0.9999983110149974,
    "max_abs_err_mine_vs_fp32": 0.009714841842651367,
    "exact_mine_vs_fp32_rounded_once": 0.8430150349934896,
    "elements": 393216
   },
-  "gelu_after_round": {
+  "fp32:gelu_after_round": {
    "cores": 8,
-   "seconds": 4.19,
+   "seconds": 2.98,
    "pcc_mine_vs_fp32": 0.9999957762274323,
    "max_abs_err_mine_vs_fp32": 0.014900445938110352,
    "exact_mine_vs_fp32_rounded_once": 0.6988423665364584,
+   "elements": 393216
+  },
+  "bf16:none": {
+   "cores": 8,
+   "seconds": 2.8,
+   "pcc_mine_vs_fp32": 0.9999019460593235,
+   "max_abs_err_mine_vs_fp32": 0.07141876220703125,
+   "exact_mine_vs_fp32_rounded_once": 0.0980682373046875,
+   "pcc_ttnn_vs_fp32": 0.9999019460593235,
+   "exact_ttnn_vs_fp32_rounded_once": 0.0980682373046875,
+   "bit_exact_vs_ttnn": 1.0,
+   "within_1_ulp_vs_ttnn": 1.0,
+   "max_ulp_vs_ttnn": 0,
+   "elements": 393216
+  },
+  "bf16:gelu": {
+   "cores": 8,
+   "seconds": 3.38,
+   "pcc_mine_vs_fp32": 0.9998628199695234,
+   "max_abs_err_mine_vs_fp32": 0.07649970054626465,
+   "exact_mine_vs_fp32_rounded_once": 0.1709925333658854,
+   "pcc_ttnn_vs_fp32": 0.9998628199695234,
+   "exact_ttnn_vs_fp32_rounded_once": 0.1709925333658854,
+   "bit_exact_vs_ttnn": 1.0,
+   "within_1_ulp_vs_ttnn": 1.0,
+   "max_ulp_vs_ttnn": 0,
+   "ttnn_gelu_same_as_separate_gelu_op": 1.0,
+   "elements": 393216
+  },
+  "bf16:gelu_after_round": {
+   "cores": 8,
+   "seconds": 4.17,
+   "pcc_mine_vs_fp32": 0.9998628199695234,
+   "max_abs_err_mine_vs_fp32": 0.07649970054626465,
+   "exact_mine_vs_fp32_rounded_once": 0.1709925333658854,
+   "pcc_ttnn_vs_fp32": 0.9998628199695234,
+   "exact_ttnn_vs_fp32_rounded_once": 0.1709925333658854,
+   "bit_exact_vs_ttnn": 1.0,
+   "within_1_ulp_vs_ttnn": 1.0,
+   "max_ulp_vs_ttnn": 0,
+   "ttnn_gelu_same_as_separate_gelu_op": 1.0,
    "elements": 393216
   }
  }

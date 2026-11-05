@@ -8,26 +8,26 @@
  "weights": "bfloat8_b",
  "ttnn_skipped": null,
  "runs": {
-  "none": {
+  "fp32:none": {
    "cores": 8,
-   "seconds": 4.21,
-   "pcc_mine_vs_fp32": 0.999998539554264,
+   "seconds": 5.56,
+   "pcc_mine_vs_fp32": 0.9999985395542617,
    "max_abs_err_mine_vs_fp32": 0.008686304092407227,
    "exact_mine_vs_fp32_rounded_once": 0.8543879191080729,
-   "pcc_ttnn_vs_fp32": 0.999998539554264,
+   "pcc_ttnn_vs_fp32": 0.9999985395542617,
    "exact_ttnn_vs_fp32_rounded_once": 0.8543879191080729,
    "bit_exact_vs_ttnn": 1.0,
    "within_1_ulp_vs_ttnn": 1.0,
    "max_ulp_vs_ttnn": 0,
    "elements": 393216
   },
-  "gelu": {
+  "fp32:gelu": {
    "cores": 8,
-   "seconds": 3.29,
-   "pcc_mine_vs_fp32": 0.9999983110149974,
+   "seconds": 5.27,
+   "pcc_mine_vs_fp32": 0.9999983110149946,
    "max_abs_err_mine_vs_fp32": 0.009714841842651367,
    "exact_mine_vs_fp32_rounded_once": 0.8430150349934896,
-   "pcc_ttnn_vs_fp32": 0.9999957624830074,
+   "pcc_ttnn_vs_fp32": 0.9999957624830054,
    "exact_ttnn_vs_fp32_rounded_once": 0.6985143025716146,
    "bit_exact_vs_ttnn": 0.7538426717122396,
    "within_1_ulp_vs_ttnn": 0.9997736612955729,
@@ -35,17 +35,58 @@
    "ttnn_gelu_same_as_separate_gelu_op": 1.0,
    "elements": 393216
   },
-  "gelu_after_round": {
+  "fp32:gelu_after_round": {
    "cores": 8,
-   "seconds": 3.31,
-   "pcc_mine_vs_fp32": 0.9999957762274323,
+   "seconds": 5.42,
+   "pcc_mine_vs_fp32": 0.9999957762274296,
    "max_abs_err_mine_vs_fp32": 0.014900445938110352,
    "exact_mine_vs_fp32_rounded_once": 0.6988423665364584,
-   "pcc_ttnn_vs_fp32": 0.9999957624830074,
+   "pcc_ttnn_vs_fp32": 0.9999957624830054,
    "exact_ttnn_vs_fp32_rounded_once": 0.6985143025716146,
    "bit_exact_vs_ttnn": 0.9937159220377604,
    "within_1_ulp_vs_ttnn": 1.0,
    "max_ulp_vs_ttnn": 1,
+   "ttnn_gelu_same_as_separate_gelu_op": 1.0,
+   "elements": 393216
+  },
+  "bf16:none": {
+   "cores": 8,
+   "seconds": 5.08,
+   "pcc_mine_vs_fp32": 0.9999019460593239,
+   "max_abs_err_mine_vs_fp32": 0.07141876220703125,
+   "exact_mine_vs_fp32_rounded_once": 0.0980682373046875,
+   "pcc_ttnn_vs_fp32": 0.9999019460593239,
+   "exact_ttnn_vs_fp32_rounded_once": 0.0980682373046875,
+   "bit_exact_vs_ttnn": 1.0,
+   "within_1_ulp_vs_ttnn": 1.0,
+   "max_ulp_vs_ttnn": 0,
+   "elements": 393216
+  },
+  "bf16:gelu": {
+   "cores": 8,
+   "seconds": 5.47,
+   "pcc_mine_vs_fp32": 0.9998628199695191,
+   "max_abs_err_mine_vs_fp32": 0.07649970054626465,
+   "exact_mine_vs_fp32_rounded_once": 0.1709925333658854,
+   "pcc_ttnn_vs_fp32": 0.9998628199695191,
+   "exact_ttnn_vs_fp32_rounded_once": 0.1709925333658854,
+   "bit_exact_vs_ttnn": 1.0,
+   "within_1_ulp_vs_ttnn": 1.0,
+   "max_ulp_vs_ttnn": 0,
+   "ttnn_gelu_same_as_separate_gelu_op": 1.0,
+   "elements": 393216
+  },
+  "bf16:gelu_after_round": {
+   "cores": 8,
+   "seconds": 5.42,
+   "pcc_mine_vs_fp32": 0.9998628199695191,
+   "max_abs_err_mine_vs_fp32": 0.07649970054626465,
+   "exact_mine_vs_fp32_rounded_once": 0.1709925333658854,
+   "pcc_ttnn_vs_fp32": 0.9998628199695191,
+   "exact_ttnn_vs_fp32_rounded_once": 0.1709925333658854,
+   "bit_exact_vs_ttnn": 1.0,
+   "within_1_ulp_vs_ttnn": 1.0,
+   "max_ulp_vs_ttnn": 0,
    "ttnn_gelu_same_as_separate_gelu_op": 1.0,
    "elements": 393216
   }

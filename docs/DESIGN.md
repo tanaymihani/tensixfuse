@@ -74,7 +74,7 @@ For each decision: what I picked, what it costs, what could break, and how I'd f
 
 **Choice.** [`linear_bias_act`](../kernels/metalium/linear_bias_act) copies the order of operations in ttnn.linear's fused-bias kernel at v0.79.0, read from `bmm_large_block_zm_fused_bias_activation.cpp` and the program factory: fp32 accumulation over all of K, an fp32 buffer for the sum (which is what ttnn uses when `fp32_dest_acc_en` is on), the bias added by the matrix engine as a row broadcast (so the sum is read through a source register, at TF32 precision), then the activation. That way a mismatch means something real, not a different recipe.
 
-**What it found.** With no activation the bits match on every output. With GELU they don't, because ttnn.linear's result at this shape is identical to rounding the sum to bf16 and running `ttnn.gelu` on it; my kernel applies GELU before the rounding. The `gelu_after_round` option rounds first and matches ttnn.linear on 99.4% of outputs.
+**What it found.** With bf16 accumulation the bits match on every output on both chips, GELU included. With fp32 accumulation they match without an activation; with GELU they don't, because ttnn.linear's result at this shape is identical to rounding the sum to bf16 and running `ttnn.gelu` on it, while my kernel applies GELU before the rounding. The `gelu_after_round` option rounds first and matches ttnn.linear on 99.4% of outputs.
 
 **What could break.** A different ttnn version could pick another program config or change the fused path. The comparison runs on every change to the kernel, and on Wormhole it's skipped with the reason recorded, because ttnn.linear itself stops on ttsim's undefined-behavior check there.
 

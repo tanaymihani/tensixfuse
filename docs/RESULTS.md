@@ -147,11 +147,17 @@ ttsim, built against tt-metal 0.79.0's SDK packages. `y = act(x @ w + b)` at GPT
 | blackhole | fp32 | none | 100.00% | 0 | 85.44% | 85.44% | 0.9999985 | 0.9999985 |
 | blackhole | fp32 | gelu | 75.38% | 4 | 84.30% | 69.85% | 0.9999983 | 0.9999958 |
 | blackhole | fp32 | gelu_after_round | 99.37% | 1 | 69.88% | 69.85% | 0.9999958 | 0.9999958 |
+| blackhole | bf16 | none | 100.00% | 0 | 9.81% | 9.81% | 0.9999019 | 0.9999019 |
+| blackhole | bf16 | gelu | 100.00% | 0 | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
+| blackhole | bf16 | gelu_after_round | 100.00% | 0 | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
 | wormhole | fp32 | none | n/a | n/a | 85.44% | n/a | 0.9999985 | n/a |
 | wormhole | fp32 | gelu | n/a | n/a | 84.30% | n/a | 0.9999983 | n/a |
 | wormhole | fp32 | gelu_after_round | n/a | n/a | 69.88% | n/a | 0.9999958 | n/a |
+| wormhole | bf16 | none | 100.00% | 0 | 9.81% | 9.81% | 0.9999019 | 0.9999019 |
+| wormhole | bf16 | gelu | 100.00% | 0 | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
+| wormhole | bf16 | gelu_after_round | 100.00% | 0 | 17.10% | 17.10% | 0.9998628 | 0.9998628 |
 
-No ttnn.linear column on wormhole: ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole.
+No ttnn.linear column on wormhole with fp32 accumulation: ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole.
 
 ## The fusion kernels through the TT-Lang compiler
 
