@@ -140,16 +140,16 @@ ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into one o
 
 ## TT-Metalium C++: my bfloat8_b linear layer against ttnn.linear
 
-ttsim, built against tt-metal 0.79.0's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape (128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4 with fp32 accumulation, seeded random data. Compared bit for bit with ttnn.linear at the same settings on the same simulated chip, and both with fp32 math on the same rounded inputs. `gelu_from_pack` runs GELU from the packer thread, as ttnn.linear's fused activation does. Made by `python bench/linear_bias_act.py`.
+ttsim, built against tt-metal 0.79.0's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape (128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4, seeded random data. `fp32` accumulates in fp32 destination registers with an fp32 buffer for the sum, `bf16` in bf16 for both (ttnn.linear's fp32_dest_acc_en on and off). Compared bit for bit with ttnn.linear at the same settings on the same simulated chip, and both with fp32 math on the same rounded inputs. `gelu_after_round` rounds the sum to bf16 before GELU. Made by `python bench/linear_bias_act.py`.
 
-| Chip | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | Equal to fp32 rounded once: mine | ttnn | PCC vs fp32: mine | ttnn |
-|---|---|---|---|---|---|---|---|
-| blackhole | none | 100.00% | 0 | 85.44% | 85.44% | 0.9999985 | 0.9999985 |
-| blackhole | gelu | 75.38% | 4 | 84.30% | 69.85% | 0.9999983 | 0.9999958 |
-| blackhole | gelu_after_round | 99.37% | 1 | 69.88% | 69.85% | 0.9999958 | 0.9999958 |
-| wormhole | none | n/a | n/a | 85.44% | n/a | 0.9999985 | n/a |
-| wormhole | gelu | n/a | n/a | 84.30% | n/a | 0.9999983 | n/a |
-| wormhole | gelu_after_round | n/a | n/a | 69.88% | n/a | 0.9999958 | n/a |
+| Chip | Accumulation | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | Equal to fp32 rounded once: mine | ttnn | PCC vs fp32: mine | ttnn |
+|---|---|---|---|---|---|---|---|---|
+| blackhole | fp32 | none | 100.00% | 0 | 85.44% | 85.44% | 0.9999985 | 0.9999985 |
+| blackhole | fp32 | gelu | 75.38% | 4 | 84.30% | 69.85% | 0.9999983 | 0.9999958 |
+| blackhole | fp32 | gelu_after_round | 99.37% | 1 | 69.88% | 69.85% | 0.9999958 | 0.9999958 |
+| wormhole | fp32 | none | n/a | n/a | 85.44% | n/a | 0.9999985 | n/a |
+| wormhole | fp32 | gelu | n/a | n/a | 84.30% | n/a | 0.9999983 | n/a |
+| wormhole | fp32 | gelu_after_round | n/a | n/a | 69.88% | n/a | 0.9999958 | n/a |
 
 No ttnn.linear column on wormhole: ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole.
 

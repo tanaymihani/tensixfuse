@@ -54,7 +54,7 @@ def reference(x, w, b, fmt: str, act: str) -> np.ndarray:
     return y.astype(np.float32)
 
 
-def run_ttnn(x_t, w_t, b_t, fmt: str, act: str) -> np.ndarray:
+def run_ttnn(x_t, w_t, b_t, fmt: str, act: str, acc: str) -> np.ndarray:
     import torch
     import ttnn
 
@@ -63,7 +63,7 @@ def run_ttnn(x_t, w_t, b_t, fmt: str, act: str) -> np.ndarray:
         kwargs = {
             "math_fidelity": ttnn.MathFidelity.HiFi4,
             "math_approx_mode": False,
-            "fp32_dest_acc_en": True,
+            "fp32_dest_acc_en": acc == "fp32",
             "packer_l1_acc": False,
         }
         try:
@@ -90,7 +90,7 @@ def run_ttnn(x_t, w_t, b_t, fmt: str, act: str) -> np.ndarray:
         ttnn.close_device(device)
 
 
-def run_mine(binary, x_t, w_t, b_t, shape, act, fmt, cores):
+def run_mine(binary, x_t, w_t, b_t, shape, act, fmt, cores, acc):
     m, k, n = shape
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
@@ -98,7 +98,7 @@ def run_mine(binary, x_t, w_t, b_t, shape, act, fmt, cores):
         w_t.float().numpy().astype(np.float32).tofile(tmp / "w.bin")  # bf16 values, exactly
         bf16_bits(b_t).tofile(tmp / "b.bin")
         cmd = [binary, *(str(tmp / f) for f in ("x.bin", "w.bin", "b.bin", "y.bin"))]
-        cmd += [str(m), str(k), str(n), act, fmt, str(cores)]
+        cmd += [str(m), str(k), str(n), act, fmt, str(cores), acc]
         proc = subprocess.run(
             cmd, capture_output=True, text=True, check=False, env=os.environ.copy()
         )
@@ -123,7 +123,9 @@ def main() -> None:
     p.add_argument("--fmt", choices=("bfp8", "bf16"), default="bfp8")
     p.add_argument("--cores", type=int, default=8)
     p.add_argument("--seed", type=int, default=0)
-    p.add_argument("--skip-ttnn", default="", help="why ttnn.linear isn't run here, if it isn't")
+    p.add_argument("--accs", default="fp32,bf16", help="accumulation: fp32 and/or bf16")
+    p.add_argument("--skip-ttnn-accs", default="", help="accumulations to skip ttnn.linear for")
+    p.add_argument("--skip-ttnn", default="", help="why ttnn.linear is skipped for those")
     p.add_argument("--out", default="results/linear_bias_act.json")
     args = p.parse_args()
 
@@ -140,11 +142,13 @@ def main() -> None:
         "arch": os.environ.get("TENSIXFUSE_ARCH", "?"),
         "shape": list(shape),
         "weights": TT_FORMAT[args.fmt],
-        "ttnn_skipped": args.skip_ttnn or None,
+        "ttnn_skipped": {acc: args.skip_ttnn for acc in args.skip_ttnn_accs.split(",") if acc}
+        or None,
         "runs": {},
     }
-    for act in args.acts.split(","):
-        mine, timing = run_mine(args.binary, x_t, w_t, b_t, shape, act, args.fmt, args.cores)
+    skip = set(filter(None, args.skip_ttnn_accs.split(",")))
+    for acc, act in ((acc, act) for acc in args.accs.split(",") for act in args.acts.split(",")):
+        mine, timing = run_mine(args.binary, x_t, w_t, b_t, shape, act, args.fmt, args.cores, acc)
         ref = reference(x, w, b, args.fmt, act)
         once = bf16_bits(torch.from_numpy(as_bf16(ref)).to(torch.bfloat16)).reshape(mine.shape)
         r = {
@@ -154,8 +158,8 @@ def main() -> None:
             "max_abs_err_mine_vs_fp32": float(np.abs(bits_to_f32(mine) - ref).max()),
             "exact_mine_vs_fp32_rounded_once": float((mine == once).mean()),
         }
-        if not args.skip_ttnn:
-            theirs, post = run_ttnn(x_t, w_t, b_t, args.fmt, act)
+        if acc not in skip:
+            theirs, post = run_ttnn(x_t, w_t, b_t, args.fmt, act, acc)
             theirs = theirs.reshape(mine.shape)
             ulp = bf16_ulp_distance(mine, theirs)
             r.update(
@@ -172,8 +176,8 @@ def main() -> None:
                     (theirs == post.reshape(mine.shape)).mean()
                 )
         r["elements"] = int(mine.size)
-        out["runs"][act] = r
-        print(act, json.dumps(r), flush=True)
+        out["runs"][f"{acc}:{act}"] = r
+        print(acc, act, json.dumps(r), flush=True)
     dest = Path(args.out)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(out, indent=1))

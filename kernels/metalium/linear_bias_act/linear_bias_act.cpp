@@ -14,6 +14,9 @@
 // streams the x and w tiles along K and the bias tile for that column.
 //
 // usage: linear_bias_act X.bin W.bin B.bin OUT.bin M K N [none|relu|gelu|gelu_after_round] [bfp8|bf16] [CORES]
+//        [fp32|bf16]
+// The last argument is the accumulation: fp32 destination registers and an fp32 buffer for the sum
+// (default), or bf16 for both, which is what ttnn.linear does with fp32_dest_acc_en off.
 // gelu_after_round rounds x @ w + b to bf16 before GELU.
 // X.bin, B.bin and OUT.bin are raw little-endian bf16, row-major. W.bin is raw
 // float32, row-major; the host packs it as bfloat8_b with tt-metal's packer.
@@ -163,6 +166,12 @@ int main(int argc, char** argv) {
     const std::string act = argc > 8 ? argv[8] : "gelu";
     const std::string fmt = argc > 9 ? argv[9] : "bfp8";
     const uint32_t requested_cores = argc > 10 ? std::stoul(argv[10]) : 8;
+    const std::string acc = argc > 11 ? argv[11] : "fp32";
+    if (acc != "fp32" && acc != "bf16") {
+        std::fprintf(stderr, "accumulation must be fp32 or bf16\n");
+        return 2;
+    }
+    const bool fp32_acc = acc == "fp32";
     uint32_t act_id;
     if (act == "none") {
         act_id = 0;
@@ -241,7 +250,14 @@ int main(int argc, char** argv) {
         bfp8 ? tt::DataFormat::Bfp8_b : tt::DataFormat::Float16_b,
         w_tile_bytes);                                                                          // w
     make_cb(program, cores, tt::CBIndex::c_2, 2, tt::DataFormat::Float16_b, BF16_TILE_BYTES);   // bias
-    make_cb(program, cores, tt::CBIndex::c_24, 2, tt::DataFormat::Float32, FP32_TILE_BYTES);    // x @ w
+    // x @ w: fp32 with fp32 accumulation, else bf16 (ttnn.linear's choice in both cases).
+    make_cb(
+        program,
+        cores,
+        tt::CBIndex::c_24,
+        2,
+        fp32_acc ? tt::DataFormat::Float32 : tt::DataFormat::Float16_b,
+        fp32_acc ? FP32_TILE_BYTES : BF16_TILE_BYTES);
     make_cb(program, cores, tt::CBIndex::c_25, 2, tt::DataFormat::Float16_b, BF16_TILE_BYTES);  // sum, bf16
     make_cb(program, cores, tt::CBIndex::c_16, 2, tt::DataFormat::Float16_b, BF16_TILE_BYTES);  // y
 
@@ -264,14 +280,14 @@ int main(int argc, char** argv) {
         cores,
         DataMovementConfig{
             .processor = DataMovementProcessor::RISCV_1, .noc = NOC::RISCV_1_default, .compile_args = writer_ct});
-    // HiFi4 with fp32 accumulation, ttnn.linear's settings in the GPT-2 study.
+    // HiFi4, with fp32 accumulation by default: ttnn.linear's settings in the GPT-2 study.
     auto compute = CreateKernel(
         program,
         KERNEL_DIR "compute/linear_bias_act.cpp",
         cores,
         ComputeConfig{
             .math_fidelity = MathFidelity::HiFi4,
-            .fp32_dest_acc_en = true,
+            .fp32_dest_acc_en = fp32_acc,
             .math_approx_mode = false,
             .compile_args = {act_id}});
 
@@ -307,7 +323,7 @@ int main(int argc, char** argv) {
     device->close();
     std::printf(
         "{\"rows\": %u, \"k\": %u, \"cols\": %u, \"tiles\": %u, \"cores\": %u, \"act\": \"%s\", "
-        "\"weights\": \"%s\", \"seconds\": %.2f}\n",
+        "\"weights\": \"%s\", \"acc\": \"%s\", \"seconds\": %.2f}\n",
         M,
         K,
         N,
@@ -315,6 +331,7 @@ int main(int argc, char** argv) {
         n_cores,
         act.c_str(),
         fmt.c_str(),
+        acc.c_str(),
         secs);
     return 0;
 }

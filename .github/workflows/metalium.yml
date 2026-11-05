@@ -131,12 +131,14 @@ jobs:
           # On Wormhole, ttnn.linear with fp32 accumulation and a fused bias stops
           # on ttsim's undefined-behavior check in the unpacker; mine is checked
           # against fp32 alone there.
-          skip=""
+          skip_accs=""
           if [ "${{ matrix.arch }}" = wormhole ]; then
-            skip="ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole"
+            skip_accs="fp32"
           fi
           python bench/linear_bias_act.py --binary build/linear_bias_act/linear_bias_act \
-            --acts none,gelu,gelu_after_round --skip-ttnn "$skip" --out results/linear_bias_act_${{ matrix.arch }}.json
+            --accs fp32,bf16 --acts none,gelu,gelu_after_round --skip-ttnn-accs "$skip_accs" \
+            --skip-ttnn "ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole" \
+            --out results/linear_bias_act_${{ matrix.arch }}.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:

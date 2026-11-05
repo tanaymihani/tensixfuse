@@ -262,24 +262,27 @@ def linear_section(runs: list[dict]) -> list[str]:
         "",
         (
             "ttsim, built against tt-metal 0.79.0's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape "
-            "(128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4 with fp32 accumulation, seeded random data. "
-            "Compared bit for bit with ttnn.linear at the same settings on the same simulated chip, and both with "
-            "fp32 math on the same rounded inputs. `gelu_from_pack` runs GELU from the packer thread, as "
-            "ttnn.linear's fused activation does. Made by `python bench/linear_bias_act.py`."
+            "(128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4, seeded random data. `fp32` accumulates in fp32 "
+            "destination registers with an fp32 buffer for the sum, `bf16` in bf16 for both (ttnn.linear's "
+            "fp32_dest_acc_en on and off). Compared bit for bit with ttnn.linear at the same settings on the same "
+            "simulated chip, and both with fp32 math on the same rounded inputs. `gelu_after_round` rounds the "
+            "sum to bf16 before GELU. Made by `python bench/linear_bias_act.py`."
         ),
         "",
         (
-            "| Chip | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | "
+            "| Chip | Accumulation | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | "
             "Equal to fp32 rounded once: mine | ttnn | PCC vs fp32: mine | ttnn |"
         ),
-        "|---|---|---|---|---|---|---|---|",
+        "|---|---|---|---|---|---|---|---|---|",
     ]
     for res in runs:
-        for act, r in res["runs"].items():
+        for key, r in res["runs"].items():
+            acc, act = key.split(":") if ":" in key else ("fp32", key)
             if "bit_exact_vs_ttnn" in r:
                 cells = (
                     f"{r['bit_exact_vs_ttnn']:.2%} | {r['max_ulp_vs_ttnn']} | "
-                    f"{r['exact_mine_vs_fp32_rounded_once']:.2%} | {r['exact_ttnn_vs_fp32_rounded_once']:.2%} | "
+                    f"{r['exact_mine_vs_fp32_rounded_once']:.2%} | "
+                    f"{r['exact_ttnn_vs_fp32_rounded_once']:.2%} | "
                     f"{r['pcc_mine_vs_fp32']:.7f} | {r['pcc_ttnn_vs_fp32']:.7f}"
                 )
             else:
@@ -287,10 +290,17 @@ def linear_section(runs: list[dict]) -> list[str]:
                     f"n/a | n/a | {r['exact_mine_vs_fp32_rounded_once']:.2%} | n/a | "
                     f"{r['pcc_mine_vs_fp32']:.7f} | n/a"
                 )
-            out.append(f"| {res['arch']} | {act} | {cells} |")
-    skipped = {res["arch"]: res["ttnn_skipped"] for res in runs if res.get("ttnn_skipped")}
-    for arch, why in skipped.items():
-        out += ["", f"No ttnn.linear column on {arch}: {why}."]
+            out.append(f"| {res['arch']} | {acc} | {act} | {cells} |")
+    for res in runs:
+        skipped = res.get("ttnn_skipped")
+        if isinstance(skipped, dict):
+            for acc, why in skipped.items():
+                out += [
+                    "",
+                    f"No ttnn.linear column on {res['arch']} with {acc} accumulation: {why}.",
+                ]
+        elif skipped:
+            out += ["", f"No ttnn.linear column on {res['arch']}: {skipped}."]
     return out
 
 
