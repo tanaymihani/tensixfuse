@@ -1,5 +1,6 @@
-// Reader for y = act(x @ w + b): for each output tile in this core's columns,
-// the x and w tiles along K, then that column's bias tile.
+// Reader for y = act(x @ w + b): all of x once (it stays in L1 for every column
+// this core computes), then each of this core's w columns once, with its bias
+// tile. Compute uses a column for all Mt rows of the output before the next.
 
 #include <cstdint>
 
@@ -14,6 +15,8 @@ void kernel_main() {
     const uint32_t Nt = get_arg_val<uint32_t>(5);
     const uint32_t n_start = get_arg_val<uint32_t>(6);
     const uint32_t n_count = get_arg_val<uint32_t>(7);
+    const uint32_t x_tile_bytes = get_arg_val<uint32_t>(8);
+    const uint32_t w_tile_bytes = get_arg_val<uint32_t>(9);
 
     constexpr uint32_t cb_x = 0;
     constexpr uint32_t cb_w = 1;
@@ -26,21 +29,26 @@ void kernel_main() {
     constexpr auto b_args = TensorAccessorArgs<w_args.next_compile_time_args_offset()>();
     const auto bs = TensorAccessor(b_args, b_addr);
 
+    // x, tile (mt, kt) at page mt * Kt + kt, in that order in the buffer.
+    cb_reserve_back(cb_x, Mt * Kt);
+    const uint32_t x_ptr = get_write_ptr(cb_x);
+    for (uint32_t i = 0; i < Mt * Kt; ++i) {
+        noc_async_read_page(i, xs, x_ptr + i * x_tile_bytes);
+    }
+    noc_async_read_barrier();
+    cb_push_back(cb_x, Mt * Kt);
+
+    // The w buffer holds two columns, so the next one loads while this one is used.
     for (uint32_t nt = n_start; nt < n_start + n_count; ++nt) {
-        for (uint32_t mt = 0; mt < Mt; ++mt) {
-            for (uint32_t kt = 0; kt < Kt; ++kt) {
-                cb_reserve_back(cb_x, 1);
-                cb_reserve_back(cb_w, 1);
-                noc_async_read_page(mt * Kt + kt, xs, get_write_ptr(cb_x));
-                noc_async_read_page(kt * Nt + nt, ws, get_write_ptr(cb_w));
-                noc_async_read_barrier();
-                cb_push_back(cb_x, 1);
-                cb_push_back(cb_w, 1);
-            }
-            cb_reserve_back(cb_b, 1);
-            noc_async_read_page(nt, bs, get_write_ptr(cb_b));
-            noc_async_read_barrier();
-            cb_push_back(cb_b, 1);
+        cb_reserve_back(cb_w, Kt);
+        cb_reserve_back(cb_b, 1);
+        const uint32_t w_ptr = get_write_ptr(cb_w);
+        for (uint32_t kt = 0; kt < Kt; ++kt) {
+            noc_async_read_page(kt * Nt + nt, ws, w_ptr + kt * w_tile_bytes);
         }
+        noc_async_read_page(nt, bs, get_write_ptr(cb_b));
+        noc_async_read_barrier();
+        cb_push_back(cb_w, Kt);
+        cb_push_back(cb_b, 1);
     }
 }

@@ -173,6 +173,7 @@ def main() -> None:
         r = {
             "cores": timing["cores"],
             "seconds": timing["seconds"],
+            "dram_read_bytes": timing.get("dram_read_bytes"),
             "pcc_mine_vs_fp32": pcc(bits_to_f32(mine), ref),
             "max_abs_err_mine_vs_fp32": float(np.abs(bits_to_f32(mine) - ref).max()),
             "exact_mine_vs_fp32_rounded_once": float((mine == once).mean()),

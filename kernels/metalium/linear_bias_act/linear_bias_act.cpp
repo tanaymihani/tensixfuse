@@ -240,13 +240,21 @@ int main(int argc, char** argv) {
     for (const auto& c : core_list) ranges.emplace_back(c, c);
     const CoreRangeSet cores(ranges);
 
+    // Every core keeps all of x in L1 and two columns of w (one loading, one in use).
+    const uint64_t x_l1_bytes = static_cast<uint64_t>(Mt) * Kt * BF16_TILE_BYTES;
+    if (x_l1_bytes + 2ULL * Kt * w_tile_bytes > 1024ULL * 1024ULL) {
+        std::fprintf(stderr, "x (%llu bytes) and two w columns don't fit in 1 MiB of L1\n",
+                     static_cast<unsigned long long>(x_l1_bytes));
+        return 1;
+    }
+
     Program program = CreateProgram();
-    make_cb(program, cores, tt::CBIndex::c_0, 2, tt::DataFormat::Float16_b, BF16_TILE_BYTES);  // x
+    make_cb(program, cores, tt::CBIndex::c_0, Mt * Kt, tt::DataFormat::Float16_b, BF16_TILE_BYTES);  // x
     make_cb(
         program,
         cores,
         tt::CBIndex::c_1,
-        2,
+        2 * Kt,
         bfp8 ? tt::DataFormat::Bfp8_b : tt::DataFormat::Float16_b,
         w_tile_bytes);                                                                          // w
     make_cb(program, cores, tt::CBIndex::c_2, 2, tt::DataFormat::Float16_b, BF16_TILE_BYTES);   // bias
@@ -301,8 +309,17 @@ int main(int argc, char** argv) {
             program,
             reader,
             core,
-            {x_buf->address(), w_buf->address(), b_buf->address(), Mt, Kt, Nt, n_start, n_count});
-        SetRuntimeArgs(program, compute, core, {Mt * n_count, Kt});
+            {x_buf->address(),
+             w_buf->address(),
+             b_buf->address(),
+             Mt,
+             Kt,
+             Nt,
+             n_start,
+             n_count,
+             BF16_TILE_BYTES,
+             w_tile_bytes});
+        SetRuntimeArgs(program, compute, core, {n_count, Kt, Mt});
         SetRuntimeArgs(program, writer, core, {y_buf->address(), Mt, Nt, n_start, n_count});
         n_start += n_count;
     }
@@ -321,9 +338,13 @@ int main(int argc, char** argv) {
         .write(reinterpret_cast<const char*>(y.data()), static_cast<std::streamsize>(y.size() * sizeof(uint16_t)));
 
     device->close();
+    // What the readers fetch from DRAM: x once per core, each w column and bias tile once.
+    const uint64_t dram_read_bytes = static_cast<uint64_t>(n_cores) * Mt * Kt * BF16_TILE_BYTES +
+                                     static_cast<uint64_t>(Kt) * Nt * w_tile_bytes +
+                                     static_cast<uint64_t>(Nt) * BF16_TILE_BYTES;
     std::printf(
         "{\"rows\": %u, \"k\": %u, \"cols\": %u, \"tiles\": %u, \"cores\": %u, \"act\": \"%s\", "
-        "\"weights\": \"%s\", \"acc\": \"%s\", \"seconds\": %.2f}\n",
+        "\"weights\": \"%s\", \"acc\": \"%s\", \"dram_read_bytes\": %llu, \"seconds\": %.2f}\n",
         M,
         K,
         N,
@@ -332,6 +353,7 @@ int main(int argc, char** argv) {
         act.c_str(),
         fmt.c_str(),
         acc.c_str(),
+        static_cast<unsigned long long>(dram_read_bytes),
         secs);
     return 0;
 }
