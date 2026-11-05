@@ -13,8 +13,8 @@
 // Each core gets a range of output tile columns. For every output tile it
 // streams the x and w tiles along K and the bias tile for that column.
 //
-// usage: linear_bias_act X.bin W.bin B.bin OUT.bin M K N [none|relu|gelu|gelu_from_pack] [bfp8|bf16] [CORES]
-// gelu_from_pack runs GELU from the packer thread, as ttnn.linear's fused activation does.
+// usage: linear_bias_act X.bin W.bin B.bin OUT.bin M K N [none|relu|gelu|gelu_after_round] [bfp8|bf16] [CORES]
+// gelu_after_round rounds x @ w + b to bf16 before GELU.
 // X.bin, B.bin and OUT.bin are raw little-endian bf16, row-major. W.bin is raw
 // float32, row-major; the host packs it as bfloat8_b with tt-metal's packer.
 
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
     if (argc < 8) {
         std::fprintf(
             stderr,
-            "usage: %s X.bin W.bin B.bin OUT.bin M K N [none|relu|gelu|gelu_from_pack] [bfp8|bf16] [CORES]\n",
+            "usage: %s X.bin W.bin B.bin OUT.bin M K N [none|relu|gelu|gelu_after_round] [bfp8|bf16] [CORES]\n",
             argv[0]);
         return 2;
     }
@@ -170,10 +170,10 @@ int main(int argc, char** argv) {
         act_id = 1;
     } else if (act == "gelu") {
         act_id = 2;
-    } else if (act == "gelu_from_pack") {
+    } else if (act == "gelu_after_round") {
         act_id = 3;
     } else {
-        std::fprintf(stderr, "activation must be none, relu, gelu or gelu_from_pack\n");
+        std::fprintf(stderr, "activation must be none, relu, gelu or gelu_after_round\n");
         return 2;
     }
     if (fmt != "bfp8" && fmt != "bf16") {
@@ -242,6 +242,7 @@ int main(int argc, char** argv) {
         w_tile_bytes);                                                                          // w
     make_cb(program, cores, tt::CBIndex::c_2, 2, tt::DataFormat::Float16_b, BF16_TILE_BYTES);   // bias
     make_cb(program, cores, tt::CBIndex::c_24, 2, tt::DataFormat::Float32, FP32_TILE_BYTES);    // x @ w
+    make_cb(program, cores, tt::CBIndex::c_25, 2, tt::DataFormat::Float16_b, BF16_TILE_BYTES);  // sum, bf16
     make_cb(program, cores, tt::CBIndex::c_16, 2, tt::DataFormat::Float16_b, BF16_TILE_BYTES);  // y
 
     std::vector<uint32_t> reader_ct;

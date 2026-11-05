@@ -76,10 +76,16 @@ def run_ttnn(x_t, w_t, b_t, fmt: str, act: str) -> np.ndarray:
         b = ttnn.from_torch(
             b_t.reshape(1, -1), dtype=ttnn.bfloat16, layout=ttnn.TILE_LAYOUT, device=device
         )
-        # Both of my GELU variants are compared with ttnn.linear's one fused GELU.
+        # Both of my GELU variants are compared with ttnn.linear's one GELU.
         ttnn_act = {"none": None, "relu": "relu"}.get(act, "gelu")
         y = ttnn.linear(x, w, bias=b, activation=ttnn_act, compute_kernel_config=cfg)
-        return bf16_bits(ttnn.to_torch(y).to(torch.bfloat16))
+        fused = bf16_bits(ttnn.to_torch(y).to(torch.bfloat16))
+        post = None
+        if ttnn_act == "gelu":
+            # The same with GELU as its own op on the bf16 output of the linear.
+            y0 = ttnn.linear(x, w, bias=b, compute_kernel_config=cfg)
+            post = bf16_bits(ttnn.to_torch(ttnn.gelu(y0)).to(torch.bfloat16))
+        return fused, post
     finally:
         ttnn.close_device(device)
 
@@ -112,7 +118,7 @@ def main() -> None:
     p.add_argument("--K", type=int, default=768)
     p.add_argument("--N", type=int, default=3072)
     p.add_argument(
-        "--acts", default="none,gelu,gelu_from_pack", help="none, relu, gelu, gelu_from_pack"
+        "--acts", default="none,gelu,gelu_after_round", help="none, relu, gelu, gelu_after_round"
     )
     p.add_argument("--fmt", choices=("bfp8", "bf16"), default="bfp8")
     p.add_argument("--cores", type=int, default=8)
@@ -149,7 +155,8 @@ def main() -> None:
             "exact_mine_vs_fp32_rounded_once": float((mine == once).mean()),
         }
         if not args.skip_ttnn:
-            theirs = run_ttnn(x_t, w_t, b_t, args.fmt, act).reshape(mine.shape)
+            theirs, post = run_ttnn(x_t, w_t, b_t, args.fmt, act)
+            theirs = theirs.reshape(mine.shape)
             ulp = bf16_ulp_distance(mine, theirs)
             r.update(
                 {
@@ -160,6 +167,10 @@ def main() -> None:
                     "max_ulp_vs_ttnn": int(ulp.max()),
                 }
             )
+            if post is not None:
+                r["ttnn_gelu_same_as_separate_gelu_op"] = float(
+                    (theirs == post.reshape(mine.shape)).mean()
+                )
         r["elements"] = int(mine.size)
         out["runs"][act] = r
         print(act, json.dumps(r), flush=True)
