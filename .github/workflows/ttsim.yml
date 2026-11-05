@@ -71,8 +71,9 @@ jobs:
     name: newest ttsim release / ${{ matrix.arch }}
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-22.04
-    # The pinned tests take a few minutes per chip. On Oct 30, ttsim v1.15.0
-    # didn't finish the Blackhole tests in 45 (Wormhole passed in 14 s).
+    # The pinned tests take a few minutes per chip. With ttnn 0.79.0, ttsim v1.15.0
+    # didn't finish the Blackhole tests in 45 min (Oct 30) or 20 (Nov 2); Wormhole
+    # passed in 14 s. With ttnn 0.81.1, v1.16.0 passed both in about 22 s (Nov 5).
     timeout-minutes: 20
     continue-on-error: true
     strategy:

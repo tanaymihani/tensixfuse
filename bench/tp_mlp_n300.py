@@ -4,15 +4,21 @@ c_fc is split by columns: each chip holds half of the 3,072 hidden units and
 applies GELU to its own half, with no communication. c_proj is split by rows:
 each chip ends up with a partial 128 x 768 output, and one all-reduce over the
 chips' Ethernet link adds the two partials. Checks the result against the
-fp32 PyTorch block and that both chips end up with the same bits.
+fp32 PyTorch block and that both chips end up with the same bits. With
+--no-fabric the two partials come back to the host instead, which adds them.
 
-Needs ttsim's 2-chip build (scripts/setup_ttsim.sh n300) and an N300 cluster
-descriptor in TT_METAL_MOCK_CLUSTER_DESC_PATH.
+Needs ttsim's 2-chip build (scripts/setup_ttsim.sh n300). The workflow also
+sets TT_METAL_MOCK_CLUSTER_DESC_PATH to tt-umd's N300 example file unless told
+to let UMD discover the chips.
 
-Status: with tt-metal 0.79.0 and ttsim v1.10.8 the two simulated chips come up
-and the Ethernet fabric between them initializes, but host writes to the remote
-chip (through its Ethernet core) time out. ttsim notes that multichip support
-isn't fully merged into mainline tt-metal yet.
+Status (tt-metal 0.81.1): with --no-fabric it works on ttsim v1.12.1 and
+v1.16.0, PCC 0.9998 or better against fp32 on every block, about 160 s per
+block on v1.12.1 and 9 s on v1.16.0. With the fabric on and the example file
+as the topology, the fabric initializes on both chips, and then the first host
+write to the second chip (through its Ethernet core) times out after UMD's 5 s,
+the same with tt-metal 0.79.0 and ttsim v1.10.8. When UMD discovers the
+chips instead, nothing times out, but a block hadn't finished after 12 minutes
+on v1.12.1 or 18 on v1.16.0.
 
     python bench/tp_mlp_n300.py data/gpt2_mlp.npz --out results/tp_n300.json
 """
@@ -21,7 +27,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
+from importlib.metadata import version
 from pathlib import Path
 
 import numpy as np
@@ -81,7 +89,13 @@ def main() -> None:
     if not args.no_fabric:
         ttnn.set_fabric_config(ttnn.FabricConfig.FABRIC_1D)
     mesh = ttnn.open_mesh_device(ttnn.MeshShape(1, 2))
-    results: dict = {"chips": mesh.get_num_devices(), "fabric": not args.no_fabric, "blocks": []}
+    results: dict = {
+        "chips": mesh.get_num_devices(),
+        "fabric": not args.no_fabric,
+        "ttnn": version("ttnn"),
+        "simulator": os.environ.get("TT_METAL_SIMULATOR", ""),
+        "blocks": [],
+    }
 
     def to_mesh(a, mapper):
         # Round to bf16 on the host so nothing has to be converted on the device.
@@ -120,7 +134,7 @@ def main() -> None:
                 "pcc_vs_fp32": pcc(y0, d[f"y{i}"]),
                 "chips_bit_identical": None if args.no_fabric else bool(np.array_equal(y0, y1)),
                 "collective": how,
-                "all_reduced_kib_per_chip": partial.shape[-2] * partial.shape[-1] * 2 / 1024,
+                "partial_kib_per_chip": partial.shape[-2] * partial.shape[-1] * 2 / 1024,
                 "seconds": round(time.perf_counter() - t0, 1),
             }
             results["blocks"].append(row)

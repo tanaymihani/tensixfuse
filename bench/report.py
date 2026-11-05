@@ -66,7 +66,7 @@ def quant_section(q: dict) -> list[str]:
         "## Block-float weights on GPT-2's MLP blocks",
         "",
         (
-            f"ttsim, simulated {q['arch'].split('.')[-1].title()}, ttnn 0.79.0, HiFi4. "
+            f"ttsim, simulated {q['arch'].split('.')[-1].title()}, ttnn 0.81.1, HiFi4. "
             f"All {q['blocks']} MLP blocks of GPT-2 small on {q['tokens']} tokens of WikiText-2; "
             'PCC of each block\'s output against fp32 PyTorch. "Emulated" is the same block on CPU '
             "with weights rounded the way tt-metal packs them. Made by `python bench/quant_gpt2.py`."
@@ -134,7 +134,7 @@ def bn_section(runs: list[dict]) -> list[str]:
         "## TT-Metalium C++: fused BatchNorm + ReLU",
         "",
         (
-            "ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into one of "
+            "ttsim, built against tt-metal 0.81.1's SDK packages. Input: what goes into one of "
             "GPU-CorruptNet's BatchNorm layers for 32 frames, channels last. In ResNet-50, layer4.2.bn2 "
             "is followed by ReLU; layer4.2.bn3 is followed by the residual add, so BN + ReLU on it is a "
             "stand-in. `fpu` multiplies and adds on the matrix engine with a bf16 intermediate in L1; "
@@ -256,12 +256,37 @@ def compiled_section(runs: list[dict]) -> list[str]:
     return out
 
 
+def n300_section(t: dict) -> list[str]:
+    # The simulator path is .../ttsim/<version>/n300/libttsim_wh_x2.so.
+    sim = Path(t.get("simulator", "")).parent.parent.name or "?"
+    how = "an all-reduce over the fabric" if t["fabric"] else "the host"
+    out = [
+        "## Two simulated chips: GPT-2's MLP split across an N300",
+        "",
+        (
+            f"ttsim {sim}, its 2-chip Wormhole build ({t['chips']} chips), ttnn {t['ttnn']}, bf16. "
+            "`c_fc` is split by columns and `c_proj` by rows, so each chip computes half of the "
+            f"hidden units and a partial `c_proj` output; the two partials are added by {how}. PCC of "
+            "each block's output against fp32 PyTorch, on the same 128 tokens of WikiText-2 as the "
+            "block-float study. Made by `python bench/tp_mlp_n300.py` (the manual `scaleout` workflow)."
+        ),
+        "",
+        "| Block | PCC vs fp32 | Partial per chip |",
+        "|---|---|---|",
+    ]
+    for b in t["blocks"]:
+        out.append(
+            f"| {b['block']} | {b['pcc_vs_fp32']:.5f} | {b['partial_kib_per_chip']:.0f} KiB |"
+        )
+    return out
+
+
 def linear_section(runs: list[dict]) -> list[str]:
     out = [
         "## TT-Metalium C++: my bfloat8_b linear layer against ttnn.linear",
         "",
         (
-            "ttsim, built against tt-metal 0.79.0's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape "
+            "ttsim, built against tt-metal 0.81.1's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape "
             "(128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4, seeded random data. `fp32` accumulates in fp32 "
             "destination registers with an fp32 buffer for the sum, `bf16` in bf16 for both (ttnn.linear's "
             "fp32_dest_acc_en on and off). Compared bit for bit with ttnn.linear at the same settings on the same "
@@ -339,6 +364,8 @@ def main() -> None:
     compiled = [load(f"ttlang_compiled_{a}.json") for a in ("wormhole", "blackhole")]
     if any(compiled):
         parts += compiled_section([r for r in compiled if r]) + [""]
+    if n300 := load("tp_n300.json"):
+        parts += n300_section(n300) + [""]
     dest = REPO / "docs" / "RESULTS.md"
     dest.parent.mkdir(exist_ok=True)
     dest.write_text("\n".join(parts))

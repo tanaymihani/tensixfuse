@@ -54,7 +54,7 @@ TT-Lang functional simulator (tt-lang-sim 1.1.6). `y = relu(a @ b + c)`, square,
 
 ## Block-float weights on GPT-2's MLP blocks
 
-ttsim, simulated Blackhole, ttnn 0.79.0, HiFi4. All 12 MLP blocks of GPT-2 small on 128 tokens of WikiText-2; PCC of each block's output against fp32 PyTorch. "Emulated" is the same block on CPU with weights rounded the way tt-metal packs them. Made by `python bench/quant_gpt2.py`.
+ttsim, simulated Blackhole, ttnn 0.81.1, HiFi4. All 12 MLP blocks of GPT-2 small on 128 tokens of WikiText-2; PCC of each block's output against fp32 PyTorch. "Emulated" is the same block on CPU with weights rounded the way tt-metal packs them. Made by `python bench/quant_gpt2.py`.
 
 | Weights | MLP weights | Median PCC | Worst PCC (block) | Emulated median | Emulated worst |
 |---|---|---|---|---|---|
@@ -125,7 +125,7 @@ CPU emulation, weight-only, like the GPT-2 study. Whole test set, 299,078 tokens
 
 ## TT-Metalium C++: fused BatchNorm + ReLU
 
-ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into one of GPU-CorruptNet's BatchNorm layers for 32 frames, channels last. In ResNet-50, layer4.2.bn2 is followed by ReLU; layer4.2.bn3 is followed by the residual add, so BN + ReLU on it is a stand-in. `fpu` multiplies and adds on the matrix engine with a bf16 intermediate in L1; `sfpu` does all three steps in fp32 on the vector engine. Compared with NumPy fp32 rounded once to bf16. ReLU's zeros match trivially, so the nonzero columns count only the outputs it doesn't zero. Made by `python bench/bn_relu.py --binary build/bn_relu/bn_relu --layer bn2|bn3 --mode fpu|sfpu`.
+ttsim, built against tt-metal 0.81.1's SDK packages. Input: what goes into one of GPU-CorruptNet's BatchNorm layers for 32 frames, channels last. In ResNet-50, layer4.2.bn2 is followed by ReLU; layer4.2.bn3 is followed by the residual add, so BN + ReLU on it is a stand-in. `fpu` multiplies and adds on the matrix engine with a bf16 intermediate in L1; `sfpu` does all three steps in fp32 on the vector engine. Compared with NumPy fp32 rounded once to bf16. ReLU's zeros match trivially, so the nonzero columns count only the outputs it doesn't zero. Made by `python bench/bn_relu.py --binary build/bn_relu/bn_relu --layer bn2|bn3 --mode fpu|sfpu`.
 
 | Layer | Chip | Kernel | Elements | Nonzero outputs | PCC | Bit-exact, all | Bit-exact, nonzero | Within 1 bf16 step, nonzero | Max error / max output | Two runs identical |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -140,7 +140,7 @@ ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into one o
 
 ## TT-Metalium C++: my bfloat8_b linear layer against ttnn.linear
 
-ttsim, built against tt-metal 0.79.0's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape (128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4, seeded random data. `fp32` accumulates in fp32 destination registers with an fp32 buffer for the sum, `bf16` in bf16 for both (ttnn.linear's fp32_dest_acc_en on and off). Compared bit for bit with ttnn.linear at the same settings on the same simulated chip, and both with fp32 math on the same rounded inputs. `gelu_after_round` rounds the sum to bf16 before GELU. Made by `python bench/linear_bias_act.py`.
+ttsim, built against tt-metal 0.81.1's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape (128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4, seeded random data. `fp32` accumulates in fp32 destination registers with an fp32 buffer for the sum, `bf16` in bf16 for both (ttnn.linear's fp32_dest_acc_en on and off). Compared bit for bit with ttnn.linear at the same settings on the same simulated chip, and both with fp32 math on the same rounded inputs. `gelu_after_round` rounds the sum to bf16 before GELU. Made by `python bench/linear_bias_act.py`.
 
 | Chip | Accumulation | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | Equal to fp32 rounded once: mine | ttnn | PCC vs fp32: mine | ttnn |
 |---|---|---|---|---|---|---|---|---|

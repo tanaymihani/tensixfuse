@@ -48,7 +48,7 @@ For each decision: what I picked, what it costs, what could break, and how I'd f
 
 ## The TT-Lang compiler, with its own pins
 
-**Choice.** The fusion kernels also go through the real TT-Lang compiler and run on ttsim ([`bench/ttlang_compiled.py`](../bench/ttlang_compiled.py)). The tt-lang 1.1.6 wheel requires ttnn 0.74.0, while the rest of the repo is on 0.79.0, so that one job uses the ttsim and SFPI versions tt-metal 0.74.0 pins ([`pins/tt-lang-1.1.6`](../pins/tt-lang-1.1.6)); the setup scripts switch with `TENSIXFUSE_PINS`.
+**Choice.** The fusion kernels also go through the real TT-Lang compiler and run on ttsim ([`bench/ttlang_compiled.py`](../bench/ttlang_compiled.py)). The tt-lang 1.1.6 wheel requires ttnn 0.74.0, while the rest of the repo is on 0.81.1, so that one job uses the ttsim and SFPI versions tt-metal 0.74.0 pins ([`pins/tt-lang-1.1.6`](../pins/tt-lang-1.1.6)); the setup scripts switch with `TENSIXFUSE_PINS`.
 
 **Why.** The functional simulator is more forgiving than the compiler: it runs Python, so a kernel can do things the compiler won't lower. Compiling them is the check that these are kernels TT-Lang can actually build.
 
@@ -72,7 +72,7 @@ For each decision: what I picked, what it costs, what could break, and how I'd f
 
 ## My own linear layer, step for step with ttnn.linear
 
-**Choice.** [`linear_bias_act`](../kernels/metalium/linear_bias_act) copies the order of operations in ttnn.linear's fused-bias kernel at v0.79.0, read from `bmm_large_block_zm_fused_bias_activation.cpp` and the program factory: fp32 accumulation over all of K, an fp32 buffer for the sum (which is what ttnn uses when `fp32_dest_acc_en` is on), the bias added by the matrix engine as a row broadcast (so the sum is read through a source register, at TF32 precision), then the activation. That way a mismatch means something real, not a different recipe.
+**Choice.** [`linear_bias_act`](../kernels/metalium/linear_bias_act) copies the order of operations in ttnn.linear's fused-bias kernel (the same in v0.79.0 and v0.81.1), read from `bmm_large_block_zm_fused_bias_activation.cpp` and the program factory: fp32 accumulation over all of K, an fp32 buffer for the sum (which is what ttnn uses when `fp32_dest_acc_en` is on), the bias added by the matrix engine as a row broadcast (so the sum is read through a source register, at TF32 precision), then the activation. That way a mismatch means something real, not a different recipe.
 
 **What it found.** With bf16 accumulation the bits match on every output on both chips, GELU included. With fp32 accumulation they match without an activation; with GELU they don't, because ttnn.linear's result at this shape is identical to rounding the sum to bf16 and running `ttnn.gelu` on it, while my kernel applies GELU before the rounding. The `gelu_after_round` option rounds first and matches ttnn.linear on 99.4% of outputs.
 
@@ -80,14 +80,14 @@ For each decision: what I picked, what it costs, what could break, and how I'd f
 
 ## Pinning
 
-ttnn 0.79.0, ttsim v1.10.8 and SFPI 7.78.0 are the versions tt-metal 0.79.0 pins for itself, each with a checksum. The N300 cluster file for the (manual, not yet working) two-chip run comes from the tt-umd commit tt-metal pins. When a number moves, it should be because the code moved. A simulator bump is its own commit.
+ttnn 0.81.1, ttsim v1.12.1 and SFPI 7.89.0 are the versions tt-metal 0.81.1 pins for itself, each with a checksum. The move from 0.79.0 (ttsim v1.10.8, SFPI 7.78.0) ran every workflow on a branch first: everything that passed before passed again with the same results (GPT-2's PCCs within 0.000003, their usual run-to-run noise), and the manual N300 run, with the fabric on, failed exactly as before. I also diffed the two tt-metal files the repo copies from: `blockfloat_common.cpp` only gained an include, and the fused-bias matmul kernel only gained a per-group bias for sparse matmuls and moved a packer ReLU setting on the path without a bias. The N300 cluster file for the manual two-chip run comes from the tt-umd commit tt-metal pins. When a number moves, it should be because the code moved. A simulator bump is its own commit.
 
 ## CI tiers
 
 - Every push: lint and the 72 fast tests on Linux and macOS (functional simulator, emulation, model, regression gate).
 - ttsim: 6 jobs over simulated Wormhole and Blackhole and the three weight formats, with PCC floors.
 - C++: built against Tenstorrent's released SDK packages, both kernels on both chips, every element checked.
-- Studies (GPT-2, CorruptNet head) run when their code changes and write the JSON the tables come from. The two-chip N300 run is manual until host writes to the remote chip work.
+- Studies (GPT-2, CorruptNet head) run when their code changes and write the JSON the tables come from. The two-chip N300 run is manual: about 160 s per block on the pinned simulator, with the partial sums added on the host until the fabric all-reduce works.
 
 ## Sharding the sweep
 

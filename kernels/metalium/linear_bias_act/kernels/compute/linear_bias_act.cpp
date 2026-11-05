@@ -1,6 +1,6 @@
 // Compute for y = act(x @ w + b), in the order ttnn.linear's fused-bias kernel
-// uses (bmm_large_block_zm_fused_bias_activation.cpp at v0.79.0), so the two
-// can match bit for bit:
+// uses (bmm_large_block_zm_fused_bias_activation.cpp, the same in v0.79.0 and
+// v0.81.1), so the two can match bit for bit:
 //
 // 1. x @ w over all K tiles, accumulated in fp32 destination registers
 //    (fp32_dest_acc_en), packed to an fp32 buffer in L1.

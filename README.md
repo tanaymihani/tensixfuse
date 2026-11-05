@@ -8,7 +8,7 @@ How much DRAM traffic does kernel fusion actually save on a Tenstorrent chip? An
 
 None of this ran on silicon. Device numbers come from Tenstorrent's two simulators: TT-Lang's functional simulator, which logs every tile that moves between DRAM, L1 and other cores, and [ttsim](https://github.com/tenstorrent/ttsim), a full-system simulator of Wormhole and Blackhole chips that is designed to be bit-exact with the hardware. So correctness and data movement are real. Timing isn't, because ttsim doesn't model it, and I don't report any device latency.
 
-The repo also runs like a small hardware lab with simulated chips: CI on simulated Wormhole and Blackhole, a C++ program built against Tenstorrent's released SDK, a pinned container, the benchmark sweep fanned out across hosts and as a Kubernetes JobSet, and an Ansible playbook that turns a bare Ubuntu machine into a checked simulator node.
+The repo also runs like a small hardware lab with simulated chips: CI on simulated Wormhole and Blackhole, two C++ programs built against Tenstorrent's released SDK, a pinned container, the benchmark sweep fanned out across hosts and as a Kubernetes JobSet, and an Ansible playbook that turns a bare Ubuntu machine into a checked simulator node.
 
 TensixFuse is listed in Tenstorrent's [tt-awesome](https://github.com/tenstorrent/tt-awesome/blob/main/entries/kernels/tensixfuse.json) registry of community projects. The fused TT-Lang kernel starts from TT-Lang's own matmul tutorial and the multicast version from tt-lang's SUMMA benchmark; [Builds on](#builds-on) says what came from where and what's mine.
 
@@ -186,8 +186,9 @@ The table also says what fp32 accumulation is worth: over K = 768, summing in bf
 | Sharded sweep ([`sweep.yml`](.github/workflows/sweep.yml)) | The 48-run fusion sweep split over 8 GitHub-hosted runners with cost-balanced shards, merged and checked | 184 s on one runner, 76 s across 8 |
 | Kubernetes ([`deploy/helm`](deploy/helm/tensixfuse-sweep)) | A Helm chart that runs the sweep as a [JobSet](https://github.com/kubernetes-sigs/jobset), one simulator pod per shard; CI runs it on a kind cluster | 4 pods finish in under 25 s on kind; all 24 runs match the model |
 | Ansible ([`deploy/ansible`](deploy/ansible)) | `site.yml` turns a bare Ubuntu 24.04 host into a simulator node; `health_check` runs known-answer kernels on every simulated chip and fails the play on a mismatch. Tested with Molecule | under 100 s on a fresh VM; a second run changes nothing |
+| Two chips ([`scaleout.yml`](.github/workflows/scaleout.yml), manual) | GPT-2's MLP split Megatron style over the two chips of ttsim's N300 build: `c_fc` by columns, `c_proj` by rows, the two partial sums added on the host | PCC 0.9998 or better against fp32 on 3 blocks; about 160 s per block on the pinned simulator, 9 s on ttsim v1.16.0 |
 
-The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 itself pins, with checksums ([`ttsim-version`](ttsim-version), [`sfpi-version`](sfpi-version)). When the simulator changes, I want to know that the simulator changed, not wonder whether my kernel did.
+The simulator and the SFPI compiler are pinned to the versions tt-metal 0.81.1 itself pins, with checksums ([`ttsim-version`](ttsim-version), [`sfpi-version`](sfpi-version)). When the simulator changes, I want to know that the simulator changed, not wonder whether my kernel did. Moving from tt-metal 0.79.0 (ttsim v1.10.8, SFPI 7.78.0) to 0.81.1 (ttsim v1.12.1, SFPI 7.89.0) went through every workflow on its own branch first, and it changed nothing beyond noise: both C++ programs gave the same results on both chips, the CorruptNet head the same on Blackhole, and GPT-2's PCCs moved by at most 0.000003, about what they move between runs anyway because the activations are captured on the runner's CPU.
 
 ## What I found
 
@@ -205,7 +206,7 @@ The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 i
 
 **My first BatchNorm kernel rounded twice.** The FPU version stores `x * s` in L1 as bf16 before adding `b`, so it rounds twice, and the matrix engine reads operands at 16 or 19 bits. On the outputs ReLU doesn't zero, a reference that rounds the same way matches 74% of bn2's values instead of 59% (70% of bn3's instead of 30%), so the double rounding is part of the gap; the rest comes from how the matrix engine and the packer round, which I haven't pinned down. The SFPU version keeps everything in fp32 registers and lands every element within one bf16 step. On silicon the FPU version should be the faster one; ttsim can't say by how much.
 
-**Getting the stack to run took more than the kernels did.** The `ttnn` wheel doesn't bundle SFPI, the RISC-V compiler tt-metal uses to build kernels at runtime, so that's pinned and installed separately. The SDK's `libtt_metal.so` needs Tenstorrent's OpenMPI build with ULFM fault tolerance, which the packages don't pull in, so linking failed on `MPIX_Comm_revoke` until I installed it. A slim Ubuntu image also needs `libatomic` and GCC's math libraries for SFPI's compiler. TT-Lang's simulator and the real `ttnn` can't share a Python environment either: with both installed, the simulator picks up the real `ttnn` and the kernels fail, which I found when the Kubernetes pods crashed. So the Dockerfile has two targets. And tt-lang-sim 1.1.6 replaces any kernel error with a `FileNotFoundError` for `ttl/ttl/diagnostics.py`, a file the wheel doesn't ship; [`kernels/ttlang/simfix.py`](kernels/ttlang/simfix.py) prints the real message. Its help text also says the per-core L1 limit is 1,336 KiB, while the code enforces 1,432. I reported both upstream, with repros and proposed fixes: [tt-lang#1192](https://github.com/tenstorrent/tt-lang/issues/1192) and [tt-lang#1193](https://github.com/tenstorrent/tt-lang/issues/1193).
+**Getting the stack to run took more than the kernels did.** The `ttnn` wheel doesn't bundle SFPI, the RISC-V compiler tt-metal uses to build kernels at runtime, so that's pinned and installed separately. The SDK's `libtt_metal.so` needs Tenstorrent's OpenMPI build with ULFM fault tolerance, which the packages don't pull in, so linking failed on `MPIX_Comm_revoke` until I installed it. A slim Ubuntu image also needs `libatomic` and GCC's math libraries for SFPI's compiler. TT-Lang's simulator and the real `ttnn` can't share a Python environment either: with both installed, the simulator picks up the real `ttnn` and the kernels fail, which I found when the Kubernetes pods crashed. So the Dockerfile has two targets. In November pyarrow 26 started requiring NumPy 2 while ttnn still requires NumPy 1, so the GPT-2 study stopped at `import datasets` until I pinned `pyarrow<26`. And tt-lang-sim 1.1.6 replaces any kernel error with a `FileNotFoundError` for `ttl/ttl/diagnostics.py`, a file the wheel doesn't ship; [`kernels/ttlang/simfix.py`](kernels/ttlang/simfix.py) prints the real message. Its help text also says the per-core L1 limit is 1,336 KiB, while the code enforces 1,432. I reported both upstream, with repros and proposed fixes: [tt-lang#1192](https://github.com/tenstorrent/tt-lang/issues/1192) and [tt-lang#1193](https://github.com/tenstorrent/tt-lang/issues/1193).
 
 **The simulator ran a multicast that would have deadlocked.** In my first multicast kernel, the core that reads A from DRAM was also one of its own pipe's destinations. Its send waits for every destination to post its receive, and its own receive came after the send in the same thread, so on a chip it would wait forever. TT-Lang's functional simulator ran it and every tile count came out right; the compiler refused it and pointed at both lines. Now the source keeps the block it read and sends only to the other cores, which moves the same DRAM traffic. The compiler also wanted the multicast compute kernel free of bounds checks on node coordinates, so it could prove which cores produce and consume each buffer.
 
@@ -213,17 +214,20 @@ The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 i
 
 **One run sets the floor for sharding.** Spread over 8 runners, the sweep is bounded by its largest single run, the unblocked 2048³ dry run, which takes about a minute on a hosted runner by itself. Balancing shards by predicted cost keeps the other big runs off that shard, but nothing gets the slowest shard below that one run.
 
+**Two simulated chips work until the fabric comes up.** Split across the two chips of ttsim's N300 build, with each chip's partial sum added on the host, three of GPT-2's MLP blocks match fp32 at PCC 0.9998 or better. An all-reduce on the chips needs tt-metal's fabric, and once the fabric is up, the first host write to the second chip times out after UMD's 5 seconds, in every combination I tried: tt-metal 0.79.0 with ttsim v1.10.8, and 0.81.1 with v1.12.1 and v1.16.0. I had pointed tt-metal at tt-umd's example N300 cluster file, and in simulator mode tt-metal takes that file as the topology instead of letting UMD discover the simulated chips. With discovery nothing times out, but the run hadn't finished a block after 12 minutes on the pinned simulator, or after 18 on ttsim v1.16.0, which does a block in 9 seconds with the fabric off.
+
 ## Builds on
 
 - **TT-Lang's matmul tutorial** (steps 1 to 4). The fused `relu(a @ b + c)` kernel in [`kernels/ttlang/ops.py`](kernels/ttlang/ops.py) is that tutorial's kernel, generalized to other block sizes, grids and activations. The unfused baseline and the elementwise ops are mine.
 - **tt-lang's SUMMA benchmark** ([`benchmarks/matmul/summa_kernel.py`](https://github.com/tenstorrent/tt-lang/blob/main/benchmarks/matmul/summa_kernel.py)). My multicast variant uses its row and column `PipeNet` pattern, with the fused bias and activation added. tt-metal's [`matmul_multicore_reuse_mcast`](https://github.com/tenstorrent/tt-metal/tree/main/tt_metal/programming_examples/matmul/matmul_multicore_reuse_mcast) example does the same thing in TT-Metalium.
 - **tt-metal's `eltwise_binary` and `eltwise_sfpu` programming examples**, for the host and kernel structure of [`kernels/metalium/bn_relu`](kernels/metalium/bn_relu), and tt-metal's FP32 accuracy guide for its SFPU version.
-- **tt-metal's block-float packer** (`blockfloat_common.cpp` at v0.79.0), which [`blockfloat.py`](src/tensixfuse/blockfloat.py) reimplements in NumPy.
+- **tt-metal's block-float packer** (`blockfloat_common.cpp`, the same in v0.79.0 and v0.81.1), which [`blockfloat.py`](src/tensixfuse/blockfloat.py) reimplements in NumPy.
+- **ttnn.linear's fused-bias matmul kernel** (`bmm_large_block_zm_fused_bias_activation.cpp`), whose order of operations [`linear_bias_act`](kernels/metalium/linear_bias_act) copies so the two can be compared bit for bit.
 - **TTNN**, whose `ttnn.linear` runs the GPT-2 and GPU-CorruptNet studies on ttsim.
 - **The other formats' definitions**, for [`formats.py`](src/tensixfuse/formats.py): the OCP Microscaling (MX) spec v1.0 for MXFP8 and MXFP4, NVIDIA's two-level NVFP4 scheme, and the INT4 group-of-128 layout GPTQ and AWQ store weights in (without their calibration).
 - **tt_transformers' precision settings** (`models/tt_transformers/tt/model_config.py` in tt-metal), the recipes the Qwen study tests, and **Tenstorrent's published card specs** for the modelled roofline.
 
-What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's checked against, the block-float emulator and the numerics and perplexity studies built on it, the BatchNorm program, and the CI, container, Kubernetes and Ansible setup.
+What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's checked against, the block-float emulator and the numerics and perplexity studies built on it, the BatchNorm and linear-layer programs, and the CI, container, Kubernetes and Ansible setup.
 
 ## Limitations
 
@@ -240,8 +244,7 @@ What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's
 - Find out why `ttnn.linear`'s GELU runs on the bf16-rounded sum at this shape, and whether applying it before the rounding is worth raising with TTNN. Then make my linear layer reuse `x` across output columns (it re-reads `x` for every column now).
 - Fuse the whole MLP (`c_fc`, GELU, `c_proj`) so the 128 × 3072 hidden activations stay in L1 across cores and never touch DRAM.
 - Put LoFi into the perplexity table by running the MLPs on ttsim for a slice of WikiText-2. The CPU emulation can't model math fidelity.
-- Move to tt-metal 0.81.1 (it pins ttsim v1.12.1 and SFPI 7.89.0) and re-run every study, as its own change.
-- Finish the tensor-parallel GPT-2 MLP on ttsim's 2-chip N300 build ([`bench/tp_mlp_n300.py`](bench/tp_mlp_n300.py)). Both simulated chips come up and the Ethernet fabric between them initializes, but host writes to the remote chip time out with tt-metal 0.79.0, which matches ttsim's note that multichip support isn't fully merged into mainline yet. My first attempt also stopped on ttsim's strict checks, with UndefinedBehavior in an unpacker reading and writing Float32, which I didn't get to the bottom of.
+- Get the all-reduce onto the chips in the N300 run ([`bench/tp_mlp_n300.py`](bench/tp_mlp_n300.py)). The split itself works with the partials added on the host; with the fabric up, host writes to the second chip time out (with tt-umd's example cluster file) or crawl (with UMD's own discovery).
 
 ## Reproduce
 
@@ -265,7 +268,8 @@ python bench/report.py                                   # docs/RESULTS.md
 docker run --rm -e TENSIXFUSE_ARCH=wormhole ghcr.io/tanaymihani/tensixfuse tensixfuse-doctor
 
 pip install torch --index-url https://download.pytorch.org/whl/cpu
-pip install ttnn==0.79.0 && pip install --no-deps -e .
+pip install ttnn==0.81.1 && pip install --no-deps -e .
+pip install transformers datasets "numpy<2" "pyarrow<26"   # for the GPT-2 study; ttnn needs NumPy 1
 bash scripts/install_sfpi.sh                  # pinned SFPI, checksum checked
 eval "$(bash scripts/setup_ttsim.sh blackhole)"
 pytest -m ttsim tests/test_ttsim.py
@@ -281,7 +285,7 @@ python bench/perplexity.py --configs fp32,all:bfloat8_b,all:bfloat4_b,all:nvfp4
 python bench/perplexity_llama.py --configs fp32,attn=bfloat8_b+ff13=bfloat4_b+ff2=bfloat8_b
 ```
 
-**The C++ programs** need tt-metal 0.79.0's SDK packages; [`metalium.yml`](.github/workflows/metalium.yml) has the exact install and build steps.
+**The C++ programs** need tt-metal 0.81.1's SDK packages; [`metalium.yml`](.github/workflows/metalium.yml) has the exact install and build steps.
 
 **The sweep on Kubernetes** (with the JobSet controller installed):
 
@@ -304,7 +308,7 @@ kernels/metalium/      bn_relu: host program, reader/writer kernels, FPU and SFP
                        linear_bias_act: bfloat8_b linear + bias + GELU, step for step with ttnn.linear
 src/tensixfuse/        traffic model, block-float and MX/NVFP4/INT4 emulation, metrics, simulator runner, doctor
 model/                 GPU-CorruptNet exports, GPT-2 MLP capture
-bench/                 fusion sweep, GPT-2, perplexity and head studies, BatchNorm check, TT-Lang compiler run, merge, report
+bench/                 fusion sweep, GPT-2, perplexity and head studies, BatchNorm and linear checks, TT-Lang compiler run, N300 split, merge, report
 tests/                 model, emulation, simulator-vs-model, regression gate, ttsim
 pins/                  ttsim and SFPI pins for the tt-lang 1.1.6 compiler job (its ttnn is 0.74.0)
 docker/                pinned simulator image
