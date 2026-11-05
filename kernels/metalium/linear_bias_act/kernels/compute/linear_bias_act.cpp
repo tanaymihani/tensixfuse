@@ -8,12 +8,15 @@
 // 3. The activation on the vector engine (GELU in its accurate form, which is
 //    what ttnn.linear's activation="gelu" selects), packed to bf16.
 //
-// Compile-time arg 0: 0 none, 1 relu, 2 gelu.
+// Compile-time arg 0: 0 none, 1 relu, 2 gelu, 3 gelu run from the packer
+// thread, the way ttnn.linear's fused activation does it
+// (apply_activation_from_pack in bmm_fused_activation.hpp at v0.79.0).
 
 #include <cstdint>
 
 #include "api/compute/bcast.h"
 #include "api/compute/common.h"
+#include "api/compute/compute_kernel_api.h"
 #include "api/compute/compute_kernel_hw_startup.h"
 #include "api/compute/eltwise_unary/gelu.h"
 #include "api/compute/eltwise_unary/relu.h"
@@ -34,6 +37,9 @@ void kernel_main() {
 
     // Like ttnn's matmul: x feeds srcB and w srcA.
     compute_kernel_hw_startup<SrcOrder::Reverse>(cb_x, cb_w, cb_mm);
+    if constexpr (act == 3) {
+        gelu_tile_init_pack<false>();
+    }
 
     for (uint32_t t = 0; t < n_tiles; ++t) {
         // 1. x @ w
@@ -74,7 +80,19 @@ void kernel_main() {
         cb_pop_front(cb_b, 1);
 
         cb_reserve_back(cb_out, 1);
-        tile_regs_wait();
+        if constexpr (act == 3) {
+            // GELU from the packer: wait for math, point the SFPU at the
+            // packer's half of the destination registers, run it, then pack.
+            PACK(TTI_SEMWAIT(
+                p_stall::STALL_TDMA | p_stall::STALL_CFG,
+                semaphore::t6_sem(semaphore::MATH_PACK),
+                p_stall::STALL_ON_ZERO));
+            PACK(TT_SETC16(DEST_TARGET_REG_CFG_MATH_Offset_ADDR32, ckernel::packer::get_packer_dest_offset()));
+            gelu_tile_pack<false>(dst);
+            PACK(TTI_STALLWAIT(p_stall::STALL_PACK, p_stall::WAIT_SFPU));
+        } else {
+            tile_regs_wait();
+        }
         pack_tile(dst, cb_out);
         tile_regs_release();
         cb_push_back(cb_out, 1);

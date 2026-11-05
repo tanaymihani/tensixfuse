@@ -49,7 +49,7 @@ def reference(x, w, b, fmt: str, act: str) -> np.ndarray:
     y = x.astype(np.float64) @ wq.astype(np.float64) + b.astype(np.float64)
     if act == "relu":
         y = np.maximum(y, 0)
-    elif act == "gelu":  # the exact form; ttnn's accurate GELU approximates it
+    elif act.startswith("gelu"):  # the exact form; ttnn's accurate GELU approximates it
         y = 0.5 * y * (1 + np.vectorize(math.erf)(y / math.sqrt(2)))
     return y.astype(np.float32)
 
@@ -76,9 +76,9 @@ def run_ttnn(x_t, w_t, b_t, fmt: str, act: str) -> np.ndarray:
         b = ttnn.from_torch(
             b_t.reshape(1, -1), dtype=ttnn.bfloat16, layout=ttnn.TILE_LAYOUT, device=device
         )
-        y = ttnn.linear(
-            x, w, bias=b, activation=None if act == "none" else act, compute_kernel_config=cfg
-        )
+        # Both of my GELU variants are compared with ttnn.linear's one fused GELU.
+        ttnn_act = {"none": None, "relu": "relu"}.get(act, "gelu")
+        y = ttnn.linear(x, w, bias=b, activation=ttnn_act, compute_kernel_config=cfg)
         return bf16_bits(ttnn.to_torch(y).to(torch.bfloat16))
     finally:
         ttnn.close_device(device)
@@ -111,7 +111,9 @@ def main() -> None:
     p.add_argument("--M", type=int, default=128)
     p.add_argument("--K", type=int, default=768)
     p.add_argument("--N", type=int, default=3072)
-    p.add_argument("--acts", default="none,gelu", help="comma-separated: none, relu, gelu")
+    p.add_argument(
+        "--acts", default="none,gelu,gelu_from_pack", help="none, relu, gelu, gelu_from_pack"
+    )
     p.add_argument("--fmt", choices=("bfp8", "bf16"), default="bfp8")
     p.add_argument("--cores", type=int, default=8)
     p.add_argument("--seed", type=int, default=0)

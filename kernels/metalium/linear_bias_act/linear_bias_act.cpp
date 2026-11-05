@@ -13,7 +13,8 @@
 // Each core gets a range of output tile columns. For every output tile it
 // streams the x and w tiles along K and the bias tile for that column.
 //
-// usage: linear_bias_act X.bin W.bin B.bin OUT.bin M K N [none|relu|gelu] [bfp8|bf16] [CORES]
+// usage: linear_bias_act X.bin W.bin B.bin OUT.bin M K N [none|relu|gelu|gelu_from_pack] [bfp8|bf16] [CORES]
+// gelu_from_pack runs GELU from the packer thread, as ttnn.linear's fused activation does.
 // X.bin, B.bin and OUT.bin are raw little-endian bf16, row-major. W.bin is raw
 // float32, row-major; the host packs it as bfloat8_b with tt-metal's packer.
 
@@ -152,7 +153,7 @@ int main(int argc, char** argv) {
     if (argc < 8) {
         std::fprintf(
             stderr,
-            "usage: %s X.bin W.bin B.bin OUT.bin M K N [none|relu|gelu] [bfp8|bf16] [CORES]\n",
+            "usage: %s X.bin W.bin B.bin OUT.bin M K N [none|relu|gelu|gelu_from_pack] [bfp8|bf16] [CORES]\n",
             argv[0]);
         return 2;
     }
@@ -169,8 +170,10 @@ int main(int argc, char** argv) {
         act_id = 1;
     } else if (act == "gelu") {
         act_id = 2;
+    } else if (act == "gelu_from_pack") {
+        act_id = 3;
     } else {
-        std::fprintf(stderr, "activation must be none, relu or gelu\n");
+        std::fprintf(stderr, "activation must be none, relu, gelu or gelu_from_pack\n");
         return 2;
     }
     if (fmt != "bfp8" && fmt != "bf16") {
