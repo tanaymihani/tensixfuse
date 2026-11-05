@@ -60,9 +60,9 @@ For each decision: what I picked, what it costs, what could break, and how I'd f
 
 ## Two BatchNorm + ReLU kernels
 
-**FPU (`bn_relu.cpp`).** Row broadcast on the matrix engine, `x * scale` into an L1 buffer as bf16, then `+ shift` and ReLU. It uses the fast engine, but it rounds twice and the matrix engine reads operands at 16 or 19 bits: 95.4% bit-exact, 97.7% within one bf16 step.
+**FPU (`bn_relu.cpp`).** Row broadcast on the matrix engine, `x * scale` into an L1 buffer as bf16, then `+ shift` and ReLU. It uses the fast engine, but it rounds twice and the matrix engine reads operands at 16 or 19 bits: on `layer4.2.bn2`, 58.6% of the outputs ReLU doesn't zero are bit-exact and 86% are within one bf16 step.
 
-**SFPU (`bn_relu_sfpu.cpp`).** Everything in fp32 destination registers on the vector engine, one rounding when packing: 99.78% bit-exact and every element within one step. The cost is that scale and shift come as full tiles (the SFPU ops have no broadcast), and on silicon the vector engine would be slower; ttsim can't say how much.
+**SFPU (`bn_relu_sfpu.cpp`).** Everything in fp32 destination registers on the vector engine, one rounding when packing: 98.3% of bn2's nonzero outputs bit-exact and every element within one step. The cost is that scale and shift come as full tiles (the SFPU ops have no broadcast), and on silicon the vector engine would be slower; ttsim can't say how much.
 
 **Both** read each column's scale and shift once and reuse them for the whole column, and give the same bits on every run.
 

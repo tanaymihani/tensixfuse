@@ -20,7 +20,7 @@ TensixFuse is listed in Tenstorrent's [tt-awesome](https://github.com/tenstorren
 - **The format, not the chip's arithmetic, is where the error comes from.** A NumPy copy of tt-metal's block-float packer (bit-exact with it on a million values) predicts the simulated chip's PCC to the 5th decimal. The same reasoning says LoFi math fidelity should cost nothing with bfloat4_b weights, whose 3 mantissa bits fit in a single multiplier pass, and it measures that way.
 - **Whole-model accuracy, against other formats.** With every linear weight in bfloat8_b, GPT-2 small's WikiText-2 perplexity moves 0.24%. At 4 bits, bfloat4_b costs 21% where NVFP4 costs 6.7% at the same 4.5 bits per weight, and about half of that gap is which axis the 16-value groups run along. On Qwen2.5-0.5B, tt_transformers' performance recipe (FF1/FF3 in bfloat4_b) costs 8.0%, its default (all bfloat8_b) 0.13%.
 - **My own model on a simulated Blackhole.** GPU-CorruptNet's head runs as one fused `sigmoid(x @ W + b)`. With bfloat8_b weights, 2 of 4,160 frames get a different label set from PyTorch, and macro-F1 is unchanged (0.9112 seen, 0.8756 unseen).
-- **A TT-Metalium program by hand.** Fused BatchNorm + ReLU on a real ResNet-50 layer's input, 3.2 million values over 8 cores, with host code and reader, compute and writer kernels. The fp32 version lands every value within one bf16 step of NumPy, with identical results on simulated Wormhole and Blackhole.
+- **A TT-Metalium program by hand.** Fused BatchNorm + ReLU on two real ResNet-50 layers' inputs, 4 million values over 8 cores, with host code and reader, compute and writer kernels. The fp32 version lands every value within one bf16 step of NumPy, with identical results on simulated Wormhole and Blackhole.
 
 ## How a tile moves
 
@@ -138,16 +138,16 @@ The frames that flip are the ones whose logits sit right at zero, so bfloat4_b's
 
 ### 4. TT-Metalium C++: fused BatchNorm + ReLU
 
-At inference time BatchNorm is a per-channel scale and shift, so the step after each conv in ResNet-50 is `y = relu(x * s + b)`. I wrote it as a TT-Metalium program in [`kernels/metalium/bn_relu`](kernels/metalium/bn_relu): host code that sets up the device, DRAM buffers, circular buffers and runtime arguments, and three kernels per core. The reader pulls activation tiles over the NoC (and each column's scale and shift once), compute does the math, and the writer sends finished tiles back. The input is the real input to GPU-CorruptNet's `layer4.2.bn3` for 32 frames, channels last: 1,568 × 2,048 values, 3,136 tiles over 8 cores. It's built in CI against tt-metal 0.79.0's released SDK packages and run on simulated Wormhole and Blackhole.
+At inference time BatchNorm is a per-channel scale and shift, so the step after each conv in ResNet-50 is `y = relu(x * s + b)`. I wrote it as a TT-Metalium program in [`kernels/metalium/bn_relu`](kernels/metalium/bn_relu): host code that sets up the device, DRAM buffers, circular buffers and runtime arguments, and three kernels per core. The reader pulls activation tiles over the NoC (and each column's scale and shift once), compute does the math, and the writer sends finished tiles back. It runs on two real ResNet-50 inputs from GPU-CorruptNet, 32 frames each, channels last, over 8 cores: `layer4.2.bn2`, which the network follows with ReLU (1,568 × 512 values, 784 tiles), and `layer4.2.bn3` (1,568 × 2,048 values, 3,136 tiles), which it follows with the residual add instead, so BN + ReLU on it is a stand-in. It's built in CI against tt-metal 0.79.0's released SDK packages and run on simulated Wormhole and Blackhole.
 
-One honest caveat: in ResNet-50, `bn3` is followed by the residual add, not by ReLU, so BN + ReLU on its input is a stand-in, and ReLU zeros 93% of its outputs. Zeros match trivially, so the rates that count are the ones on the 6.6% of outputs (211,954) that stay nonzero:
+ReLU zeros 75% of bn2's outputs and 93% of bn3's, and zeros match trivially, so the rates that count are the ones on the outputs that stay nonzero:
 
-| Kernel | How | Bit-exact, all | Bit-exact, nonzero | Within 1 bf16 step, nonzero | PCC |
-|---|---|---|---|---|---|
-| `fpu` | matrix engine, row broadcast, bf16 intermediate in L1 | 95.40% | 30.28% | 64.68% | 0.999986 |
-| `sfpu` | vector engine, everything in fp32 registers, one rounding at the end | 99.78% | 96.70% | 100.00% | 1.000000 |
-
-`layer4.2.bn2` is followed by ReLU in the real network; [`model/corruptnet_bn2_export.py`](model/corruptnet_bn2_export.py) exports it for the same 32 frames (75% of its outputs are still zero after ReLU), and running the kernels on it is the next step.
+| Layer | Kernel | How | Nonzero outputs | Bit-exact, nonzero | Within 1 bf16 step, nonzero | Bit-exact, all | PCC |
+|---|---|---|---|---|---|---|---|
+| `bn2` | `fpu` | matrix engine, row broadcast, bf16 intermediate in L1 | 25.4% | 58.60% | 86.00% | 89.50% | 0.999995 |
+| `bn2` | `sfpu` | vector engine, everything in fp32 registers, one rounding at the end | 25.4% | 98.34% | 100.00% | 99.58% | 1.000000 |
+| `bn3` | `fpu` | same | 6.6% | 30.28% | 64.68% | 95.40% | 0.999986 |
+| `bn3` | `sfpu` | same | 6.6% | 96.70% | 100.00% | 99.78% | 1.000000 |
 
 Both give identical results on Wormhole and Blackhole, and the same bits on every run. "NumPy" here is the same bf16 inputs in fp32, rounded to bf16 once.
 
@@ -163,7 +163,7 @@ Both give identical results on Wormhole and Blackhole, and the same bits on ever
 | CI ([`ci.yml`](.github/workflows/ci.yml)) | Lint and 72 tests (model, block-float and MX/NVFP4/INT4 emulation, simulator-vs-model, regression gate) on Linux and macOS | on every push |
 | ttsim matrix ([`ttsim.yml`](.github/workflows/ttsim.yml)) | 6 jobs, Wormhole and Blackhole × bf16, bfloat8_b and bfloat4_b, with a pinned simulator and PCC floors in [`bench/baselines.json`](bench/baselines.json) | 7 tests per chip, split by format |
 | Regression gate | A PR fails if a PCC drops below its floor or a kernel's DRAM tile count goes above its baseline | |
-| C++ build ([`metalium.yml`](.github/workflows/metalium.yml)) | Installs tt-metal's SDK packages, builds the program with CMake, runs both kernels on both chips | 3.2M values checked per run |
+| C++ build ([`metalium.yml`](.github/workflows/metalium.yml)) | Installs tt-metal's SDK packages, builds the program with CMake, runs both kernels on both chips | 4.0M values checked per run |
 | Containers ([`docker/`](docker)) | Two pinned images, each tested before it's pushed to GHCR: `tensixfuse` with ttnn, SFPI and ttsim for both chips, and `tensixfuse-sweep` with TT-Lang's simulator | 2.1 GB and 1.1 GB; 7 ttsim tests per chip in under 20 s |
 | Sharded sweep ([`sweep.yml`](.github/workflows/sweep.yml)) | The 48-run fusion sweep split over 8 GitHub-hosted runners with cost-balanced shards, merged and checked | 184 s on one runner, 76 s across 8 |
 | Kubernetes ([`deploy/helm`](deploy/helm/tensixfuse-sweep)) | A Helm chart that runs the sweep as a [JobSet](https://github.com/kubernetes-sigs/jobset), one simulator pod per shard; CI runs it on a kind cluster | 4 pods finish in under 25 s on kind; all 24 runs match the model |
@@ -185,7 +185,7 @@ The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 i
 
 **Padding is easy to get wrong in a multi-label head.** 10 outputs don't fill a 32-wide tile, so the weights are padded to 32 columns. On the device, the padded columns come out as exactly sigmoid(0) = 0.5, and with a `>= 0.5` threshold that's a prediction: thresholding before slicing them off gives 22.92 labels per frame instead of 0.92.
 
-**My first BatchNorm kernel rounded twice.** The FPU version stores `x * s` in L1 as bf16 before adding `b`, so it rounds twice, and the matrix engine reads operands at 16 or 19 bits. Against a reference that rounds the same way it matches 98%, not 95%, which pinned down where the rest came from. The SFPU version keeps everything in fp32 registers and lands every element within one bf16 step. On silicon the FPU version should be the faster one; ttsim can't say by how much.
+**My first BatchNorm kernel rounded twice.** The FPU version stores `x * s` in L1 as bf16 before adding `b`, so it rounds twice, and the matrix engine reads operands at 16 or 19 bits. On the outputs ReLU doesn't zero, a reference that rounds the same way matches 74% of bn2's values instead of 59% (70% of bn3's instead of 30%), so the double rounding is part of the gap; the rest comes from how the matrix engine and the packer round, which I haven't pinned down. The SFPU version keeps everything in fp32 registers and lands every element within one bf16 step. On silicon the FPU version should be the faster one; ttsim can't say by how much.
 
 **Getting the stack to run took more than the kernels did.** The `ttnn` wheel doesn't bundle SFPI, the RISC-V compiler tt-metal uses to build kernels at runtime, so that's pinned and installed separately. The SDK's `libtt_metal.so` needs Tenstorrent's OpenMPI build with ULFM fault tolerance, which the packages don't pull in, so linking failed on `MPIX_Comm_revoke` until I installed it. A slim Ubuntu image also needs `libatomic` and GCC's math libraries for SFPI's compiler. TT-Lang's simulator and the real `ttnn` can't share a Python environment either: with both installed, the simulator picks up the real `ttnn` and the kernels fail, which I found when the Kubernetes pods crashed. So the Dockerfile has two targets. And tt-lang-sim 1.1.6 replaces any kernel error with a `FileNotFoundError` for `ttl/ttl/diagnostics.py`, a file the wheel doesn't ship; [`kernels/ttlang/simfix.py`](kernels/ttlang/simfix.py) prints the real message. Its help text also says the per-core L1 limit is 1,336 KiB, while the code enforces 1,432. I reported both upstream, with repros and proposed fixes: [tt-lang#1192](https://github.com/tenstorrent/tt-lang/issues/1192) and [tt-lang#1193](https://github.com/tenstorrent/tt-lang/issues/1193).
 

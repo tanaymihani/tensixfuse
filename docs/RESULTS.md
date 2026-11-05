@@ -129,6 +129,10 @@ ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into one o
 
 | Layer | Chip | Kernel | Elements | Nonzero outputs | PCC | Bit-exact, all | Bit-exact, nonzero | Within 1 bf16 step, nonzero | Max error / max output | Two runs identical |
 |---|---|---|---|---|---|---|---|---|---|---|
+| layer4.2.bn2 | wormhole | fpu | 802,816 | 25.4% | 0.999995 | 89.50% | 58.60% | 86.00% | 0.45% | True |
+| layer4.2.bn2 | wormhole | sfpu | 802,816 | 25.4% | 1.000000 | 99.58% | 98.34% | 100.00% | 0.45% | True |
+| layer4.2.bn2 | blackhole | fpu | 802,816 | 25.4% | 0.999995 | 89.50% | 58.60% | 86.00% | 0.45% | True |
+| layer4.2.bn2 | blackhole | sfpu | 802,816 | 25.4% | 1.000000 | 99.58% | 98.34% | 100.00% | 0.45% | True |
 | layer4.2.bn3 | wormhole | fpu | 3,211,264 | 6.6% | 0.999986 | 95.40% | 30.28% | 64.68% | 0.68% | True |
 | layer4.2.bn3 | wormhole | sfpu | 3,211,264 | 6.6% | 1.000000 | 99.78% | 96.70% | 100.00% | 0.17% | True |
 | layer4.2.bn3 | blackhole | fpu | 3,211,264 | 6.6% | 0.999986 | 95.40% | 30.28% | 64.68% | 0.68% | True |
