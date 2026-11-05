@@ -379,21 +379,25 @@ def make_matmul(cfg, epilogue=None, act="relu"):
 def _make_matmul_mcast(cfg, fused, act):
     """SUMMA-style matmul: A multicast along grid rows, B down grid columns.
 
-    The core in column 0 of each row reads A from DRAM and sends it to every
-    core in its row; the core in row 0 of each column does the same for B. Each
-    input block leaves DRAM once per time it's needed by a whole row or column,
-    instead of once per core.
+    The core in column 0 of each row reads A from DRAM, keeps it, and sends it
+    to the other cores in its row; the core in row 0 of each column does the
+    same for B. Each input block leaves DRAM once per time it's needed by a
+    whole row or column, instead of once per core. The source isn't one of its
+    own pipe's destinations: receiving into the block it just read would make
+    it wait on itself, which the compiler rejects.
     """
     bm, bn, bk = cfg.bm, cfg.bn, cfg.bk
     Mb, Nb, Kb = cfg.blocks
     cols, rows = cfg.grid
+    if cols < 2 or rows < 2:
+        raise ValueError("multicast needs at least 2 columns and 2 rows")
     m_per = Mb // rows
     n_per = Nb // cols
 
     @ttl.operation(grid=(cols, rows))
     def matmul_mcast(a, b, c, y):
-        a_net = ttl.PipeNet([ttl.Pipe(src=(0, r), dst=(slice(0, cols), r)) for r in range(rows)])
-        b_net = ttl.PipeNet([ttl.Pipe(src=(cc, 0), dst=(cc, slice(0, rows))) for cc in range(cols)])
+        a_net = ttl.PipeNet([ttl.Pipe(src=(0, r), dst=(slice(1, cols), r)) for r in range(rows)])
+        b_net = ttl.PipeNet([ttl.Pipe(src=(cc, 0), dst=(cc, slice(1, rows))) for cc in range(cols)])
         a_dfb = ttl.make_dataflow_buffer_like(a, shape=(bm, bk), block_count=2)
         b_dfb = ttl.make_dataflow_buffer_like(b, shape=(bk, bn), block_count=2)
         acc_dfb = ttl.make_dataflow_buffer_like(y, shape=(bm, bn), block_count=2)
