@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install "ttnn==$TTNN_VERSION"
-          pip install transformers datasets "numpy<2"
+          pip install transformers datasets "numpy<2" "pyarrow<26"  # ttnn needs numpy<2; pyarrow 26 needs numpy 2
           pip install --no-deps -e .
       - run: bash scripts/install_sfpi.sh
       - run: bash scripts/setup_ttsim.sh blackhole
