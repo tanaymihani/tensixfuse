@@ -20,6 +20,7 @@ TensixFuse is listed in Tenstorrent's [tt-awesome](https://github.com/tenstorren
 - **Block-float weights on GPT-2.** bfloat8_b cuts the MLP weights 47% and the worst of the 12 blocks still has PCC 0.99982. bfloat4_b cuts 72% and the worst block falls to 0.961. If you keep one layer in bfloat8_b, it should be `c_fc`, not `c_proj`, which is the opposite of what I expected.
 - **The format, not the chip's arithmetic, is where the error comes from.** A NumPy copy of tt-metal's block-float packer (bit-exact with it on a million values) predicts the simulated chip's PCC to the 5th decimal. The same reasoning says LoFi math fidelity should cost nothing with bfloat4_b weights, whose 3 mantissa bits fit in a single multiplier pass, and it measures that way.
 - **Whole-model accuracy, against other formats.** With every linear weight in bfloat8_b, GPT-2 small's WikiText-2 perplexity moves 0.24%. At 4 bits, bfloat4_b costs 21% where NVFP4 costs 6.7% at the same 4.5 bits per weight, and about half of that gap is which axis the 16-value groups run along. On Qwen2.5-0.5B, tt_transformers' performance recipe (FF1/FF3 in bfloat4_b) costs 8.0%, its default (all bfloat8_b) 0.13%.
+- **My own bfloat8_b linear layer.** A TT-Metalium `act(x @ w + b)` with bfloat8_b weights matches `ttnn.linear` bit for bit on all 393,216 outputs at GPT-2's `c_fc` shape when there's no activation. With GELU, mine is the more accurate one: ttnn.linear applies GELU to the sum after rounding it to bf16, mine before.
 - **My own model on a simulated Blackhole.** GPU-CorruptNet's head runs as one fused `sigmoid(x @ W + b)`. With bfloat8_b weights, 2 of 4,160 frames get a different label set from PyTorch, and macro-F1 is unchanged (0.9112 seen, 0.8756 unseen).
 - **A TT-Metalium program by hand.** Fused BatchNorm + ReLU on two real ResNet-50 layers' inputs, 4 million values over 8 cores, with host code and reader, compute and writer kernels. The fp32 version lands every value within one bf16 step of NumPy, with identical results on simulated Wormhole and Blackhole.
 
@@ -152,7 +153,21 @@ ReLU zeros 75% of bn2's outputs and 93% of bn3's, and zeros match trivially, so 
 
 Both give identical results on Wormhole and Blackhole, and the same bits on every run. "NumPy" here is the same bf16 inputs in fp32, rounded to bf16 once.
 
-### 5. Infrastructure
+### 5. TT-Metalium C++: my own bfloat8_b linear layer
+
+The GPT-2 study above runs TTNN's own `ttnn.linear`. [`kernels/metalium/linear_bias_act`](kernels/metalium/linear_bias_act) is a linear layer I wrote myself: `y = act(x @ w + b)` with bf16 activations and bfloat8_b weights (packed on the host with tt-metal's packer), over 8 cores. It takes the same steps as ttnn.linear's fused-bias kernel: the K tiles accumulate in fp32 destination registers, the sum goes to an fp32 buffer in L1, the matrix engine adds the bias as a row broadcast, and GELU runs on the vector engine. [`bench/linear_bias_act.py`](bench/linear_bias_act.py) runs it and ttnn.linear at the same settings (HiFi4, fp32 accumulation) on the same simulated Blackhole, at GPT-2's `c_fc` shape (128 × 768 → 3072, seeded random data), and compares the bits.
+
+| Activation | Bit-exact with ttnn.linear | Within one bf16 step | Equal to fp32 math rounded once: mine / ttnn.linear | PCC vs fp32: mine / ttnn.linear |
+|---|---|---|---|---|
+| none | 100% (393,216 of 393,216) | 100% | 85.4% / 85.4% | 0.9999985 / 0.9999985 |
+| GELU | 75.4% | 99.98% | 84.3% / 69.9% | 0.9999983 / 0.9999958 |
+| GELU on the sum rounded to bf16 first | 99.4% | 100% | 69.9% / 69.9% | 0.9999958 / 0.9999958 |
+
+Without an activation the two agree bit for bit. With GELU they don't, and the difference is on ttnn's side: `ttnn.linear(..., activation="gelu")` gives exactly the same bits as `ttnn.linear` followed by a separate `ttnn.gelu`, so its GELU sees the sum after it has been rounded to bf16. Mine applies GELU to the fp32 sum and rounds once, which is closer to fp32 math. Rounding first in my kernel reproduces ttnn.linear on 99.4% of outputs and the rest within one bf16 step. (Running GELU from the packer thread, as ttnn's fused-activation code does, gave the same bits as running it from the math thread.)
+
+On Wormhole, ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (the unpacker reading the fp32 buffer into an fp32 source register), so there's nothing to compare with there. My kernel runs, and gives the same numbers against fp32 as on Blackhole.
+
+### 6. Infrastructure
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/img/infra-dark.svg">
@@ -164,7 +179,7 @@ Both give identical results on Wormhole and Blackhole, and the same bits on ever
 | CI ([`ci.yml`](.github/workflows/ci.yml)) | Lint and 72 tests (model, block-float and MX/NVFP4/INT4 emulation, simulator-vs-model, regression gate) on Linux and macOS | on every push |
 | ttsim matrix ([`ttsim.yml`](.github/workflows/ttsim.yml)) | 6 jobs, Wormhole and Blackhole × bf16, bfloat8_b and bfloat4_b, with a pinned simulator and PCC floors in [`bench/baselines.json`](bench/baselines.json) | 7 tests per chip, split by format |
 | Regression gate | A PR fails if a PCC drops below its floor or a kernel's DRAM tile count goes above its baseline | |
-| C++ build ([`metalium.yml`](.github/workflows/metalium.yml)) | Installs tt-metal's SDK packages, builds the program with CMake, runs both kernels on both chips | 4.0M values checked per run |
+| C++ build ([`metalium.yml`](.github/workflows/metalium.yml)) | Installs tt-metal's SDK packages, builds both programs with CMake, runs them on both chips, and compares the linear layer with ttnn.linear | 4.0M BatchNorm values and 1.2M linear outputs checked per chip |
 | Containers ([`docker/`](docker)) | Two pinned images, each tested before it's pushed to GHCR: `tensixfuse` with ttnn, SFPI and ttsim for both chips, and `tensixfuse-sweep` with TT-Lang's simulator | 2.1 GB and 1.1 GB; 7 ttsim tests per chip in under 20 s |
 | Sharded sweep ([`sweep.yml`](.github/workflows/sweep.yml)) | The 48-run fusion sweep split over 8 GitHub-hosted runners with cost-balanced shards, merged and checked | 184 s on one runner, 76 s across 8 |
 | Kubernetes ([`deploy/helm`](deploy/helm/tensixfuse-sweep)) | A Helm chart that runs the sweep as a [JobSet](https://github.com/kubernetes-sigs/jobset), one simulator pod per shard; CI runs it on a kind cluster | 4 pods finish in under 25 s on kind; all 24 runs match the model |
@@ -192,6 +207,8 @@ The simulator and the SFPI compiler are pinned to the versions tt-metal 0.79.0 i
 
 **The simulator ran a multicast that would have deadlocked.** In my first multicast kernel, the core that reads A from DRAM was also one of its own pipe's destinations. Its send waits for every destination to post its receive, and its own receive came after the send in the same thread, so on a chip it would wait forever. TT-Lang's functional simulator ran it and every tile count came out right; the compiler refused it and pointed at both lines. Now the source keeps the block it read and sends only to the other cores, which moves the same DRAM traffic. The compiler also wanted the multicast compute kernel free of bounds checks on node coordinates, so it could prove which cores produce and consume each buffer.
 
+**ttnn.linear's GELU sees a rounded sum.** I wrote my linear layer to match ttnn.linear step for step, and without an activation it does, on every output. With GELU it didn't, by up to 4 bf16 steps, and mine was the closer to fp32. The explanation was on ttnn's side: at this shape, its output with `activation="gelu"` is bit-identical to rounding the sum to bf16 and running `ttnn.gelu` separately. That costs accuracy: 69.9% of outputs equal fp32 math rounded once, against 84.3% when GELU runs on the fp32 sum.
+
 **One run sets the floor for sharding.** Spread over 8 runners, the sweep is bounded by its largest single run, the unblocked 2048³ dry run, which takes about a minute on a hosted runner by itself. Balancing shards by predicted cost keeps the other big runs off that shard, but nothing gets the slowest shard below that one run.
 
 ## Builds on
@@ -218,7 +235,7 @@ What's mine: the fusion-vs-reuse measurement and the analytic traffic model it's
 ## What I would do next
 
 - Run the same kernels on a real Wormhole or Blackhole card and see how much of the DRAM saving turns into time, and what the SFPU BatchNorm costs next to the FPU one.
-- Write the bfloat8_b linear layer myself in TT-Metalium (matmul with bfloat8_b weights, bias and GELU in one kernel) and match `ttnn.linear` bit for bit, instead of comparing against TTNN's kernel.
+- Find out why `ttnn.linear`'s GELU runs on the bf16-rounded sum at this shape, and whether applying it before the rounding is worth raising with TTNN. Then make my linear layer reuse `x` across output columns (it re-reads `x` for every column now).
 - Fuse the whole MLP (`c_fc`, GELU, `c_proj`) so the 128 × 3072 hidden activations stay in L1 across cores and never touch DRAM.
 - Put LoFi into the perplexity table by running the MLPs on ttsim for a slice of WikiText-2. The CPU emulation can't model math fidelity.
 - Move to tt-metal 0.81.1 (it pins ttsim v1.12.1 and SFPI 7.89.0) and re-run every study, as its own change.
@@ -262,7 +279,7 @@ python bench/perplexity.py --configs fp32,all:bfloat8_b,all:bfloat4_b,all:nvfp4
 python bench/perplexity_llama.py --configs fp32,attn=bfloat8_b+ff13=bfloat4_b+ff2=bfloat8_b
 ```
 
-**The C++ program** needs tt-metal 0.79.0's SDK packages; [`metalium.yml`](.github/workflows/metalium.yml) has the exact install and build steps.
+**The C++ programs** need tt-metal 0.79.0's SDK packages; [`metalium.yml`](.github/workflows/metalium.yml) has the exact install and build steps.
 
 **The sweep on Kubernetes** (with the JobSet controller installed):
 
@@ -282,6 +299,7 @@ cd deploy/ansible && ansible-playbook site.yml   # then cat /var/lib/tensixfuse/
 ```
 kernels/ttlang/        fused and unfused matmul, multicast variant, elementwise ops, runner
 kernels/metalium/      bn_relu: host program, reader/writer kernels, FPU and SFPU compute kernels
+                       linear_bias_act: bfloat8_b linear + bias + GELU, step for step with ttnn.linear
 src/tensixfuse/        traffic model, block-float and MX/NVFP4/INT4 emulation, metrics, simulator runner, doctor
 model/                 GPU-CorruptNet exports, GPT-2 MLP capture
 bench/                 fusion sweep, GPT-2, perplexity and head studies, BatchNorm check, TT-Lang compiler run, merge, report

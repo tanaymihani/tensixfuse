@@ -1,0 +1,36 @@
+{
+ "arch": "wormhole",
+ "shape": [
+  128,
+  768,
+  3072
+ ],
+ "weights": "bfloat8_b",
+ "ttnn_skipped": "ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole",
+ "runs": {
+  "none": {
+   "cores": 8,
+   "seconds": 4.38,
+   "pcc_mine_vs_fp32": 0.999998539554264,
+   "max_abs_err_mine_vs_fp32": 0.008686304092407227,
+   "exact_mine_vs_fp32_rounded_once": 0.8543879191080729,
+   "elements": 393216
+  },
+  "gelu": {
+   "cores": 8,
+   "seconds": 4.15,
+   "pcc_mine_vs_fp32": 0.9999983110149974,
+   "max_abs_err_mine_vs_fp32": 0.009714841842651367,
+   "exact_mine_vs_fp32_rounded_once": 0.8430150349934896,
+   "elements": 393216
+  },
+  "gelu_after_round": {
+   "cores": 8,
+   "seconds": 4.19,
+   "pcc_mine_vs_fp32": 0.9999957762274323,
+   "max_abs_err_mine_vs_fp32": 0.014900445938110352,
+   "exact_mine_vs_fp32_rounded_once": 0.6988423665364584,
+   "elements": 393216
+  }
+ }
+}

@@ -138,6 +138,21 @@ ttsim, built against tt-metal 0.79.0's SDK packages. Input: what goes into one o
 | layer4.2.bn3 | blackhole | fpu | 3,211,264 | 6.6% | 0.999986 | 95.40% | 30.28% | 64.68% | 0.68% | True |
 | layer4.2.bn3 | blackhole | sfpu | 3,211,264 | 6.6% | 1.000000 | 99.78% | 96.70% | 100.00% | 0.17% | True |
 
+## TT-Metalium C++: my bfloat8_b linear layer against ttnn.linear
+
+ttsim, built against tt-metal 0.79.0's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape (128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4 with fp32 accumulation, seeded random data. Compared bit for bit with ttnn.linear at the same settings on the same simulated chip, and both with fp32 math on the same rounded inputs. `gelu_from_pack` runs GELU from the packer thread, as ttnn.linear's fused activation does. Made by `python bench/linear_bias_act.py`.
+
+| Chip | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | Equal to fp32 rounded once: mine | ttnn | PCC vs fp32: mine | ttnn |
+|---|---|---|---|---|---|---|---|
+| blackhole | none | 100.00% | 0 | 85.44% | 85.44% | 0.9999985 | 0.9999985 |
+| blackhole | gelu | 75.38% | 4 | 84.30% | 69.85% | 0.9999983 | 0.9999958 |
+| blackhole | gelu_after_round | 99.37% | 1 | 69.88% | 69.85% | 0.9999958 | 0.9999958 |
+| wormhole | none | n/a | n/a | 85.44% | n/a | 0.9999985 | n/a |
+| wormhole | gelu | n/a | n/a | 84.30% | n/a | 0.9999983 | n/a |
+| wormhole | gelu_after_round | n/a | n/a | 69.88% | n/a | 0.9999958 | n/a |
+
+No ttnn.linear column on wormhole: ttnn.linear with fp32 accumulation and a fused bias stops on ttsim's undefined-behavior check (unpacker reading Float32 into Float32) on Wormhole.
+
 ## The fusion kernels through the TT-Lang compiler
 
 ttsim. The same kernels as the fusion study, compiled by the TT-Lang compiler instead of run in the functional simulator, at 256³, `y = relu(a @ b + c)`, bf16, checked against PyTorch. Made by `python bench/ttlang_compiled.py`.

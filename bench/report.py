@@ -256,6 +256,44 @@ def compiled_section(runs: list[dict]) -> list[str]:
     return out
 
 
+def linear_section(runs: list[dict]) -> list[str]:
+    out = [
+        "## TT-Metalium C++: my bfloat8_b linear layer against ttnn.linear",
+        "",
+        (
+            "ttsim, built against tt-metal 0.79.0's SDK packages. `y = act(x @ w + b)` at GPT-2's c_fc shape "
+            "(128 x 768 -> 3072), bf16 x and b, bfloat8_b w, HiFi4 with fp32 accumulation, seeded random data. "
+            "Compared bit for bit with ttnn.linear at the same settings on the same simulated chip, and both with "
+            "fp32 math on the same rounded inputs. `gelu_from_pack` runs GELU from the packer thread, as "
+            "ttnn.linear's fused activation does. Made by `python bench/linear_bias_act.py`."
+        ),
+        "",
+        (
+            "| Chip | Activation | Bit-exact vs ttnn.linear | Max bf16 steps from ttnn | "
+            "Equal to fp32 rounded once: mine | ttnn | PCC vs fp32: mine | ttnn |"
+        ),
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for res in runs:
+        for act, r in res["runs"].items():
+            if "bit_exact_vs_ttnn" in r:
+                cells = (
+                    f"{r['bit_exact_vs_ttnn']:.2%} | {r['max_ulp_vs_ttnn']} | "
+                    f"{r['exact_mine_vs_fp32_rounded_once']:.2%} | {r['exact_ttnn_vs_fp32_rounded_once']:.2%} | "
+                    f"{r['pcc_mine_vs_fp32']:.7f} | {r['pcc_ttnn_vs_fp32']:.7f}"
+                )
+            else:
+                cells = (
+                    f"n/a | n/a | {r['exact_mine_vs_fp32_rounded_once']:.2%} | n/a | "
+                    f"{r['pcc_mine_vs_fp32']:.7f} | n/a"
+                )
+            out.append(f"| {res['arch']} | {act} | {cells} |")
+    skipped = {res["arch"]: res["ttnn_skipped"] for res in runs if res.get("ttnn_skipped")}
+    for arch, why in skipped.items():
+        out += ["", f"No ttnn.linear column on {arch}: {why}."]
+    return out
+
+
 def main() -> None:
     parts = [
         "# Results",
@@ -285,6 +323,9 @@ def main() -> None:
     ]
     if any(bn_runs):
         parts += bn_section([r for r in bn_runs if r]) + [""]
+    linear = [load(f"linear_bias_act_{a}.json") for a in ("blackhole", "wormhole")]
+    if any(linear):
+        parts += linear_section([r for r in linear if r]) + [""]
     compiled = [load(f"ttlang_compiled_{a}.json") for a in ("wormhole", "blackhole")]
     if any(compiled):
         parts += compiled_section([r for r in compiled if r]) + [""]
