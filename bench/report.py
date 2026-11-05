@@ -256,28 +256,32 @@ def compiled_section(runs: list[dict]) -> list[str]:
     return out
 
 
-def n300_section(t: dict) -> list[str]:
-    # The simulator path is .../ttsim/<version>/n300/libttsim_wh_x2.so.
-    sim = Path(t.get("simulator", "")).parent.parent.name or "?"
-    how = "an all-reduce over the fabric" if t["fabric"] else "the host"
+def n300_section(runs: list[dict]) -> list[str]:
     out = [
         "## Two simulated chips: GPT-2's MLP split across an N300",
         "",
         (
-            f"ttsim {sim}, its 2-chip Wormhole build ({t['chips']} chips), ttnn {t['ttnn']}, bf16. "
-            "`c_fc` is split by columns and `c_proj` by rows, so each chip computes half of the "
-            f"hidden units and a partial `c_proj` output; the two partials are added by {how}. PCC of "
-            "each block's output against fp32 PyTorch, on the same 128 tokens of WikiText-2 as the "
-            "block-float study. Made by `python bench/tp_mlp_n300.py` (the manual `scaleout` workflow)."
+            "ttsim's 2-chip Wormhole build, ttnn 0.81.1, bf16. `c_fc` is split by columns and `c_proj` "
+            "by rows, so each chip computes half of the hidden units and a partial `c_proj` output. "
+            "The two partials are added either on the host or by `ttnn.all_reduce` over tt-metal's "
+            "fabric between the chips. PCC of each block's output against fp32 PyTorch, on the same 128 "
+            "tokens of WikiText-2 as the block-float study. Made by `python bench/tp_mlp_n300.py` (the "
+            "manual `scaleout` workflow); the fabric run let UMD discover the two chips."
         ),
         "",
-        "| Block | PCC vs fp32 | Partial per chip |",
-        "|---|---|---|",
+        "| Partials added by | ttsim | Block | PCC vs fp32 | Both chips same bits | Partial per chip |",
+        "|---|---|---|---|---|---|",
     ]
-    for b in t["blocks"]:
-        out.append(
-            f"| {b['block']} | {b['pcc_vs_fp32']:.5f} | {b['partial_kib_per_chip']:.0f} KiB |"
-        )
+    for t in runs:
+        # The simulator path is .../ttsim/<version>/n300/libttsim_wh_x2.so.
+        sim = Path(t.get("simulator", "")).parent.parent.name or "?"
+        how = "all-reduce over the fabric" if t["fabric"] else "the host"
+        for b in t["blocks"]:
+            same = {True: "yes", False: "no", None: "n/a"}[b.get("chips_bit_identical")]
+            out.append(
+                f"| {how} | {sim} | {b['block']} | {b['pcc_vs_fp32']:.5f} | {same} | "
+                f"{b['partial_kib_per_chip']:.0f} KiB |"
+            )
     return out
 
 
@@ -373,8 +377,9 @@ def main() -> None:
     compiled = [load(f"ttlang_compiled_{a}.json") for a in ("wormhole", "blackhole")]
     if any(compiled):
         parts += compiled_section([r for r in compiled if r]) + [""]
-    if n300 := load("tp_n300.json"):
-        parts += n300_section(n300) + [""]
+    n300 = [load(name) for name in ("tp_n300.json", "tp_n300_fabric.json")]
+    if any(n300):
+        parts += n300_section([t for t in n300 if t]) + [""]
     dest = REPO / "docs" / "RESULTS.md"
     dest.parent.mkdir(exist_ok=True)
     dest.write_text("\n".join(parts))

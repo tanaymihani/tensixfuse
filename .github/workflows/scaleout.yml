@@ -2,11 +2,12 @@ name: scaleout
 
 # GPT-2's MLP tensor-parallel across the two chips of a simulated N300 (ttsim's
 # 2-chip Wormhole build): c_fc split by columns, c_proj by rows. By default each
-# chip's partial sum comes back to the host, which adds them. With `fabric`, the
-# chips all-reduce over tt-metal's fabric instead, which doesn't work yet: with
-# tt-umd's N300 example file as the topology, the first host write to the
-# second chip times out once the fabric is up (see bench/tp_mlp_n300.py).
-# Manual: on the pinned ttsim each block takes about 160 s.
+# chip's partial sum comes back to the host, which adds them: about 160 s per
+# block on the pinned ttsim. With `fabric` and `discover`, the chips all-reduce
+# over tt-metal's fabric instead. That works, but slowly: block 0 took 64 minutes
+# on ttsim v1.16.0, so set `minutes` and `blocks` too. With `fabric` alone
+# (tt-umd's N300 example file as the topology), the first host write to the
+# second chip times out (see bench/tp_mlp_n300.py). Manual.
 on:
   workflow_dispatch:
     inputs:

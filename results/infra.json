@@ -75,5 +75,27 @@
   "molecule": "converge, idempotence, verify passed",
   "note": "the two runs before took 104 s (main, tt-metal 0.79.0) and 79 s (the 0.81.1 branch)",
   "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018894020"
+ },
+ "scaleout": {
+  "chips": 2,
+  "host_sum": {
+   "blocks": 3,
+   "seconds_per_block": [
+    155.1,
+    148.1,
+    147.5
+   ],
+   "ttsim": "v1.12.1",
+   "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018927072"
+  },
+  "fabric_all_reduce": {
+   "blocks": 1,
+   "seconds": 3855.8,
+   "chips_bit_identical": true,
+   "ttsim": "v1.16.0",
+   "topology": "UMD discovery",
+   "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42029327198"
+  },
+  "note": "with tt-umd's example N300 cluster file instead of discovery, the fabric run times out on the first host write to the second chip"
  }
 }

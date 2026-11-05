@@ -13,12 +13,12 @@ to let UMD discover the chips.
 
 Status (tt-metal 0.81.1): with --no-fabric it works on ttsim v1.12.1 and
 v1.16.0, PCC 0.9998 or better against fp32 on every block, about 160 s per
-block on v1.12.1 and 9 s on v1.16.0. With the fabric on and the example file
-as the topology, the fabric initializes on both chips, and then the first host
+block on v1.12.1 and 9 s on v1.16.0. With the fabric on, the run needs UMD to
+discover the chips: with tt-umd's example file as the topology, the first host
 write to the second chip (through its Ethernet core) times out after UMD's 5 s,
-the same with tt-metal 0.79.0 and ttsim v1.10.8. When UMD discovers the
-chips instead, nothing times out, but a block hadn't finished after 12 minutes
-on v1.12.1 or 18 on v1.16.0.
+the same with tt-metal 0.79.0 and ttsim v1.10.8. With discovery the all-reduce
+works (block 0: PCC 0.99991, both chips the same bits), but every host write to
+the second chip is slow once the fabric is up: 3,856 s for one block on v1.16.0.
 
     python bench/tp_mlp_n300.py data/gpt2_mlp.npz --out results/tp_n300.json
 """

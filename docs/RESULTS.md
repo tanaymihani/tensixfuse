@@ -192,10 +192,11 @@ ttsim. The same kernels as the fusion study, compiled by the TT-Lang compiler in
 
 ## Two simulated chips: GPT-2's MLP split across an N300
 
-ttsim v1.12.1, its 2-chip Wormhole build (2 chips), ttnn 0.81.1, bf16. `c_fc` is split by columns and `c_proj` by rows, so each chip computes half of the hidden units and a partial `c_proj` output; the two partials are added by the host. PCC of each block's output against fp32 PyTorch, on the same 128 tokens of WikiText-2 as the block-float study. Made by `python bench/tp_mlp_n300.py` (the manual `scaleout` workflow).
+ttsim's 2-chip Wormhole build, ttnn 0.81.1, bf16. `c_fc` is split by columns and `c_proj` by rows, so each chip computes half of the hidden units and a partial `c_proj` output. The two partials are added either on the host or by `ttnn.all_reduce` over tt-metal's fabric between the chips. PCC of each block's output against fp32 PyTorch, on the same 128 tokens of WikiText-2 as the block-float study. Made by `python bench/tp_mlp_n300.py` (the manual `scaleout` workflow); the fabric run let UMD discover the two chips.
 
-| Block | PCC vs fp32 | Partial per chip |
-|---|---|---|
-| 0 | 0.99991 | 192 KiB |
-| 6 | 0.99980 | 192 KiB |
-| 11 | 0.99993 | 192 KiB |
+| Partials added by | ttsim | Block | PCC vs fp32 | Both chips same bits | Partial per chip |
+|---|---|---|---|---|---|
+| the host | v1.12.1 | 0 | 0.99991 | n/a | 192 KiB |
+| the host | v1.12.1 | 6 | 0.99980 | n/a | 192 KiB |
+| the host | v1.12.1 | 11 | 0.99993 | n/a | 192 KiB |
+| all-reduce over the fabric | v1.16.0 | 0 | 0.99991 | yes | 192 KiB |

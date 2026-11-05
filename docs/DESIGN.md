@@ -87,7 +87,7 @@ ttnn 0.81.1, ttsim v1.12.1 and SFPI 7.89.0 are the versions tt-metal 0.81.1 pins
 - Every push: lint and the 72 fast tests on Linux and macOS (functional simulator, emulation, model, regression gate).
 - ttsim: 6 jobs over simulated Wormhole and Blackhole and the three weight formats, with PCC floors.
 - C++: built against Tenstorrent's released SDK packages, both kernels on both chips, every element checked.
-- Studies (GPT-2, CorruptNet head) run when their code changes and write the JSON the tables come from. The two-chip N300 run is manual: about 160 s per block on the pinned simulator, with the partial sums added on the host until the fabric all-reduce works.
+- Studies (GPT-2, CorruptNet head) run when their code changes and write the JSON the tables come from. The two-chip N300 run is manual: about 160 s per block on the pinned simulator with the partial sums added on the host. The fabric all-reduce works when UMD discovers the chips, but takes about an hour per block.
 
 ## Sharding the sweep
 

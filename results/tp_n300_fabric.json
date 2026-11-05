@@ -1,0 +1,16 @@
+{
+ "chips": 2,
+ "fabric": true,
+ "ttnn": "0.81.1",
+ "simulator": "/home/runner/.cache/tensixfuse/ttsim/v1.16.0/n300/libttsim_wh_x2.so",
+ "blocks": [
+  {
+   "block": 0,
+   "pcc_vs_fp32": 0.9999101380447609,
+   "chips_bit_identical": true,
+   "collective": "all_reduce",
+   "partial_kib_per_chip": 192.0,
+   "seconds": 3855.8
+  }
+ ]
+}
