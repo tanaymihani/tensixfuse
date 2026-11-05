@@ -7,7 +7,7 @@
    "ubuntu-latest",
    "macos-latest"
   ],
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893262"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42022639588"
  },
  "ttsim_matrix": {
   "jobs": 6,
@@ -21,7 +21,7 @@
    "bfloat4_b"
   ],
   "tests_per_chip": 7,
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893049"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42022639481"
  },
  "metalium": {
   "chips": 2,
@@ -31,7 +31,8 @@
   ],
   "bn_values_per_kernel_per_chip": 4014080,
   "linear_outputs_per_chip": 2359296,
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42020649232"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42022639464",
+  "linear_dram_read_bytes_per_call": 4276224
  },
  "studies": {
   "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893104"
