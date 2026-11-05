@@ -11,6 +11,10 @@ on:
         description: "ttsim release to use instead of the pinned one, e.g. v1.16.0 (empty: the pin)"
         required: false
         default: ""
+      args:
+        description: "extra arguments for bench/tp_mlp_n300.py, e.g. --no-fabric"
+        required: false
+        default: ""
 
 env:
   TTNN_VERSION: "0.81.1"
@@ -59,7 +63,9 @@ jobs:
           echo "TT_METAL_SIMULATOR_DIRECT_TENSOR_WRITES=1" >> "$GITHUB_ENV"
       - run: python model/gpt2_capture.py --out data/gpt2_mlp.npz
       - name: Tensor-parallel MLP on the simulated N300
-        run: python bench/tp_mlp_n300.py data/gpt2_mlp.npz --out results/tp_n300.json
+        env:
+          EXTRA_ARGS: ${{ inputs.args }}
+        run: python bench/tp_mlp_n300.py data/gpt2_mlp.npz --out results/tp_n300.json $EXTRA_ARGS
       - uses: actions/upload-artifact@v4
         if: always()
         with:

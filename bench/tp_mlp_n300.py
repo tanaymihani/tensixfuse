@@ -70,12 +70,18 @@ def main() -> None:
     p.add_argument("data", nargs="?", default="data/gpt2_mlp.npz")
     p.add_argument("--blocks", type=int, nargs="+", default=[0, 6, 11])
     p.add_argument("--out", default="results/tp_n300.json")
+    p.add_argument(
+        "--no-fabric",
+        action="store_true",
+        help="leave the fabric off and add the two partials on the host instead of an all-reduce",
+    )
     args = p.parse_args()
     d = np.load(args.data)
 
-    ttnn.set_fabric_config(ttnn.FabricConfig.FABRIC_1D)
+    if not args.no_fabric:
+        ttnn.set_fabric_config(ttnn.FabricConfig.FABRIC_1D)
     mesh = ttnn.open_mesh_device(ttnn.MeshShape(1, 2))
-    results: dict = {"chips": mesh.get_num_devices(), "blocks": []}
+    results: dict = {"chips": mesh.get_num_devices(), "fabric": not args.no_fabric, "blocks": []}
 
     def to_mesh(a, mapper):
         # Round to bf16 on the host so nothing has to be converted on the device.
@@ -100,15 +106,19 @@ def main() -> None:
 
             h = ttnn.linear(x, w_fc, bias=b_fc, activation="gelu")  # 128 x 1536 per chip
             partial = ttnn.linear(h, w_proj)  # 128 x 768 per chip, to be summed
-            y, how = all_reduce(partial)
-            y = ttnn.add(y, b_proj)
-
-            both = ttnn.to_torch(y, mesh_composer=concat(mesh, 0)).float().numpy()
-            y0, y1 = both[0, 0], both[1, 0]
+            if args.no_fabric:
+                parts = ttnn.to_torch(partial, mesh_composer=concat(mesh, 0)).float().numpy()
+                y0 = y1 = parts[0, 0] + parts[1, 0] + d[f"b_proj{i}"]
+                how = "host sum"
+            else:
+                y, how = all_reduce(partial)
+                y = ttnn.add(y, b_proj)
+                both = ttnn.to_torch(y, mesh_composer=concat(mesh, 0)).float().numpy()
+                y0, y1 = both[0, 0], both[1, 0]
             row = {
                 "block": i,
                 "pcc_vs_fp32": pcc(y0, d[f"y{i}"]),
-                "chips_bit_identical": bool(np.array_equal(y0, y1)),
+                "chips_bit_identical": None if args.no_fabric else bool(np.array_equal(y0, y1)),
                 "collective": how,
                 "all_reduced_kib_per_chip": partial.shape[-2] * partial.shape[-1] * 2 / 1024,
                 "seconds": round(time.perf_counter() - t0, 1),
