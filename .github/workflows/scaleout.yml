@@ -6,6 +6,11 @@ name: scaleout
 # remote chip time out with tt-metal 0.79.0 (see bench/tp_mlp_n300.py).
 on:
   workflow_dispatch:
+    inputs:
+      ttsim:
+        description: "ttsim release to use instead of the pinned one, e.g. v1.16.0 (empty: the pin)"
+        required: false
+        default: ""
 
 env:
   TTNN_VERSION: "0.81.1"
@@ -29,6 +34,19 @@ jobs:
           pip install transformers datasets "numpy<2" "pyarrow<26"  # ttnn needs numpy<2; pyarrow 26 needs numpy 2
           pip install --no-deps -e .
       - run: bash scripts/install_sfpi.sh
+      - name: Another ttsim release
+        if: inputs.ttsim != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.ttsim }}
+        run: |
+          # The checksum GitHub recorded for the release asset.
+          digest="$(gh api "repos/tenstorrent/ttsim/releases/tags/$TAG" \
+            --jq '.assets[] | select(.name == "libttsim_wh_x2.so") | .digest')"
+          test -n "$digest"
+          echo "${digest#sha256:}  libttsim_wh_x2.so" > ttsim.sha256
+          echo "$TAG" > ttsim-version
+          echo "ttsim $TAG on the N300 (pinned: $(git show HEAD:ttsim-version))" >> "$GITHUB_STEP_SUMMARY"
       - name: Two-chip simulator and N300 cluster descriptor
         run: |
           bash scripts/setup_ttsim.sh n300
