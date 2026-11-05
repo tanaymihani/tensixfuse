@@ -168,6 +168,115 @@ def _matmul_compute_fused(act, a_dfb, b_dfb, acc_dfb, c_dfb, y_dfb, Mb, Nb, Kb, 
     return compute
 
 
+def _matmul_compute_even(act, a_dfb, b_dfb, acc_dfb, c_dfb, y_dfb, Kb, m_per, n_per):
+    """Compute for the multicast matmul, where the blocks divide evenly over the
+    grid. No bounds checks: with pipes in the operation, the compiler has to
+    prove which nodes produce and consume each buffer, and guards built from
+    node coordinates are more than it can analyze. act=None is the plain matmul.
+    """
+    if act is None:
+
+        @ttl.compute()
+        def compute():
+            for _ in range(m_per):
+                for _ in range(n_per):
+                    with acc_dfb.reserve() as acc_blk:
+                        acc_blk.store(ttl.block.fill(0, shape=acc_blk.shape))
+                    for _ in range(Kb):
+                        with (
+                            a_dfb.wait() as a_blk,
+                            b_dfb.wait() as b_blk,
+                            acc_dfb.wait() as pre,
+                        ):
+                            with acc_dfb.reserve() as acc_blk:
+                                acc_blk.store(pre + a_blk @ b_blk)
+                    with acc_dfb.wait() as acc_blk:
+                        with y_dfb.reserve() as y_blk:
+                            y_blk.store(acc_blk)
+
+    elif act == "relu":
+
+        @ttl.compute()
+        def compute():
+            for _ in range(m_per):
+                for _ in range(n_per):
+                    with acc_dfb.reserve() as acc_blk:
+                        acc_blk.store(ttl.block.fill(0, shape=acc_blk.shape))
+                    for _ in range(Kb):
+                        with (
+                            a_dfb.wait() as a_blk,
+                            b_dfb.wait() as b_blk,
+                            acc_dfb.wait() as pre,
+                        ):
+                            with acc_dfb.reserve() as acc_blk:
+                                acc_blk.store(pre + a_blk @ b_blk)
+                    with c_dfb.wait() as c_blk, acc_dfb.wait() as acc_blk:
+                        with y_dfb.reserve() as y_blk:
+                            y_blk.store(ttl.math.relu(c_blk + acc_blk))
+
+    elif act == "gelu":
+
+        @ttl.compute()
+        def compute():
+            for _ in range(m_per):
+                for _ in range(n_per):
+                    with acc_dfb.reserve() as acc_blk:
+                        acc_blk.store(ttl.block.fill(0, shape=acc_blk.shape))
+                    for _ in range(Kb):
+                        with (
+                            a_dfb.wait() as a_blk,
+                            b_dfb.wait() as b_blk,
+                            acc_dfb.wait() as pre,
+                        ):
+                            with acc_dfb.reserve() as acc_blk:
+                                acc_blk.store(pre + a_blk @ b_blk)
+                    with c_dfb.wait() as c_blk, acc_dfb.wait() as acc_blk:
+                        with y_dfb.reserve() as y_blk:
+                            y_blk.store(ttl.math.gelu(c_blk + acc_blk))
+
+    elif act == "sigmoid":
+
+        @ttl.compute()
+        def compute():
+            for _ in range(m_per):
+                for _ in range(n_per):
+                    with acc_dfb.reserve() as acc_blk:
+                        acc_blk.store(ttl.block.fill(0, shape=acc_blk.shape))
+                    for _ in range(Kb):
+                        with (
+                            a_dfb.wait() as a_blk,
+                            b_dfb.wait() as b_blk,
+                            acc_dfb.wait() as pre,
+                        ):
+                            with acc_dfb.reserve() as acc_blk:
+                                acc_blk.store(pre + a_blk @ b_blk)
+                    with c_dfb.wait() as c_blk, acc_dfb.wait() as acc_blk:
+                        with y_dfb.reserve() as y_blk:
+                            y_blk.store(ttl.math.sigmoid(c_blk + acc_blk))
+
+    else:  # "none": just the bias add
+
+        @ttl.compute()
+        def compute():
+            for _ in range(m_per):
+                for _ in range(n_per):
+                    with acc_dfb.reserve() as acc_blk:
+                        acc_blk.store(ttl.block.fill(0, shape=acc_blk.shape))
+                    for _ in range(Kb):
+                        with (
+                            a_dfb.wait() as a_blk,
+                            b_dfb.wait() as b_blk,
+                            acc_dfb.wait() as pre,
+                        ):
+                            with acc_dfb.reserve() as acc_blk:
+                                acc_blk.store(pre + a_blk @ b_blk)
+                    with c_dfb.wait() as c_blk, acc_dfb.wait() as acc_blk:
+                        with y_dfb.reserve() as y_blk:
+                            y_blk.store(c_blk + acc_blk)
+
+    return compute
+
+
 def make_matmul(cfg, epilogue=None, act="relu"):
     """Blocked, output-stationary matmul over a core grid.
 
@@ -320,9 +429,7 @@ def _make_matmul_mcast(cfg, fused, act):
                                 a_net.if_src(send_a)
                                 a_net.if_dst(recv_a)
 
-            _matmul_compute_fused(
-                act, a_dfb, b_dfb, acc_dfb, c_dfb, y_dfb, Mb, Nb, Kb, m_per, n_per
-            )
+            _matmul_compute_even(act, a_dfb, b_dfb, acc_dfb, c_dfb, y_dfb, Kb, m_per, n_per)
         else:
 
             @ttl.datamovement()
@@ -346,7 +453,7 @@ def _make_matmul_mcast(cfg, fused, act):
                                 a_net.if_src(send_a)
                                 a_net.if_dst(recv_a)
 
-            _matmul_compute_plain(a_dfb, b_dfb, acc_dfb, y_dfb, Mb, Nb, Kb, m_per, n_per)
+            _matmul_compute_even(None, a_dfb, b_dfb, acc_dfb, None, y_dfb, Kb, m_per, n_per)
 
         # Reader 2: B over the column pipe, then the finished output block.
         @ttl.datamovement()
