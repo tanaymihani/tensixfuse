@@ -1,0 +1,47 @@
+name: repro
+
+# Runs one script on a simulated chip with the pinned ttnn, SFPI and ttsim, for
+# the repros that go into upstream reports. Manual only.
+on:
+  workflow_dispatch:
+    inputs:
+      script:
+        description: "script to run, from the repo root"
+        required: false
+        default: "bench/repro_linear_activation.py"
+      arch:
+        description: "simulated chip"
+        type: choice
+        options: [blackhole, wormhole]
+        default: blackhole
+
+env:
+  TTNN_VERSION: "0.81.1"
+
+jobs:
+  run:
+    name: ${{ inputs.script }} on ${{ inputs.arch }}
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ttnn and CPU torch
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install "ttnn==$TTNN_VERSION"
+          pip install --no-deps -e .
+      - run: bash scripts/install_sfpi.sh
+      - run: bash scripts/setup_ttsim.sh "${{ inputs.arch }}"
+      - name: Run
+        env:
+          SCRIPT: ${{ inputs.script }}
+        run: python "$SCRIPT" 2>&1 | tee repro.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: repro
+          path: repro.log
