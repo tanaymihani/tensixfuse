@@ -1,0 +1,161 @@
+"""My TT-Metalium linear layer against ttnn.linear, on the same simulated chip.
+
+y = act(x @ w + b) with x in bf16, w in bfloat8_b and b in bf16: once with
+kernels/metalium/linear_bias_act (my program) and once with ttnn.linear at the
+same settings (HiFi4, fp32 accumulation), then compares the two outputs bit for
+bit. Both are also checked against fp32 math on the same rounded inputs (w
+through tensixfuse.blockfloat, the emulation of tt-metal's packer).
+
+The default shape is GPT-2's c_fc on 128 tokens (768 -> 3072) with GELU. The
+data is seeded random: x is unit variance like a LayerNorm output, w and b
+scaled like GPT-2's.
+
+    python bench/linear_bias_act.py --binary build/linear_bias_act/linear_bias_act \
+        --out results/linear_bias_act_blackhole.json
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+
+import numpy as np
+
+from tensixfuse.blockfloat import as_bf16, quantize_weight
+from tensixfuse.metrics import bf16_ulp_distance, pcc
+
+TT_FORMAT = {"bfp8": "bfloat8_b", "bf16": "bfloat16"}
+
+
+def bf16_bits(t) -> np.ndarray:
+    """Raw bits of a torch bf16 tensor."""
+    import torch
+
+    return t.contiguous().view(torch.int16).numpy().view(np.uint16)
+
+
+def bits_to_f32(bits: np.ndarray) -> np.ndarray:
+    return (bits.astype(np.uint32) << 16).view(np.float32)
+
+
+def reference(x, w, b, fmt: str, act: str) -> np.ndarray:
+    """fp32 math on the rounded inputs, for checking both outputs."""
+    wq = quantize_weight(w, TT_FORMAT[fmt])
+    y = x.astype(np.float64) @ wq.astype(np.float64) + b.astype(np.float64)
+    if act == "relu":
+        y = np.maximum(y, 0)
+    elif act == "gelu":  # the exact form; ttnn's accurate GELU approximates it
+        y = 0.5 * y * (1 + np.vectorize(math.erf)(y / math.sqrt(2)))
+    return y.astype(np.float32)
+
+
+def run_ttnn(x_t, w_t, b_t, fmt: str, act: str) -> np.ndarray:
+    import torch
+    import ttnn
+
+    device = ttnn.open_device(device_id=0)
+    try:
+        kwargs = {
+            "math_fidelity": ttnn.MathFidelity.HiFi4,
+            "math_approx_mode": False,
+            "fp32_dest_acc_en": True,
+            "packer_l1_acc": False,
+        }
+        try:
+            cfg = ttnn.init_device_compute_kernel_config(device.arch(), **kwargs)
+        except (AttributeError, TypeError):
+            cfg = ttnn.WormholeComputeKernelConfig(**kwargs)
+        dtype = ttnn.bfloat8_b if fmt == "bfp8" else ttnn.bfloat16
+        x = ttnn.from_torch(x_t, dtype=ttnn.bfloat16, layout=ttnn.TILE_LAYOUT, device=device)
+        w = ttnn.from_torch(w_t, dtype=dtype, layout=ttnn.TILE_LAYOUT, device=device)
+        b = ttnn.from_torch(
+            b_t.reshape(1, -1), dtype=ttnn.bfloat16, layout=ttnn.TILE_LAYOUT, device=device
+        )
+        y = ttnn.linear(
+            x, w, bias=b, activation=None if act == "none" else act, compute_kernel_config=cfg
+        )
+        return bf16_bits(ttnn.to_torch(y).to(torch.bfloat16))
+    finally:
+        ttnn.close_device(device)
+
+
+def main() -> None:
+    p = argparse.ArgumentParser()
+    p.add_argument("--binary", required=True)
+    p.add_argument("--M", type=int, default=128)
+    p.add_argument("--K", type=int, default=768)
+    p.add_argument("--N", type=int, default=3072)
+    p.add_argument("--act", choices=("none", "relu", "gelu"), default="gelu")
+    p.add_argument("--fmt", choices=("bfp8", "bf16"), default="bfp8")
+    p.add_argument("--cores", type=int, default=8)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--skip-ttnn", action="store_true")
+    p.add_argument("--out", default="results/linear_bias_act.json")
+    args = p.parse_args()
+
+    import torch
+
+    torch.manual_seed(args.seed)
+    x_t = torch.randn(args.M, args.K).to(torch.bfloat16)
+    w_t = (torch.randn(args.K, args.N) * 0.02).to(torch.bfloat16)
+    b_t = (torch.randn(args.N) * 0.02).to(torch.bfloat16)
+    x, w, b = x_t.float().numpy(), w_t.float().numpy(), b_t.float().numpy()
+
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        bf16_bits(x_t).tofile(tmp / "x.bin")
+        w.astype(np.float32).tofile(tmp / "w.bin")  # bf16 values, exactly, as fp32
+        bf16_bits(b_t).tofile(tmp / "b.bin")
+        cmd = [args.binary, *(str(tmp / f) for f in ("x.bin", "w.bin", "b.bin", "y.bin"))]
+        cmd += [str(args.M), str(args.K), str(args.N), args.act, args.fmt, str(args.cores)]
+        proc = subprocess.run(
+            cmd, capture_output=True, text=True, check=False, env=os.environ.copy()
+        )
+        if proc.returncode != 0:
+            raise SystemExit(
+                f"linear_bias_act failed:\n{proc.stdout[-3000:]}\n{proc.stderr[-6000:]}"
+            )
+        # ttsim prints its own stats line at exit, after ours.
+        line = next(s for s in reversed(proc.stdout.splitlines()) if s.startswith('{"rows"'))
+        timing = json.loads(line)
+        mine = np.fromfile(tmp / "y.bin", dtype=np.uint16).reshape(args.M, args.N)
+
+    ref = reference(x, w, b, args.fmt, args.act)
+    result = {
+        "arch": os.environ.get("TENSIXFUSE_ARCH", "?"),
+        "shape": [args.M, args.K, args.N],
+        "act": args.act,
+        "weights": TT_FORMAT[args.fmt],
+        "cores": timing["cores"],
+        "seconds": timing["seconds"],
+        "pcc_mine_vs_fp32": pcc(bits_to_f32(mine), ref),
+        "max_abs_err_mine_vs_fp32": float(np.abs(bits_to_f32(mine) - ref).max()),
+        "exact_vs_fp32_rounded_once": float(
+            (mine == bf16_bits(torch.from_numpy(as_bf16(ref)).to(torch.bfloat16))).mean()
+        ),
+    }
+    if not args.skip_ttnn:
+        theirs = run_ttnn(x_t, w_t, b_t, args.fmt, args.act).reshape(args.M, args.N)
+        ulp = bf16_ulp_distance(mine, theirs)
+        result.update(
+            {
+                "pcc_ttnn_vs_fp32": pcc(bits_to_f32(theirs), ref),
+                "bit_exact_vs_ttnn": float((mine == theirs).mean()),
+                "within_1_ulp_vs_ttnn": float((ulp <= 1).mean()),
+                "max_ulp_vs_ttnn": int(ulp.max()),
+                "elements": int(mine.size),
+            }
+        )
+    print(json.dumps(result))
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(result, indent=1))
+
+
+if __name__ == "__main__":
+    main()
