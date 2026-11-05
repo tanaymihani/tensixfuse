@@ -10,7 +10,7 @@
  "runs": {
   "fp32:none": {
    "cores": 8,
-   "seconds": 5.1,
+   "seconds": 5.14,
    "pcc_mine_vs_fp32": 0.9999985395542617,
    "max_abs_err_mine_vs_fp32": 0.008686304092407227,
    "exact_mine_vs_fp32_rounded_once": 0.8543879191080729,
@@ -26,7 +26,7 @@
   },
   "fp32:gelu": {
    "cores": 8,
-   "seconds": 4.91,
+   "seconds": 5.0,
    "pcc_mine_vs_fp32": 0.9999983110149946,
    "max_abs_err_mine_vs_fp32": 0.009714841842651367,
    "exact_mine_vs_fp32_rounded_once": 0.8430150349934896,
@@ -43,7 +43,7 @@
   },
   "fp32:gelu_after_round": {
    "cores": 8,
-   "seconds": 5.01,
+   "seconds": 4.99,
    "pcc_mine_vs_fp32": 0.9999957762274296,
    "max_abs_err_mine_vs_fp32": 0.014900445938110352,
    "exact_mine_vs_fp32_rounded_once": 0.6988423665364584,
@@ -60,7 +60,7 @@
   },
   "bf16:none": {
    "cores": 8,
-   "seconds": 4.69,
+   "seconds": 4.65,
    "pcc_mine_vs_fp32": 0.9999019460593239,
    "max_abs_err_mine_vs_fp32": 0.07141876220703125,
    "exact_mine_vs_fp32_rounded_once": 0.0980682373046875,
@@ -76,7 +76,7 @@
   },
   "bf16:gelu": {
    "cores": 8,
-   "seconds": 4.97,
+   "seconds": 5.0,
    "pcc_mine_vs_fp32": 0.9998628199695191,
    "max_abs_err_mine_vs_fp32": 0.07649970054626465,
    "exact_mine_vs_fp32_rounded_once": 0.1709925333658854,
@@ -93,7 +93,7 @@
   },
   "bf16:gelu_after_round": {
    "cores": 8,
-   "seconds": 5.09,
+   "seconds": 5.05,
    "pcc_mine_vs_fp32": 0.9998628199695191,
    "max_abs_err_mine_vs_fp32": 0.07649970054626465,
    "exact_mine_vs_fp32_rounded_once": 0.1709925333658854,

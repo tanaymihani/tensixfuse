@@ -31,7 +31,7 @@
   ],
   "bn_values_per_kernel_per_chip": 4014080,
   "linear_outputs_per_chip": 2359296,
-  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893266"
+  "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42020649232"
  },
  "studies": {
   "run": "https://github.com/tanaymihani/tensixfuse/actions/runs/42018893104"
