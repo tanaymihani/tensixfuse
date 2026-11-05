@@ -19,6 +19,10 @@ on:
         description: "let UMD find the two simulated chips itself instead of reading tt-umd's N300 example file"
         type: boolean
         default: false
+      fast_dispatch:
+        description: "fast dispatch (command queues) instead of the slow dispatch ttsim recommends"
+        type: boolean
+        default: false
 
 env:
   TTNN_VERSION: "0.81.1"
@@ -75,7 +79,11 @@ jobs:
       - name: Tensor-parallel MLP on the simulated N300
         env:
           EXTRA_ARGS: ${{ inputs.args }}
-        run: python bench/tp_mlp_n300.py data/gpt2_mlp.npz --out results/tp_n300.json $EXTRA_ARGS
+          FAST_DISPATCH: ${{ inputs.fast_dispatch }}
+        run: |
+          # tt-metal checks whether TT_METAL_SLOW_DISPATCH_MODE is set at all, so unset it.
+          if [ "$FAST_DISPATCH" = "true" ]; then unset TT_METAL_SLOW_DISPATCH_MODE; fi
+          python bench/tp_mlp_n300.py data/gpt2_mlp.npz --out results/tp_n300.json $EXTRA_ARGS
       - uses: actions/upload-artifact@v4
         if: always()
         with:
